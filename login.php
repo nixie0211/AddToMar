@@ -82,6 +82,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'googl
     echo json_encode([
         'ok' => (bool) ($result['ok'] ?? false),
         'redirect' => (string) ($result['redirect'] ?? ''),
+        'next' => (string) ($result['next'] ?? ''),
+        'message' => (string) ($result['error'] ?? ''),
+    ]);
+    exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'google_save_location') {
+    header('Content-Type: application/json; charset=utf-8');
+    $result = google_oauth_save_location(
+        (string) ($_POST['address'] ?? ''),
+        (string) ($_POST['latitude'] ?? ''),
+        (string) ($_POST['longitude'] ?? '')
+    );
+    echo json_encode([
+        'ok' => (bool) ($result['ok'] ?? false),
+        'redirect' => (string) ($result['redirect'] ?? ''),
         'message' => (string) ($result['error'] ?? ''),
     ]);
     exit;
@@ -331,8 +347,9 @@ if ($forgotPasswordLoginEmail !== '' && (string) ($_GET['reset'] ?? '') === 'suc
 }
 $googleVerifyEmail = is_array($googlePending) ? (string) ($googlePending['email'] ?? '') : '';
 $googleExistingAccount = is_array($googlePending) && !empty($googlePending['existing_account']);
-$openGooglePassword = is_array($googlePending) && !empty($googlePending['code_verified']);
-$openGoogleVerify = $googlePending !== null && !$openGooglePassword && $googleFlow === 'verify';
+$openGoogleLocation = is_array($googlePending) && !empty($googlePending['password_ready']);
+$openGooglePassword = is_array($googlePending) && !empty($googlePending['code_verified']) && !$openGoogleLocation;
+$openGoogleVerify = $googlePending !== null && !$openGooglePassword && !$openGoogleLocation && $googleFlow === 'verify';
 $googleVerifyNotice = '';
 if ((string) ($_GET['google'] ?? '') === 'verify' && $googlePending === null && $error === '') {
     $error = 'Google sign-in expired. Please try again.';
@@ -1842,6 +1859,9 @@ if ((string) ($_GET['google'] ?? '') === 'verify' && $googlePending === null && 
     transform:none;
   }
   body.forgot-open.google-verify-open .forgot-code-panel{display:flex;}
+  .legal-modal.google-location-modal{
+    z-index:90;
+  }
   .legal-modal.map-area-modal{
     z-index:10000;
   }
@@ -1870,6 +1890,98 @@ if ((string) ($_GET['google'] ?? '') === 'verify' && $googlePending === null && 
   .map-area-modal .legal-modal-ok:hover{
     background:#a83232;
   }
+  .google-location-modal .legal-modal-dialog{
+    width:min(720px, calc(100vw - 28px));
+    max-width:720px;
+    max-height:min(92vh, 860px);
+    padding:22px 22px 18px;
+    text-align:left;
+    overflow:auto;
+  }
+  .google-location-modal .register-map-hint,
+  .google-location-modal .register-map-status,
+  .google-location-modal .setup-location-label{
+    color:#5f6f76;
+  }
+  .google-location-modal .register-map-badge{
+    background:rgba(15,122,114,.12);
+    color:var(--teal, #0b806f);
+  }
+  .google-location-modal .register-map-search-input{
+    border:1px solid #d7e8e3;
+    background:#f6fbf9;
+    color:#1b2b34;
+  }
+  .google-location-modal .register-map-search-input::placeholder{color:#adaaa2;}
+  .google-location-modal .register-map-tool-btn{
+    border:1px solid #d8d5d0;
+    background:#f4f3f0;
+    color:#1b2b34;
+  }
+  .google-location-modal .register-map-tool-btn:hover:not(:disabled){background:#e8e6e2;}
+  .google-location-modal .register-map-search-results{
+    background:#fff;
+    border:1px solid #d7e8e3;
+    box-shadow:0 12px 28px rgba(15,23,42,.12);
+  }
+  .google-location-modal .register-map-search-item,
+  .google-location-modal .register-map-search-empty{
+    color:#1b2b34;
+  }
+  .google-location-modal .register-map-search-item:hover{background:#f0f7f5;}
+  .google-location-modal .signup-location-map-frame{
+    position:relative;
+  }
+  .google-location-modal .legal-modal-dialog h2{
+    font-size:1.35rem;
+    color:#0b806f;
+    margin:0 0 6px;
+  }
+  .google-location-modal .legal-modal-lead{
+    margin:0 0 14px;
+    color:#5f6f76;
+    font-weight:500;
+  }
+  .google-location-modal .register-map-toolbar{
+    margin-bottom:8px;
+  }
+  .google-location-modal #google-location-map{
+    width:100%;
+    height:min(42vh, 360px);
+    border-radius:12px;
+    border:1px solid #d7e4e1;
+    overflow:hidden;
+    z-index:1;
+  }
+  .google-location-modal #google-location-address{
+    width:100%;
+    min-height:72px;
+    margin:10px 0 8px;
+    padding:10px 12px;
+    border:1px solid #d7e4e1;
+    border-radius:10px;
+    font:inherit;
+    resize:vertical;
+  }
+  .google-location-modal .google-location-status{
+    min-height:1.2em;
+    margin:0 0 10px;
+    color:#c73e3e;
+    font-size:14px;
+  }
+  .google-location-modal .google-location-submit{
+    width:100%;
+    min-height:44px;
+    border:none;
+    border-radius:10px;
+    background:var(--teal, #0b806f);
+    color:#fff;
+    font-size:15px;
+    font-weight:700;
+    cursor:pointer;
+  }
+  .google-location-modal .google-location-submit:hover{background:#0a6059;}
+  .google-location-modal .google-location-submit:disabled{opacity:.65;cursor:wait;}
   @media (prefers-reduced-motion: reduce){
     .legal-modal-dialog{animation:none;}
   }
@@ -3028,6 +3140,37 @@ if ((string) ($_GET['google'] ?? '') === 'verify' && $googlePending === null && 
     </div>
   </div>
 
+  <div class="legal-modal google-location-modal" id="google-location-modal" hidden>
+    <div class="legal-modal-backdrop" aria-hidden="true"></div>
+    <div class="legal-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="google-location-title">
+      <h2 id="google-location-title">Pin your location</h2>
+      <p class="legal-modal-lead">Choose a pickup point in Laoag City, San Nicolas, or Batac City.</p>
+      <div class="register-map-toolbar">
+        <div class="register-map-search-wrap">
+          <input type="search" id="google-location-map-search" class="register-map-search-input" placeholder="Search barangay, street, or landmark…" autocomplete="off" aria-label="Search location on map">
+          <button type="button" id="google-location-map-search-btn" class="register-map-tool-btn">Search</button>
+          <ul id="google-location-map-search-results" class="register-map-search-results" hidden></ul>
+        </div>
+        <button type="button" id="google-location-map-locate-btn" class="register-map-tool-btn register-map-locate-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s7-4.35 7-10a7 7 0 1 0-14 0c0 5.65 7 10 7 10z"/><circle cx="12" cy="11" r="2.5"/></svg>
+          Use my location
+        </button>
+      </div>
+      <p class="register-map-hint">Click the map, search, or use your location.</p>
+      <p id="google-location-map-status" class="register-map-status" hidden aria-live="polite"></p>
+      <div class="signup-location-map-frame">
+        <span class="register-map-badge">Laoag · San Nicolas · Batac</span>
+        <div id="google-location-map" class="register-map" aria-label="Map for setting your pickup location"></div>
+      </div>
+      <label for="google-location-address" class="setup-location-label">Address</label>
+      <textarea id="google-location-address" name="address" rows="3" placeholder="House no., street, barangay, city"></textarea>
+      <input type="hidden" id="google-location-latitude" value="">
+      <input type="hidden" id="google-location-longitude" value="">
+      <p class="google-location-status" id="google-location-status" role="status"></p>
+      <button type="button" class="google-location-submit" id="google-location-submit">Save location and continue</button>
+    </div>
+  </div>
+
 <script>
 function toastComingSoon() {
   alert('Social sign-in is coming soon. Please use your email and password.');
@@ -3238,6 +3381,12 @@ function toastComingSoon() {
         document.getElementById('google-password')?.focus();
         return;
       }
+      if (result.ok && result.next === 'location') {
+        if (typeof window.openGoogleLocationModal === 'function') {
+          window.openGoogleLocationModal();
+        }
+        return;
+      }
       if (result.ok && result.redirect) {
         window.location.href = result.redirect;
         return;
@@ -3335,24 +3484,25 @@ function toastComingSoon() {
       return;
     }
     try {
-      const response = await fetch(window.location.pathname, {
+      const isForgot = form.closest('.login-panel')?.classList.contains('forgot-password-mode');
+      const response = await fetch(<?= json_encode(app_url('login.php'), JSON_UNESCAPED_SLASHES) ?>, {
         method: 'POST',
         headers: {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'},
         body: new URLSearchParams({
-          action: form.closest('.login-panel')?.classList.contains('forgot-password-mode')
-            ? 'forgot_set_password'
-            : 'google_set_password',
+          action: isForgot ? 'forgot_set_password' : 'google_set_password',
           password: password.value,
           password_confirm: confirm.value,
         }),
       });
       const result = await response.json();
-      if (result.ok && form.closest('.login-panel')?.classList.contains('forgot-password-mode')) {
+      if (result.ok && isForgot) {
         window.location.href = <?= json_encode(app_url('login.php?reset=success'), JSON_UNESCAPED_SLASHES) ?>;
         return;
       }
-      if (result.ok && result.redirect) {
-        window.location.href = result.redirect;
+      if (result.ok) {
+        if (typeof window.openGoogleLocationModal === 'function') {
+          window.openGoogleLocationModal();
+        }
         return;
       }
       if (status) status.textContent = result.message || 'Could not save your password. Please try again.';
@@ -3413,6 +3563,66 @@ function toastComingSoon() {
   });
 })();
 
+(function setupGoogleLocationModal() {
+  const modal = document.getElementById('google-location-modal');
+  const submit = document.getElementById('google-location-submit');
+  const status = document.getElementById('google-location-status');
+  if (!modal || !submit) return;
+
+  function openGoogleLocationModal() {
+    document.body.appendChild(modal);
+    modal.hidden = false;
+    document.body.classList.add('modal-open');
+    function tryInit(attempt) {
+      if (typeof window.initGoogleLocationMap === 'function') {
+        window.initGoogleLocationMap();
+        return;
+      }
+      if (attempt < 40) {
+        window.setTimeout(() => tryInit(attempt + 1), 50);
+      }
+    }
+    requestAnimationFrame(() => tryInit(0));
+  }
+
+  window.openGoogleLocationModal = openGoogleLocationModal;
+
+  submit.addEventListener('click', async () => {
+    const address = (document.getElementById('google-location-address')?.value || '').trim();
+    const latitude = (document.getElementById('google-location-latitude')?.value || '').trim();
+    const longitude = (document.getElementById('google-location-longitude')?.value || '').trim();
+    if (status) status.textContent = '';
+    if (!address || !latitude || !longitude) {
+      if (status) status.textContent = 'Pin a location on the map first.';
+      return;
+    }
+    submit.disabled = true;
+    try {
+      const response = await fetch(<?= json_encode(app_url('login.php'), JSON_UNESCAPED_SLASHES) ?>, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'},
+        body: new URLSearchParams({
+          action: 'google_save_location',
+          address,
+          latitude,
+          longitude,
+        }),
+      });
+      const result = await response.json();
+      if (result.ok && result.redirect) {
+        window.location.href = result.redirect;
+        return;
+      }
+      if (status) status.textContent = result.message || 'Could not save your location. Please try again.';
+    } catch (error) {
+      if (status) status.textContent = 'Could not save your location right now. Please try again.';
+    } finally {
+      submit.disabled = false;
+    }
+  });
+
+})();
+
 (function setupMapAreaModal() {
   const modal = document.getElementById('map-area-modal');
   const messageEl = document.getElementById('map-area-modal-message');
@@ -3420,7 +3630,10 @@ function toastComingSoon() {
 
   function closeMapArea() {
     modal.hidden = true;
-    document.body.classList.remove('modal-open');
+    const locationOpen = document.getElementById('google-location-modal')?.hidden === false;
+    if (!locationOpen) {
+      document.body.classList.remove('modal-open');
+    }
   }
 
   window.showMapAreaPopup = function (message) {
@@ -4146,7 +4359,14 @@ window.REGISTER_MAP_CONFIG = <?= json_encode([
 ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
 </script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-<script src="<?= htmlspecialchars(app_url('js/register-map.js'), ENT_QUOTES, 'UTF-8') ?>?v=red-pin-marker-2"></script>
+<script src="<?= htmlspecialchars(app_url('js/register-map.js'), ENT_QUOTES, 'UTF-8') ?>?v=google-location-map-2"></script>
+<?php if ($openGoogleLocation): ?>
+<script>
+if (typeof window.openGoogleLocationModal === 'function') {
+  window.openGoogleLocationModal();
+}
+</script>
+<?php endif; ?>
 <?php live_sync_render_script('public'); ?>
 </body>
 </html>

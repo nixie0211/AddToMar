@@ -272,6 +272,26 @@ function google_oauth_needs_password_setup(string $email): bool
     return (int) ($customer['password_set'] ?? 1) !== 1;
 }
 
+function google_oauth_needs_location(string $email): bool
+{
+    $email = customers_normalize_email($email);
+    $pharmacy = pharmacy_accounts_find_by_email($email) ?? pharmacy_accounts_find_db_by_email($email);
+    if ($pharmacy) {
+        return false;
+    }
+
+    $customer = customers_find_by_email($email);
+    if (!$customer) {
+        return true;
+    }
+
+    if (($customer['role'] ?? 'customer') === 'admin' || ($customer['role'] ?? '') === 'pharmacy') {
+        return false;
+    }
+
+    return trim((string) ($customer['address'] ?? '')) === '';
+}
+
 function google_oauth_after_verified(): array
 {
     $pending = google_oauth_pending();
@@ -285,6 +305,11 @@ function google_oauth_after_verified(): array
 
     if (google_oauth_needs_password_setup($email)) {
         return ['ok' => true, 'next' => 'password'];
+    }
+
+    if (google_oauth_needs_location($email)) {
+        $_SESSION['google_oauth_pending']['password_ready'] = true;
+        return ['ok' => true, 'next' => 'location'];
     }
 
     // Existing AddToMar accounts return to the login form so the user can
@@ -319,6 +344,36 @@ function google_oauth_set_password(string $password, string $passwordConfirm): a
     $saved = customers_set_login_password($email, $password, $passwordConfirm);
     if (!$saved['ok']) {
         return $saved;
+    }
+
+    $_SESSION['google_oauth_pending']['password_ready'] = true;
+
+    return ['ok' => true, 'next' => 'location'];
+}
+
+function google_oauth_save_location(string $address, string $latitude, string $longitude): array
+{
+    $pending = google_oauth_pending();
+    if ($pending === null || empty($pending['code_verified']) || empty($pending['password_ready'])) {
+        return ['ok' => false, 'error' => 'Google sign-in expired. Please try again.'];
+    }
+
+    $email = (string) ($pending['email'] ?? '');
+    $fullName = (string) ($pending['full_name'] ?? '');
+    $googleId = (string) ($pending['google_id'] ?? '');
+
+    if ($email === '') {
+        return ['ok' => false, 'error' => 'Your account email is missing.'];
+    }
+
+    $updated = customers_update_location(
+        $email,
+        $address,
+        (float) $latitude,
+        (float) $longitude
+    );
+    if (!$updated['ok']) {
+        return $updated;
     }
 
     google_oauth_clear_pending();

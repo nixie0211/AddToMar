@@ -334,6 +334,8 @@ function customers_update_location(string $email, string $address, float $latitu
         return ['ok' => false, 'error' => 'Could not load your updated address.'];
     }
 
+    customer_addresses_seed_from_user($email);
+
     return ['ok' => true, 'customer' => $updated];
 }
 
