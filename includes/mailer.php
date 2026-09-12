@@ -134,7 +134,107 @@ function smtp_friendly_error(string $message): string
         return 'Gmail rejected the mailbox login for ' . $mailbox . '. Sign in to that Gmail, open Google Account → Security → 2-Step Verification → App passwords, create a new App Password, and paste it into config/mail.local.php as MAIL_SMTP_PASS.';
     }
 
+    if (stripos($message, 'timed out') !== false || stripos($message, 'Connection timed out') !== false) {
+        return 'Render Free cannot send Gmail SMTP. Add a free BREVO_API_KEY on Render so verification emails can be sent over HTTPS.';
+    }
+
     return $message;
+}
+
+function mail_http_json(string $url, array $headers, array $body): array
+{
+    $payload = json_encode($body, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    if ($payload === false) {
+        return ['ok' => false, 'error' => 'Could not encode the email payload.', 'status' => 0, 'data' => []];
+    }
+
+    $headerLines = array_merge(['Content-Type: application/json', 'Accept: application/json'], $headers);
+
+    if (function_exists('curl_init')) {
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => $payload,
+            CURLOPT_HTTPHEADER => $headerLines,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 20,
+        ]);
+        $raw = curl_exec($ch);
+        $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlError = curl_error($ch);
+        curl_close($ch);
+        if ($curlError !== '') {
+            return ['ok' => false, 'error' => $curlError, 'status' => $status, 'data' => []];
+        }
+    } else {
+        $responseHeaders = implode("\r\n", $headerLines);
+        $raw = @file_get_contents($url, false, stream_context_create([
+            'http' => [
+                'method' => 'POST',
+                'header' => $responseHeaders,
+                'content' => $payload,
+                'timeout' => 20,
+                'ignore_errors' => true,
+            ],
+        ]));
+        $status = 0;
+        if (isset($http_response_header[0]) && preg_match('/\s(\d{3})\s/', $http_response_header[0], $match)) {
+            $status = (int) $match[1];
+        }
+        if ($raw === false) {
+            return ['ok' => false, 'error' => 'Could not reach the email API.', 'status' => $status, 'data' => []];
+        }
+    }
+
+    $data = json_decode((string) $raw, true);
+
+    return [
+        'ok' => $status >= 200 && $status < 300,
+        'error' => '',
+        'status' => $status,
+        'data' => is_array($data) ? $data : [],
+        'raw' => (string) $raw,
+    ];
+}
+
+function mail_send_via_brevo(string $to, string $subject, string $html, string $text): array
+{
+    $apiKey = addtomar_env('BREVO_API_KEY');
+    if ($apiKey === '') {
+        return ['ok' => false, 'error' => ''];
+    }
+
+    $from = addtomar_env('MAIL_FROM_EMAIL', trim((string) MAIL_SMTP_USER));
+    if ($from === '' || !filter_var($from, FILTER_VALIDATE_EMAIL)) {
+        return ['ok' => false, 'error' => 'Set ADDTOMAR_SMTP_USER to the Gmail you verified in Brevo.'];
+    }
+
+    $result = mail_http_json('https://api.brevo.com/v3/smtp/email', [
+        'api-key: ' . $apiKey,
+    ], [
+        'sender' => [
+            'name' => MAIL_FROM_NAME,
+            'email' => $from,
+        ],
+        'to' => [['email' => $to]],
+        'subject' => $subject,
+        'htmlContent' => $html,
+        'textContent' => $text,
+    ]);
+
+    if ($result['ok']) {
+        return ['ok' => true, 'error' => ''];
+    }
+
+    $detail = '';
+    if (isset($result['data']['message']) && is_string($result['data']['message'])) {
+        $detail = $result['data']['message'];
+    }
+
+    return [
+        'ok' => false,
+        'error' => $detail !== '' ? $detail : 'Brevo could not send the email (HTTP ' . (int) $result['status'] . ').',
+    ];
 }
 
 function smtp_send_html(string $to, string $subject, string $html, string $text = ''): array
@@ -144,18 +244,24 @@ function smtp_send_html(string $to, string $subject, string $html, string $text 
         return ['ok' => false, 'error' => 'Enter a valid email address.'];
     }
 
-    $user = trim((string) MAIL_SMTP_USER);
-    $pass = preg_replace('/\s+/', '', trim((string) MAIL_SMTP_PASS)) ?? '';
-    if ($user === '' || $pass === '') {
-        return ['ok' => false, 'error' => 'Add your Gmail App Password in config/mail.local.php so emails can be sent.'];
-    }
-
-    $from = $user;
-    $encodedSubject = '=?UTF-8?B?' . base64_encode($subject) . '?=';
     $text = trim($text);
     if ($text === '') {
         $text = trim(html_entity_decode(strip_tags(str_replace(['<br>', '<br/>', '<br />', '</p>'], "\n", $html)), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
     }
+
+    $brevo = mail_send_via_brevo($to, $subject, $html, $text);
+    if ($brevo['error'] !== '' || $brevo['ok']) {
+        return $brevo;
+    }
+
+    $user = trim((string) MAIL_SMTP_USER);
+    $pass = preg_replace('/\s+/', '', trim((string) MAIL_SMTP_PASS)) ?? '';
+    if ($user === '' || $pass === '') {
+        return ['ok' => false, 'error' => 'Add a free BREVO_API_KEY on Render so verification emails can be sent. Gmail SMTP is blocked on Render Free.'];
+    }
+
+    $from = $user;
+    $encodedSubject = '=?UTF-8?B?' . base64_encode($subject) . '?=';
     $boundary = 'addtomar-' . bin2hex(random_bytes(8));
     $headers = [
         'Date: ' . date('r'),

@@ -2,7 +2,7 @@ FROM php:8.2-apache
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates libcurl4-openssl-dev \
-    && docker-php-ext-install pdo pdo_mysql \
+    && docker-php-ext-install pdo pdo_mysql curl \
     && a2enmod rewrite headers \
     && rm -rf /var/lib/apt/lists/*
 
