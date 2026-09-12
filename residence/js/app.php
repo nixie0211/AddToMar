@@ -3191,13 +3191,13 @@ function ensureAddressMap(){
   if(!addressMapInstance){
     addressMapInstance = L.map(mapEl, {
       zoomControl: true,
-      minZoom: 11,
-      maxZoom: 18,
+      minZoom: cfg.minZoom || 11,
+      maxZoom: cfg.maxZoom || 19,
     });
 
     L.tileLayer(cfg.tileUrl, {
       attribution: cfg.tileAttribution || '',
-      maxZoom: 18,
+      maxZoom: cfg.maxZoom || 19,
     }).addTo(addressMapInstance);
 
     const bounds = addressMapBounds();
@@ -4380,13 +4380,13 @@ function initLocatorMap(){
   if(!locatorMapInstance){
     locatorMapInstance = L.map(mapEl, {
       zoomControl: true,
-      minZoom: cfg.defaultZoom ? cfg.defaultZoom - 1 : 11,
-      maxZoom: 18,
+      minZoom: cfg.minZoom || 11,
+      maxZoom: cfg.maxZoom || 19,
     });
 
     L.tileLayer(cfg.tileUrl, {
       attribution: cfg.tileAttribution || '',
-      maxZoom: 18,
+      maxZoom: cfg.maxZoom || 19,
     }).addTo(locatorMapInstance);
 
     locatorMarkersLayer = L.layerGroup().addTo(locatorMapInstance);

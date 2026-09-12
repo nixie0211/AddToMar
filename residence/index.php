@@ -94,6 +94,8 @@ window.RESIDENCE_CONFIG = <?= json_encode([
   'defaultLat' => MAP_DEFAULT_LAT,
   'defaultLng' => MAP_DEFAULT_LNG,
   'defaultZoom' => MAP_DEFAULT_ZOOM,
+  'minZoom' => MAP_MIN_ZOOM,
+  'maxZoom' => MAP_MAX_ZOOM,
   'bounds' => maps_bounds(),
   'pharmacies' => $residencePharmacyCatalog,
   'marketplacePharmacies' => $residenceMarketplacePharmacies,
@@ -136,7 +138,7 @@ window.nearbyPharmacies = window.RESIDENCE_CONFIG.pharmacies || [];
   'featuredProductIds' => array_values(array_map(static fn(array $item): int => (int) ($item['id'] ?? 0), $residenceFeaturedProducts)),
   'topSellerIds' => array_values(array_map(static fn(array $item): int => (int) ($item['id'] ?? 0), $residenceTopSellers)),
 ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>
-<script src="<?= residence_asset('js/app.php') ?>?v=multi-pharmacy-receipt-1"></script>
+<script src="<?= residence_asset('js/app.php') ?>?v=esri-satellite-1"></script>
 <?php live_sync_render_script('residence'); ?>
 <script>
 window.openProductPreview = window.openProductPreview || function(card) {

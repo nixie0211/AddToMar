@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-define('MAP_TILE_URL', 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
-define('MAP_ATTRIBUTION', '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors');
+define('MAP_TILE_URL', 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
+define('MAP_ATTRIBUTION', 'Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community');
 define('MAP_DEFAULT_LAT', 18.1978);
 define('MAP_DEFAULT_LNG', 120.5937);
 define('MAP_DEFAULT_ZOOM', 12);
 define('MAP_MIN_ZOOM', 11);
-define('MAP_MAX_ZOOM', 18);
+define('MAP_MAX_ZOOM', 19);
 
 /** Southwest and northeast corners: Laoag, San Nicolas, and Batac service area */
 define('MAP_BOUNDS_SOUTH', 18.02);

@@ -363,7 +363,7 @@
           map.setView([cfg.defaultLat || 18.1978, cfg.defaultLng || 120.5937], cfg.defaultZoom || 12);
         }
 
-        L.tileLayer(cfg.tileUrl || 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        L.tileLayer(cfg.tileUrl || 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
           attribution: cfg.tileAttribution || '&copy; OpenStreetMap contributors',
           maxZoom: cfg.maxZoom || 18,
           minZoom: cfg.minZoom || 11,
