@@ -1,0 +1,488 @@
+{
+    "tgp@gmail.com": {
+        "id": "f4d04eb0aac0bd74",
+        "email": "tgp@gmail.com",
+        "contact_number": "09020250501",
+        "password_hash": "$2y$10$kkw7Mr6gLgpyOvfBOQyqpuPrG5q0Ww9R7MwzQjkdA/wFVEYc1RlLi",
+        "pharmacy_name": "TGP Pharmacy",
+        "open_time": "08:00",
+        "close_time": "20:00",
+        "operation_days": [
+            "mon",
+            "tue",
+            "wed",
+            "thu",
+            "fri",
+            "sat",
+            "sun"
+        ],
+        "operating_hours": {
+            "mon": {
+                "open": "08:00",
+                "close": "20:00"
+            },
+            "tue": {
+                "open": "08:00",
+                "close": "20:00"
+            },
+            "wed": {
+                "open": "08:00",
+                "close": "20:00"
+            },
+            "thu": {
+                "open": "08:00",
+                "close": "20:00"
+            },
+            "fri": {
+                "open": "08:00",
+                "close": "12:00"
+            },
+            "sat": {
+                "open": "08:00",
+                "close": "20:00"
+            },
+            "sun": {
+                "open": "08:00",
+                "close": "20:00"
+            }
+        },
+        "address": "Madamba Road, Nangalisan East, San Nicolas",
+        "latitude": 18.17358491708792,
+        "longitude": 120.59288472075093,
+        "status": "approved",
+        "created_at": "2026-09-04T16:30:30+02:00",
+        "updated_at": "2026-09-04T17:10:14+02:00",
+        "logo_path": "data/uploads/pharmacies/f4d04eb0aac0bd74/logo.jpg",
+        "business_permit_path": "data/uploads/pharmacies/f4d04eb0aac0bd74/business_permit.pdf",
+        "business_permit_paths": [
+            "data/uploads/pharmacies/f4d04eb0aac0bd74/business_permit.pdf"
+        ],
+        "pharmacy_license_path": "data/uploads/pharmacies/f4d04eb0aac0bd74/pharmacy_license.pdf",
+        "pharmacy_license_paths": [
+            "data/uploads/pharmacies/f4d04eb0aac0bd74/pharmacy_license.pdf"
+        ],
+        "bir_certificate_path": "data/uploads/pharmacies/f4d04eb0aac0bd74/bir_certificate.pdf",
+        "bir_certificate_paths": [
+            "data/uploads/pharmacies/f4d04eb0aac0bd74/bir_certificate.pdf"
+        ],
+        "admin_note": "Pharmacy account approved."
+    },
+    "st.joseph@gmail.com": {
+        "id": "65523547a51627ac",
+        "email": "st.joseph@gmail.com",
+        "contact_number": "09020250502",
+        "password_hash": "$2y$10$m2N89TbVQApB0cgsJCh9VOa1kdGNB3tsTDnZokZCLpgWbDhUib1jq",
+        "pharmacy_name": "St. Joseph Drugstore",
+        "open_time": "08:00",
+        "close_time": "20:00",
+        "operation_days": [
+            "mon",
+            "tue",
+            "wed",
+            "thu",
+            "fri",
+            "sat",
+            "sun"
+        ],
+        "operating_hours": {
+            "mon": {
+                "open": "08:00",
+                "close": "20:00"
+            },
+            "tue": {
+                "open": "08:00",
+                "close": "20:00"
+            },
+            "wed": {
+                "open": "08:00",
+                "close": "20:00"
+            },
+            "thu": {
+                "open": "08:00",
+                "close": "20:00"
+            },
+            "fri": {
+                "open": "08:00",
+                "close": "20:00"
+            },
+            "sat": {
+                "open": "08:00",
+                "close": "20:00"
+            },
+            "sun": {
+                "open": "08:00",
+                "close": "20:00"
+            }
+        },
+        "address": "Zacarias Flores Street",
+        "latitude": 18.20093740074254,
+        "longitude": 120.59119492679906,
+        "status": "approved",
+        "created_at": "2026-09-04T16:32:40+02:00",
+        "updated_at": "2026-09-04T17:10:35+02:00",
+        "logo_path": "data/uploads/pharmacies/65523547a51627ac/logo.png",
+        "business_permit_path": "data/uploads/pharmacies/65523547a51627ac/business_permit.jpg",
+        "business_permit_paths": [
+            "data/uploads/pharmacies/65523547a51627ac/business_permit.jpg"
+        ],
+        "pharmacy_license_path": "data/uploads/pharmacies/65523547a51627ac/pharmacy_license.jpg",
+        "pharmacy_license_paths": [
+            "data/uploads/pharmacies/65523547a51627ac/pharmacy_license.jpg"
+        ],
+        "bir_certificate_path": "data/uploads/pharmacies/65523547a51627ac/bir_certificate.jpg",
+        "bir_certificate_paths": [
+            "data/uploads/pharmacies/65523547a51627ac/bir_certificate.jpg"
+        ],
+        "admin_note": "Pharmacy account approved."
+    },
+    "wtf@gmail.com": {
+        "id": "73517bf322cbc148",
+        "email": "wtf@gmail.com",
+        "contact_number": "09020250503",
+        "password_hash": "$2y$10$wDF71M19yNWJPWL5w4y2Tex0dG5FqaXkZd7TViD73Ptw7gID8x/5q",
+        "pharmacy_name": "WTF",
+        "open_time": "08:00",
+        "close_time": "20:00",
+        "operation_days": [
+            "tue",
+            "wed",
+            "thu",
+            "fri",
+            "sat"
+        ],
+        "operating_hours": {
+            "tue": {
+                "open": "08:00",
+                "close": "20:00"
+            },
+            "wed": {
+                "open": "08:00",
+                "close": "20:00"
+            },
+            "thu": {
+                "open": "08:00",
+                "close": "20:00"
+            },
+            "fri": {
+                "open": "08:00",
+                "close": "20:00"
+            },
+            "sat": {
+                "open": "08:00",
+                "close": "20:00"
+            }
+        },
+        "address": "Sacro Street, Batac",
+        "latitude": 18.05010148942082,
+        "longitude": 120.56534374518218,
+        "status": "rejected",
+        "created_at": "2026-09-04T16:34:27+02:00",
+        "updated_at": "2026-09-04T17:11:21+02:00",
+        "logo_path": "data/uploads/pharmacies/73517bf322cbc148/logo.jpg",
+        "business_permit_path": "data/uploads/pharmacies/73517bf322cbc148/business_permit.jpg",
+        "business_permit_paths": [
+            "data/uploads/pharmacies/73517bf322cbc148/business_permit.jpg"
+        ],
+        "pharmacy_license_path": "data/uploads/pharmacies/73517bf322cbc148/pharmacy_license.pdf",
+        "pharmacy_license_paths": [
+            "data/uploads/pharmacies/73517bf322cbc148/pharmacy_license.pdf"
+        ],
+        "bir_certificate_path": "data/uploads/pharmacies/73517bf322cbc148/bir_certificate.pdf",
+        "bir_certificate_paths": [
+            "data/uploads/pharmacies/73517bf322cbc148/bir_certificate.pdf"
+        ],
+        "admin_note": "Other: Pharmacy name is not pleasant"
+    },
+    "nat@gmail.com": {
+        "id": "fc49ff95ea233333",
+        "email": "nat@gmail.com",
+        "contact_number": "09020250504",
+        "password_hash": "$2y$10$jREEgdRnmoFJbBuwVFOFwebCvCh3duvXF2vpozE3RdAMIbiU7dSZS",
+        "pharmacy_name": "NAT Pharmacy",
+        "open_time": "08:00",
+        "close_time": "20:00",
+        "operation_days": [
+            "thu",
+            "sat"
+        ],
+        "operating_hours": {
+            "thu": {
+                "open": "08:00",
+                "close": "20:00"
+            },
+            "sat": {
+                "open": "08:00",
+                "close": "20:00"
+            }
+        },
+        "address": "P. Gomez Street, Centro",
+        "latitude": 18.19969906353412,
+        "longitude": 120.60080800992661,
+        "status": "pending",
+        "created_at": "2026-09-04T16:36:08+02:00",
+        "updated_at": "2026-09-04T16:36:08+02:00",
+        "logo_path": "data/uploads/pharmacies/fc49ff95ea233333/logo.jpg",
+        "business_permit_path": "data/uploads/pharmacies/fc49ff95ea233333/business_permit.jpg",
+        "business_permit_paths": [
+            "data/uploads/pharmacies/fc49ff95ea233333/business_permit.jpg"
+        ],
+        "pharmacy_license_path": "data/uploads/pharmacies/fc49ff95ea233333/pharmacy_license.jpg",
+        "pharmacy_license_paths": [
+            "data/uploads/pharmacies/fc49ff95ea233333/pharmacy_license.jpg"
+        ],
+        "bir_certificate_path": "data/uploads/pharmacies/fc49ff95ea233333/bir_certificate.jpg",
+        "bir_certificate_paths": [
+            "data/uploads/pharmacies/fc49ff95ea233333/bir_certificate.jpg"
+        ]
+    },
+    "marvs@gmail.com": {
+        "id": "f777402e4452c46e",
+        "email": "marvs@gmail.com",
+        "contact_number": "09020250505",
+        "password_hash": "$2y$10$DHQOIue9VqRGSzQ4sctmaedOQQAQJqucM9i40.7G2vNuahS4wyq2y",
+        "pharmacy_name": "Marv's Healthcare",
+        "open_time": "08:00",
+        "close_time": "20:00",
+        "operation_days": [
+            "mon",
+            "tue",
+            "wed",
+            "thu",
+            "fri",
+            "sat"
+        ],
+        "operating_hours": {
+            "mon": {
+                "open": "08:00",
+                "close": "20:00"
+            },
+            "tue": {
+                "open": "08:00",
+                "close": "20:00"
+            },
+            "wed": {
+                "open": "08:00",
+                "close": "20:00"
+            },
+            "thu": {
+                "open": "08:00",
+                "close": "20:00"
+            },
+            "fri": {
+                "open": "08:00",
+                "close": "20:00"
+            },
+            "sat": {
+                "open": "08:00",
+                "close": "20:00"
+            }
+        },
+        "address": "J. Jose Street, Nangalisan East, San Nicolas",
+        "latitude": 18.169553286610206,
+        "longitude": 120.59404879548649,
+        "status": "pending",
+        "created_at": "2026-09-04T16:37:46+02:00",
+        "updated_at": "2026-09-04T16:37:46+02:00",
+        "logo_path": "data/uploads/pharmacies/f777402e4452c46e/logo.jpg",
+        "business_permit_path": "data/uploads/pharmacies/f777402e4452c46e/business_permit.jpg",
+        "business_permit_paths": [
+            "data/uploads/pharmacies/f777402e4452c46e/business_permit.jpg"
+        ],
+        "pharmacy_license_path": "data/uploads/pharmacies/f777402e4452c46e/pharmacy_license.jpeg",
+        "pharmacy_license_paths": [
+            "data/uploads/pharmacies/f777402e4452c46e/pharmacy_license.jpeg"
+        ],
+        "bir_certificate_path": "data/uploads/pharmacies/f777402e4452c46e/bir_certificate.jpg",
+        "bir_certificate_paths": [
+            "data/uploads/pharmacies/f777402e4452c46e/bir_certificate.jpg"
+        ]
+    },
+    "nicole's@gmail.com": {
+        "id": "fdcf8280fc63c1a9",
+        "email": "nicole's@gmail.com",
+        "contact_number": "09020250506",
+        "password_hash": "$2y$10$naSrJi.g1N8gxj.fNwduF.7ZGlamVhXXypt84upcrVj572F2Xciui",
+        "pharmacy_name": "Nicole's Pharmacy",
+        "open_time": "08:00",
+        "close_time": "20:00",
+        "operation_days": [
+            "tue",
+            "wed",
+            "thu",
+            "fri",
+            "sat",
+            "sun"
+        ],
+        "operating_hours": {
+            "tue": {
+                "open": "08:00",
+                "close": "20:00"
+            },
+            "wed": {
+                "open": "08:00",
+                "close": "20:00"
+            },
+            "thu": {
+                "open": "08:00",
+                "close": "20:00"
+            },
+            "fri": {
+                "open": "08:00",
+                "close": "20:00"
+            },
+            "sat": {
+                "open": "08:00",
+                "close": "20:00"
+            },
+            "sun": {
+                "open": "08:00",
+                "close": "20:00"
+            }
+        },
+        "address": "Manila North Road, Batac",
+        "latitude": 18.060240818475652,
+        "longitude": 120.55967350703399,
+        "status": "approved",
+        "created_at": "2026-09-04T16:39:36+02:00",
+        "updated_at": "2026-09-06T05:29:43+02:00",
+        "logo_path": "data/uploads/pharmacies/fdcf8280fc63c1a9/logo.jpg",
+        "business_permit_path": "data/uploads/pharmacies/fdcf8280fc63c1a9/business_permit.jpg",
+        "business_permit_paths": [
+            "data/uploads/pharmacies/fdcf8280fc63c1a9/business_permit.jpg"
+        ],
+        "pharmacy_license_path": "data/uploads/pharmacies/fdcf8280fc63c1a9/pharmacy_license.jpg",
+        "pharmacy_license_paths": [
+            "data/uploads/pharmacies/fdcf8280fc63c1a9/pharmacy_license.jpg"
+        ],
+        "bir_certificate_path": "data/uploads/pharmacies/fdcf8280fc63c1a9/bir_certificate.jpg",
+        "bir_certificate_paths": [
+            "data/uploads/pharmacies/fdcf8280fc63c1a9/bir_certificate.jpg"
+        ],
+        "admin_note": "Pharmacy account approved."
+    },
+    "nasha@gmail.com": {
+        "id": "7838e6a69390ab31",
+        "email": "nasha@gmail.com",
+        "contact_number": "09020250507",
+        "password_hash": "$2y$10$APffjncM7mnOZyd9rutAku0A3c8aKWEQOQN5oLEtT3LnQKgdmet36",
+        "pharmacy_name": "Nasha",
+        "open_time": "08:00",
+        "close_time": "20:00",
+        "operation_days": [
+            "mon",
+            "tue",
+            "wed",
+            "thu",
+            "fri",
+            "sat"
+        ],
+        "operating_hours": {
+            "mon": {
+                "open": "08:00",
+                "close": "20:00"
+            },
+            "tue": {
+                "open": "08:00",
+                "close": "20:00"
+            },
+            "wed": {
+                "open": "08:00",
+                "close": "20:00"
+            },
+            "thu": {
+                "open": "08:00",
+                "close": "20:00"
+            },
+            "fri": {
+                "open": "08:00",
+                "close": "20:00"
+            },
+            "sat": {
+                "open": "08:00",
+                "close": "20:00"
+            }
+        },
+        "address": "Mabini Street, Buttong, Raraburan",
+        "latitude": 18.176443359784212,
+        "longitude": 120.57664696313715,
+        "status": "pending",
+        "created_at": "2026-09-04T16:40:56+02:00",
+        "updated_at": "2026-09-04T16:40:56+02:00",
+        "logo_path": "data/uploads/pharmacies/7838e6a69390ab31/logo.jpg",
+        "business_permit_path": "data/uploads/pharmacies/7838e6a69390ab31/business_permit.jpg",
+        "business_permit_paths": [
+            "data/uploads/pharmacies/7838e6a69390ab31/business_permit.jpg"
+        ],
+        "pharmacy_license_path": "data/uploads/pharmacies/7838e6a69390ab31/pharmacy_license.jpg",
+        "pharmacy_license_paths": [
+            "data/uploads/pharmacies/7838e6a69390ab31/pharmacy_license.jpg"
+        ],
+        "bir_certificate_path": "data/uploads/pharmacies/7838e6a69390ab31/bir_certificate.png",
+        "bir_certificate_paths": [
+            "data/uploads/pharmacies/7838e6a69390ab31/bir_certificate.png"
+        ]
+    },
+    "mojicaaljenabanilla@gmail.com": {
+        "id": "c7f8b53c4f3e9a0b",
+        "email": "mojicaaljenabanilla@gmail.com",
+        "contact_number": "09458294669",
+        "password_hash": "$2y$10$dy4KKTp7Rm1yRPX3cZ4XI.V0JV0yHr0i4LXHsodhZXk6ENxlhHjYG",
+        "pharmacy_name": "HAHA",
+        "open_time": "08:00",
+        "close_time": "20:00",
+        "operation_days": [
+            "mon",
+            "tue",
+            "wed",
+            "thu",
+            "fri",
+            "sat"
+        ],
+        "operating_hours": {
+            "mon": {
+                "open": "08:00",
+                "close": "20:00"
+            },
+            "tue": {
+                "open": "08:00",
+                "close": "20:00"
+            },
+            "wed": {
+                "open": "08:00",
+                "close": "20:00"
+            },
+            "thu": {
+                "open": "08:00",
+                "close": "20:00"
+            },
+            "fri": {
+                "open": "08:00",
+                "close": "20:00"
+            },
+            "sat": {
+                "open": "08:00",
+                "close": "20:00"
+            }
+        },
+        "address": "Barit-Pandan",
+        "latitude": 18.210426780441114,
+        "longitude": 120.60001373291017,
+        "status": "approved",
+        "created_at": "2026-09-10T02:24:23+02:00",
+        "updated_at": "2026-09-10T02:24:54+02:00",
+        "logo_path": "data/uploads/pharmacies/c7f8b53c4f3e9a0b/logo.jpg",
+        "business_permit_path": "data/uploads/pharmacies/c7f8b53c4f3e9a0b/business_permit.png",
+        "business_permit_paths": [
+            "data/uploads/pharmacies/c7f8b53c4f3e9a0b/business_permit.png"
+        ],
+        "pharmacy_license_path": "data/uploads/pharmacies/c7f8b53c4f3e9a0b/pharmacy_license.png",
+        "pharmacy_license_paths": [
+            "data/uploads/pharmacies/c7f8b53c4f3e9a0b/pharmacy_license.png"
+        ],
+        "bir_certificate_path": "data/uploads/pharmacies/c7f8b53c4f3e9a0b/bir_certificate.png",
+        "bir_certificate_paths": [
+            "data/uploads/pharmacies/c7f8b53c4f3e9a0b/bir_certificate.png"
+        ],
+        "admin_note": "Pharmacy account approved."
+    }
+}

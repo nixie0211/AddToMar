@@ -1,0 +1,6 @@
+config/google-oauth.local.php
+config/mail.local.php
+AddToMar1/AddToMar/config/paymongo.local.php
+data/uploads/
+.DS_Store
+Thumbs.db

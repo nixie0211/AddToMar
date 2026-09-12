@@ -1,0 +1,10 @@
+RewriteEngine On
+RewriteBase /AddToMar1/
+
+# Prevent rewrite loop — skip if request is already in AddToMar/
+RewriteRule ^AddToMar/ - [L]
+
+# Map /AddToMar1/login.php → /AddToMar1/AddToMar/login.php etc.
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ AddToMar/$1 [L]

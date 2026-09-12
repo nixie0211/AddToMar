@@ -1,0 +1,161 @@
+/* Medicine Finder — healthcare glassmorphism theme */
+:root {
+  --mf-blue: #0ea5e9;
+  --mf-blue-dark: #0369a1;
+  --mf-green: #10b981;
+  --mf-green-dark: #059669;
+  --mf-glass: rgba(255, 255, 255, 0.72);
+  --mf-glass-border: rgba(255, 255, 255, 0.55);
+  --mf-shadow: 0 8px 32px rgba(14, 165, 233, 0.12);
+}
+
+.finder-hero-search {
+  background: linear-gradient(135deg, rgba(14,165,233,0.08), rgba(16,185,129,0.08));
+  border: 1px solid var(--mf-glass-border);
+  border-radius: 20px;
+  backdrop-filter: blur(12px);
+  box-shadow: var(--mf-shadow);
+  padding: 1.5rem;
+}
+
+.glass-card {
+  background: var(--mf-glass);
+  border: 1px solid var(--mf-glass-border);
+  border-radius: 18px;
+  backdrop-filter: blur(14px);
+  box-shadow: var(--mf-shadow);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.glass-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(14, 165, 233, 0.18);
+}
+
+.medicine-result-card {
+  cursor: pointer;
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.medicine-result-card.active {
+  border-color: var(--mf-green);
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.medicine-result-card img {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+#finderMap {
+  width: 100%;
+  height: 420px;
+  border-radius: 18px;
+  border: 1px solid #e2e8f0;
+  z-index: 1;
+}
+
+.finder-map-marker { background: transparent !important; border: none !important; }
+
+.leaflet-routing-container { display: none !important; }
+
+@media (max-width: 768px) {
+  #finderMap { height: 300px; }
+}
+
+.pharmacy-list-item {
+  padding: 0.85rem 1rem;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: #fff;
+}
+
+.pharmacy-list-item:hover,
+.pharmacy-list-item.selected {
+  border-color: var(--mf-blue);
+  background: rgba(14, 165, 233, 0.06);
+}
+
+.pharmacy-list-item.nearest-highlight {
+  border-color: var(--mf-green);
+  background: linear-gradient(135deg, rgba(16,185,129,0.1), rgba(14,165,233,0.06));
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.15);
+}
+
+.status-open { color: var(--mf-green-dark); font-weight: 600; }
+.status-closed { color: #ef4444; font-weight: 600; }
+
+.leaflet-section { margin-bottom: 1rem; }
+.leaflet-section h6 { color: var(--mf-blue-dark); font-weight: 700; margin-bottom: 0.35rem; }
+
+.route-panel {
+  background: linear-gradient(135deg, #0369a1, #059669);
+  color: #fff;
+  border-radius: 16px;
+  padding: 1.25rem;
+}
+
+.route-stat {
+  text-align: center;
+  padding: 0.5rem;
+}
+
+.route-stat .val { font-size: 1.35rem; font-weight: 800; display: block; }
+.route-stat .lbl { font-size: 0.75rem; opacity: 0.85; }
+
+.alt-pharmacy-alert {
+  border-left: 4px solid #f59e0b;
+  background: rgba(245, 158, 11, 0.08);
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+.finder-empty {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #64748b;
+}
+
+.pulse-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--mf-green);
+  animation: pulseDot 1.5s infinite;
+  margin-right: 6px;
+}
+
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.3); }
+}
+
+.fade-in-finder {
+  animation: fadeInFinder 0.4s ease forwards;
+}
+
+@keyframes fadeInFinder {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.analytics-stat {
+  text-align: center;
+  padding: 1.25rem;
+}
+
+.analytics-stat .num {
+  font-size: 2rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--mf-blue), var(--mf-green));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}

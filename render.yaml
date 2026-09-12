@@ -1,0 +1,35 @@
+# Render Blueprint: web app + MySQL.
+# Create a Blueprint from this file in the Render dashboard after the repo is on GitHub.
+# Private MySQL + disks are not available on the free plan.
+
+services:
+  - type: web
+    name: addtomar
+    runtime: docker
+    plan: free
+    healthCheckPath: /health.php
+    envVars:
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        value: "3306"
+      - key: DB_NAME
+        value: CAPS
+      - key: DB_USER
+        sync: false
+      - key: DB_PASS
+        sync: false
+      - key: APP_URL
+        sync: false
+      - key: ADDTOMAR_GOOGLE_CLIENT_ID
+        sync: false
+      - key: ADDTOMAR_GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: ADDTOMAR_SMTP_USER
+        sync: false
+      - key: ADDTOMAR_SMTP_PASS
+        sync: false
+      - key: PAYMONGO_PUBLIC_KEY
+        sync: false
+      - key: PAYMONGO_SECRET_KEY
+        sync: false

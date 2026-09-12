@@ -1,0 +1,8 @@
+.git
+.gitignore
+.cursor
+agent-transcripts
+config/google-oauth.local.php
+config/mail.local.php
+data/uploads
+*.md
