@@ -199,7 +199,30 @@ function caps_run_migrations(PDO $pdo): void
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     ');
 
+    caps_clear_sample_reports($pdo);
     caps_ensure_admin_account($pdo);
+}
+
+function caps_clear_sample_reports(PDO $pdo): void
+{
+    $pdo->exec('
+        CREATE TABLE IF NOT EXISTS app_meta (
+            meta_key VARCHAR(64) NOT NULL PRIMARY KEY,
+            meta_value VARCHAR(255) NOT NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    ');
+
+    $stmt = $pdo->prepare('SELECT meta_value FROM app_meta WHERE meta_key = ? LIMIT 1');
+    $stmt->execute(['clear_sample_reports_v1']);
+    if ($stmt->fetchColumn()) {
+        return;
+    }
+
+    $pdo->exec('DELETE FROM pharmacy_reports');
+    $pdo->exec("DELETE FROM resident_notifications WHERE type = 'report'");
+
+    $insert = $pdo->prepare('INSERT INTO app_meta (meta_key, meta_value) VALUES (?, ?)');
+    $insert->execute(['clear_sample_reports_v1', date('c')]);
 }
 
 function caps_ensure_admin_account(PDO $pdo): void
