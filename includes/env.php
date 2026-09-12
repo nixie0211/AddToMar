@@ -49,3 +49,13 @@ function addtomar_mysql_options(): array
 
     return $options;
 }
+
+function addtomar_mysql_disable_ansi_quotes(PDO $pdo): void
+{
+    $mode = (string) $pdo->query('SELECT @@SESSION.sql_mode')->fetchColumn();
+    $parts = array_values(array_filter(
+        array_map('trim', explode(',', $mode)),
+        static fn (string $part): bool => strtoupper($part) !== 'ANSI_QUOTES' && $part !== ''
+    ));
+    $pdo->exec('SET SESSION sql_mode = ' . $pdo->quote(implode(',', $parts)));
+}

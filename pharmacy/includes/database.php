@@ -30,6 +30,7 @@ function pharmacy_db(): PDO
         $pdo->exec('USE `' . PHARMACY_DB_NAME . '`');
     }
 
+    addtomar_mysql_disable_ansi_quotes($pdo);
     pharmacy_run_migrations($pdo);
 
     return $pdo;

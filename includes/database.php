@@ -39,6 +39,8 @@ function caps_db(): PDO
         $pdo->exec('USE `' . DB_NAME . '`');
     }
 
+    addtomar_mysql_disable_ansi_quotes($pdo);
+
     caps_run_migrations($pdo);
 
     return $pdo;
@@ -103,20 +105,20 @@ function caps_run_migrations(PDO $pdo): void
             id VARCHAR(32) NOT NULL,
             email VARCHAR(255) NOT NULL,
             pharmacy_name VARCHAR(255) NOT NULL,
-            contact_number VARCHAR(20) NOT NULL DEFAULT "",
+            contact_number VARCHAR(20) NOT NULL DEFAULT \'\',
             address TEXT NOT NULL,
             latitude DECIMAL(10, 7) NULL,
             longitude DECIMAL(10, 7) NULL,
             password_hash VARCHAR(255) NOT NULL,
-            open_time VARCHAR(8) NOT NULL DEFAULT "08:00",
-            close_time VARCHAR(8) NOT NULL DEFAULT "20:00",
+            open_time VARCHAR(8) NOT NULL DEFAULT \'08:00\',
+            close_time VARCHAR(8) NOT NULL DEFAULT \'20:00\',
             operation_days TEXT,
             operating_hours TEXT,
-            logo_path VARCHAR(255) NOT NULL DEFAULT "",
-            business_permit_path VARCHAR(255) NOT NULL DEFAULT "",
-            pharmacy_license_path VARCHAR(255) NOT NULL DEFAULT "",
-            bir_certificate_path VARCHAR(255) NOT NULL DEFAULT "",
-            status VARCHAR(32) NOT NULL DEFAULT "pending",
+            logo_path VARCHAR(255) NOT NULL DEFAULT \'\',
+            business_permit_path VARCHAR(255) NOT NULL DEFAULT \'\',
+            pharmacy_license_path VARCHAR(255) NOT NULL DEFAULT \'\',
+            bir_certificate_path VARCHAR(255) NOT NULL DEFAULT \'\',
+            status VARCHAR(32) NOT NULL DEFAULT \'pending\',
             admin_note TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
