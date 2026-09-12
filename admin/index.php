@@ -150,7 +150,9 @@ require __DIR__ . '/partials/shell-start.php';
   <section class="admin-card ov-panel">
     <h3>Recent activity</h3>
     <?php if ($activity === []): ?>
-    <p class="ov-empty">No recent pharmacy or report activity yet.</p>
+    <div class="ov-empty-wrap">
+      <p class="ov-empty">No recent pharmacy or report activity yet.</p>
+    </div>
     <?php else: ?>
     <ul class="ov-activity">
       <?php foreach (array_slice($activity, 0, 5) as $item): ?>
