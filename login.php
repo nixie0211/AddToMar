@@ -345,6 +345,12 @@ if ($forgotPasswordLoginEmail !== '' && (string) ($_GET['reset'] ?? '') === 'suc
     $registerSuccess = 'Password reset successfully. Sign in with your new password.';
     unset($_SESSION['forgot_password_login_email']);
 }
+$googleSignupLoginEmail = trim((string) ($_SESSION['google_signup_login_email'] ?? ''));
+if ($googleSignupLoginEmail !== '' && (string) ($_GET['google'] ?? '') === 'ready') {
+    $email = $googleSignupLoginEmail;
+    $registerSuccess = 'Account created. Sign in with your email and password.';
+    unset($_SESSION['google_signup_login_email']);
+}
 $googleVerifyEmail = is_array($googlePending) ? (string) ($googlePending['email'] ?? '') : '';
 $googleExistingAccount = is_array($googlePending) && !empty($googlePending['existing_account']);
 $openGoogleLocation = is_array($googlePending) && !empty($googlePending['password_ready']);

@@ -359,8 +359,6 @@ function google_oauth_save_location(string $address, string $latitude, string $l
     }
 
     $email = (string) ($pending['email'] ?? '');
-    $fullName = (string) ($pending['full_name'] ?? '');
-    $googleId = (string) ($pending['google_id'] ?? '');
 
     if ($email === '') {
         return ['ok' => false, 'error' => 'Your account email is missing.'];
@@ -377,8 +375,9 @@ function google_oauth_save_location(string $address, string $latitude, string $l
     }
 
     google_oauth_clear_pending();
+    $_SESSION['google_signup_login_email'] = $email;
 
-    return google_oauth_sign_in($email, $fullName, $googleId);
+    return ['ok' => true, 'redirect' => login_url() . '?google=ready'];
 }
 
 function google_oauth_sign_in(string $email, string $fullName, string $googleId): array
