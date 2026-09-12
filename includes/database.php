@@ -52,7 +52,8 @@ function caps_bootstrap(): bool
         }
         caps_db();
         return true;
-    } catch (Throwable) {
+    } catch (Throwable $e) {
+        error_log('AddToMar database error: ' . $e->getMessage());
         return false;
     }
 }
