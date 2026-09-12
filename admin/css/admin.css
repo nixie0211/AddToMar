@@ -175,8 +175,8 @@ a {
 .admin-profile-bar {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 4px 8px 4px 4px;
+  gap: 8px;
+  padding: 0;
   border-radius: 999px;
 }
 
@@ -187,19 +187,23 @@ a {
 
 .admin-notify-btn {
   position: relative;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border: none;
   border-radius: 50%;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  background: rgba(255, 255, 255, 0.75);
-  color: var(--body-text);
-  box-shadow: 0 1px 4px rgba(11, 34, 48, 0.06);
+  background: #f7fbfa;
+  color: #6d848c;
+  box-shadow: none;
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease;
+}
+
+.admin-notify-btn svg {
+  display: block;
 }
 
 .admin-notify-wrap {
@@ -210,7 +214,7 @@ a {
 .admin-notify-wrap.open .admin-notify-btn,
 .admin-notify-btn:hover {
   background: #fff;
-  color: var(--teal-dark);
+  color: #5c747c;
 }
 
 .admin-notify-panel {
@@ -421,21 +425,23 @@ a {
 
 .admin-sidebar-profile .admin-avatar-wrap {
   position: relative;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   flex-shrink: 0;
 }
 
 .admin-sidebar-profile .admin-avatar {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border: none;
   box-shadow: none;
+  background: #0b2230;
+  color: #fff;
 }
 
 .admin-sidebar-profile .admin-avatar svg {
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
 }
 
 .admin-sidebar-profile .admin-profile-name {
@@ -619,9 +625,9 @@ a {
   height: 52px;
   flex-shrink: 0;
   border-radius: 50%;
-  background: #16343f;
-  border: 2px solid #fff;
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18);
+  background: #0b2230;
+  border: none;
+  box-shadow: none;
   color: #fff;
   display: flex;
   align-items: center;

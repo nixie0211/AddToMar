@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="<?= htmlspecialchars(app_url('admin/css/admin.css'), ENT_QUOTES, 'UTF-8') ?>?v=pharmacy-day-hours">
+<link rel="stylesheet" href="<?= htmlspecialchars(app_url('admin/css/admin.css'), ENT_QUOTES, 'UTF-8') ?>?v=header-icons-match">
 </head>
 <body<?= (!empty($viewPharmacyModal) || !empty($reviewReportModal)) ? ' class="modal-open"' : '' ?> data-admin-mark-read-url="<?= htmlspecialchars(admin_url(), ENT_QUOTES, 'UTF-8') ?>">
 <div class="admin-shell">
@@ -36,7 +36,10 @@
         <div class="admin-profile-bar">
           <div class="admin-notify-wrap" data-live-region="admin-notify" data-live-keys="notifications,admin">
             <button type="button" class="admin-notify-btn" id="admin-notify-btn" aria-haspopup="true" aria-expanded="false" aria-label="<?= $adminNotifyCount > 0 ? number_format($adminNotifyCount) . ' notifications' : 'Notifications' ?>">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M7 9.2a5 5 0 0 1 10 0c0 4.6 2 6.4 2.4 6.8H4.6C5 15.6 7 13.8 7 9.2Z"/>
+                <path d="M10.4 18.6a1.7 1.7 0 0 0 3.2 0"/>
+              </svg>
               <?php if ($adminNotifyCount > 0): ?>
               <span class="admin-notify-badge"><?= $adminNotifyCount > 9 ? '9+' : number_format($adminNotifyCount) ?></span>
               <?php endif; ?>
@@ -80,9 +83,9 @@
           </div>
           <span class="admin-avatar-wrap">
             <span class="admin-avatar" aria-hidden="true">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="8" r="3.2"/>
-                <path d="M5.5 19.2c.8-3.2 3.3-5.2 6.5-5.2s5.7 2 6.5 5.2"/>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <circle cx="12" cy="8.2" r="3.35"/>
+                <path d="M5.1 18.9c.85-3.35 3.35-5.15 6.9-5.15s6.05 1.8 6.9 5.15A11.6 11.6 0 0 1 12 20.2c-2.55 0-4.95-.45-6.9-1.3Z"/>
               </svg>
             </span>
           </span>
