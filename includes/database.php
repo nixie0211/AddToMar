@@ -46,6 +46,7 @@ function caps_db(): PDO
 
 function caps_bootstrap(): bool
 {
+    $GLOBALS['addtomar_db_error'] = '';
     try {
         if (function_exists('date_default_timezone_set')) {
             date_default_timezone_set(defined('APP_TIMEZONE') ? APP_TIMEZONE : 'Asia/Manila');
@@ -53,6 +54,7 @@ function caps_bootstrap(): bool
         caps_db();
         return true;
     } catch (Throwable $e) {
+        $GLOBALS['addtomar_db_error'] = $e->getMessage();
         error_log('AddToMar database error: ' . $e->getMessage());
         return false;
     }

@@ -13,4 +13,13 @@ if (caps_bootstrap()) {
 }
 
 http_response_code(503);
-echo 'database unavailable';
+$error = trim((string) ($GLOBALS['addtomar_db_error'] ?? ''));
+$host = addtomar_env('DB_HOST', '(empty)');
+$port = addtomar_env('DB_PORT', '(empty)');
+$name = addtomar_env('DB_NAME', '(empty)');
+
+echo "database unavailable\n";
+echo 'host=' . $host . "\n";
+echo 'port=' . $port . "\n";
+echo 'name=' . $name . "\n";
+echo 'error=' . ($error !== '' ? $error : '(none)');
