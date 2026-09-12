@@ -55,39 +55,39 @@ function pharmacy_ensure_column(PDO $pdo, string $table, string $column, string 
 
 function pharmacy_run_migrations(PDO $pdo): void
 {
-    $pdo->exec('
+    $pdo->exec(<<<'SQL'
         CREATE TABLE IF NOT EXISTS pharmacy_settings (
             id INT PRIMARY KEY AUTO_INCREMENT,
-            pharmacy_name VARCHAR(255) NOT NULL DEFAULT "",
-            license_number VARCHAR(100) NOT NULL DEFAULT "",
-            owner_name VARCHAR(255) NOT NULL DEFAULT "",
+            pharmacy_name VARCHAR(255) NOT NULL DEFAULT '',
+            license_number VARCHAR(100) NOT NULL DEFAULT '',
+            owner_name VARCHAR(255) NOT NULL DEFAULT '',
             address TEXT,
-            email VARCHAR(255) NOT NULL DEFAULT "",
-            phone VARCHAR(50) NOT NULL DEFAULT "",
-            opening_time TIME DEFAULT "08:00:00",
-            closing_time TIME DEFAULT "21:00:00",
-            staff_name VARCHAR(255) NOT NULL DEFAULT "",
-            staff_role VARCHAR(100) NOT NULL DEFAULT "Pharmacist",
+            email VARCHAR(255) NOT NULL DEFAULT '',
+            phone VARCHAR(50) NOT NULL DEFAULT '',
+            opening_time TIME DEFAULT '08:00:00',
+            closing_time TIME DEFAULT '21:00:00',
+            staff_name VARCHAR(255) NOT NULL DEFAULT '',
+            staff_role VARCHAR(100) NOT NULL DEFAULT 'Pharmacist',
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-    ');
+        SQL);
 
-    $pdo->exec('
+    $pdo->exec(<<<'SQL'
         CREATE TABLE IF NOT EXISTS medicines (
             id INT PRIMARY KEY AUTO_INCREMENT,
             medicine_code VARCHAR(50) NULL,
             name VARCHAR(255) NOT NULL,
-            generic_name VARCHAR(255) NOT NULL DEFAULT "",
-            brand VARCHAR(255) NOT NULL DEFAULT "",
-            dosage_form VARCHAR(100) NOT NULL DEFAULT "",
-            strength VARCHAR(100) NOT NULL DEFAULT "",
-            unit VARCHAR(50) NOT NULL DEFAULT "",
-            category VARCHAR(100) NOT NULL DEFAULT "",
-            dosage VARCHAR(255) NOT NULL DEFAULT "",
-            manufacturer VARCHAR(255) NOT NULL DEFAULT "",
+            generic_name VARCHAR(255) NOT NULL DEFAULT '',
+            brand VARCHAR(255) NOT NULL DEFAULT '',
+            dosage_form VARCHAR(100) NOT NULL DEFAULT '',
+            strength VARCHAR(100) NOT NULL DEFAULT '',
+            unit VARCHAR(50) NOT NULL DEFAULT '',
+            category VARCHAR(100) NOT NULL DEFAULT '',
+            dosage VARCHAR(255) NOT NULL DEFAULT '',
+            manufacturer VARCHAR(255) NOT NULL DEFAULT '',
             description TEXT,
             ingredients TEXT,
-            batch_number VARCHAR(100) NOT NULL DEFAULT "",
+            batch_number VARCHAR(100) NOT NULL DEFAULT '',
             expiration_date DATE NULL,
             stock_quantity INT NOT NULL DEFAULT 0,
             minimum_stock INT NOT NULL DEFAULT 0,
@@ -100,12 +100,12 @@ function pharmacy_run_migrations(PDO $pdo): void
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             UNIQUE KEY uniq_medicine_code (medicine_code)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-    ');
+        SQL);
 
     pharmacy_ensure_column($pdo, 'medicines', 'medicine_code', 'VARCHAR(50) NULL AFTER id');
-    pharmacy_ensure_column($pdo, 'medicines', 'dosage_form', 'VARCHAR(100) NOT NULL DEFAULT "" AFTER brand');
-    pharmacy_ensure_column($pdo, 'medicines', 'strength', 'VARCHAR(100) NOT NULL DEFAULT "" AFTER dosage_form');
-    pharmacy_ensure_column($pdo, 'medicines', 'unit', 'VARCHAR(50) NOT NULL DEFAULT "" AFTER strength');
+    pharmacy_ensure_column($pdo, 'medicines', 'dosage_form', "VARCHAR(100) NOT NULL DEFAULT '' AFTER brand");
+    pharmacy_ensure_column($pdo, 'medicines', 'strength', "VARCHAR(100) NOT NULL DEFAULT '' AFTER dosage_form");
+    pharmacy_ensure_column($pdo, 'medicines', 'unit', "VARCHAR(50) NOT NULL DEFAULT '' AFTER strength");
     // Packages may identify only an expiry month and year, e.g. 02/mm/2027.
     $expirationTypeStmt = $pdo->prepare('SELECT DATA_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = "medicines" AND COLUMN_NAME = "expiration_date"');
     $expirationTypeStmt->execute([PHARMACY_DB_NAME]);
@@ -119,45 +119,45 @@ function pharmacy_run_migrations(PDO $pdo): void
     pharmacy_ensure_column($pdo, 'orders', 'paymongo_intent_id', 'VARCHAR(80) NULL AFTER notes');
     pharmacy_ensure_column($pdo, 'order_items', 'prescription_path', 'VARCHAR(255) NULL AFTER prescription_required');
 
-    $pdo->exec('
+    $pdo->exec(<<<'SQL'
         CREATE TABLE IF NOT EXISTS customers (
             id INT PRIMARY KEY AUTO_INCREMENT,
             name VARCHAR(255) NOT NULL,
-            phone VARCHAR(50) NOT NULL DEFAULT "",
-            email VARCHAR(255) NOT NULL DEFAULT "",
-            address VARCHAR(255) NOT NULL DEFAULT "",
-            status ENUM("active","inactive","vip") NOT NULL DEFAULT "active",
+            phone VARCHAR(50) NOT NULL DEFAULT '',
+            email VARCHAR(255) NOT NULL DEFAULT '',
+            address VARCHAR(255) NOT NULL DEFAULT '',
+            status ENUM('active','inactive','vip') NOT NULL DEFAULT 'active',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-    ');
+        SQL);
 
-    $pdo->exec('
+    $pdo->exec(<<<'SQL'
         CREATE TABLE IF NOT EXISTS suppliers (
             id INT PRIMARY KEY AUTO_INCREMENT,
             name VARCHAR(255) NOT NULL,
-            contact_person VARCHAR(255) NOT NULL DEFAULT "",
+            contact_person VARCHAR(255) NOT NULL DEFAULT '',
             medicines_count INT NOT NULL DEFAULT 0,
             last_delivery DATE NULL,
             on_time_rate DECIMAL(5,2) NOT NULL DEFAULT 0,
-            status ENUM("active","delayed","inactive") NOT NULL DEFAULT "active",
+            status ENUM('active','delayed','inactive') NOT NULL DEFAULT 'active',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-    ');
+        SQL);
 
-    $pdo->exec('
+    $pdo->exec(<<<'SQL'
         CREATE TABLE IF NOT EXISTS orders (
             id INT PRIMARY KEY AUTO_INCREMENT,
             order_number VARCHAR(50) NOT NULL UNIQUE,
             customer_id INT NULL,
-            status ENUM("pending","confirmed","preparing","ready","delivered","cancelled") NOT NULL DEFAULT "pending",
-            payment_method VARCHAR(50) NOT NULL DEFAULT "",
+            status ENUM('pending','confirmed','preparing','ready','delivered','cancelled') NOT NULL DEFAULT 'pending',
+            payment_method VARCHAR(50) NOT NULL DEFAULT '',
             total_amount DECIMAL(10,2) NOT NULL DEFAULT 0,
             notes TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             CONSTRAINT fk_orders_customer FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE SET NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-    ');
+        SQL);
 
     $pdo->exec('
         CREATE TABLE IF NOT EXISTS order_items (
