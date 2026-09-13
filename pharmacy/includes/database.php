@@ -225,4 +225,213 @@ function pharmacy_run_migrations(PDO $pdo): void
             // Rows are created per pharmacy when they sign in or save profile.
         }
     }
+
+    pharmacy_seed_tgp_inventory($pdo);
+}
+
+function pharmacy_seed_tgp_inventory(PDO $pdo): void
+{
+    $pharmaciesExist = $pdo->query("SHOW TABLES LIKE 'pharmacies'")->fetch();
+    if (!$pharmaciesExist) {
+        return;
+    }
+
+    $find = $pdo->query("
+        SELECT id FROM pharmacies
+        WHERE LOWER(pharmacy_name) LIKE '%the generics pharmacy%'
+           OR LOWER(pharmacy_name) LIKE '%tgp%'
+        ORDER BY created_at ASC
+    ");
+    $pharmacyIds = $find ? $find->fetchAll(PDO::FETCH_COLUMN) : [];
+    if ($pharmacyIds === []) {
+        return;
+    }
+
+    $rows = [
+        [
+            'name' => 'Cetirizine 10mg',
+            'generic_name' => 'Cetirizine',
+            'brand' => 'Allerkast',
+            'dosage_form' => 'Tablet',
+            'strength' => '10mg',
+            'unit' => 'Tablet',
+            'category' => 'Antihistamine',
+            'description' => 'Antihistamine used for allergy symptoms.',
+            'ingredients' => "Active: Cetirizine hydrochloride\nInactive: Lactose monohydrate, microcrystalline cellulose, magnesium stearate",
+            'batch_number' => 'CTZ-2603',
+            'expiration_date' => '2028-06-30',
+            'stock_quantity' => 180,
+            'unit_price' => 3.50,
+            'selling_price' => 5.00,
+            'prescription_required' => 0,
+        ],
+        [
+            'name' => 'Omeprazole 20mg',
+            'generic_name' => 'Omeprazole',
+            'brand' => 'Losec',
+            'dosage_form' => 'Capsule',
+            'strength' => '20mg',
+            'unit' => 'Capsule',
+            'category' => 'Gastrointestinal',
+            'description' => 'Used to reduce stomach acid production.',
+            'ingredients' => "Active: Omeprazole\nInactive: Lactose, sucrose, crospovidone, magnesium stearate, gelatin",
+            'batch_number' => 'OMP-2604',
+            'expiration_date' => '2028-03-31',
+            'stock_quantity' => 90,
+            'unit_price' => 6.00,
+            'selling_price' => 8.50,
+            'prescription_required' => 0,
+        ],
+        [
+            'name' => 'Salbutamol Syrup 2mg/5mL',
+            'generic_name' => 'Salbutamol',
+            'brand' => 'Ventolin',
+            'dosage_form' => 'Syrup',
+            'strength' => '2mg/5mL',
+            'unit' => 'Bottle',
+            'category' => 'Respiratory',
+            'description' => 'Bronchodilator medicine used for certain breathing conditions.',
+            'ingredients' => "Active: Salbutamol sulfate\nInactive: Sucrose, sodium benzoate, citric acid, flavoring, purified water",
+            'batch_number' => 'SAL-2605',
+            'expiration_date' => '2027-09-30',
+            'stock_quantity' => 45,
+            'unit_price' => 75.00,
+            'selling_price' => 95.00,
+            'prescription_required' => 1,
+        ],
+        [
+            'name' => 'Amlodipine 5mg',
+            'generic_name' => 'Amlodipine',
+            'brand' => 'Norvasc',
+            'dosage_form' => 'Tablet',
+            'strength' => '5mg',
+            'unit' => 'Tablet',
+            'category' => 'Cardiovascular',
+            'description' => 'Calcium-channel blocker used for blood pressure management.',
+            'ingredients' => "Active: Amlodipine besylate\nInactive: Microcrystalline cellulose, dibasic calcium phosphate, sodium starch glycolate, magnesium stearate",
+            'batch_number' => 'AML-2606',
+            'expiration_date' => '2028-12-31',
+            'stock_quantity' => 200,
+            'unit_price' => 2.50,
+            'selling_price' => 4.00,
+            'prescription_required' => 1,
+        ],
+        [
+            'name' => 'Metformin 500mg',
+            'generic_name' => 'Metformin',
+            'brand' => 'Glucophage',
+            'dosage_form' => 'Tablet',
+            'strength' => '500mg',
+            'unit' => 'Tablet',
+            'category' => 'Diabetes',
+            'description' => 'Medicine used as part of blood glucose management.',
+            'ingredients' => "Active: Metformin hydrochloride\nInactive: Povidone, magnesium stearate, hypromellose, polyethylene glycol",
+            'batch_number' => 'MET-2607',
+            'expiration_date' => '2028-07-31',
+            'stock_quantity' => 150,
+            'unit_price' => 4.00,
+            'selling_price' => 6.00,
+            'prescription_required' => 1,
+        ],
+        [
+            'name' => 'Vitamin C 500mg',
+            'generic_name' => 'Ascorbic Acid',
+            'brand' => 'Ceelin',
+            'dosage_form' => 'Tablet',
+            'strength' => '500mg',
+            'unit' => 'Tablet',
+            'category' => 'Vitamins & Supplements',
+            'description' => 'Vitamin supplement containing ascorbic acid.',
+            'ingredients' => "Active: Ascorbic acid\nInactive: Corn starch, povidone, stearic acid, magnesium stearate",
+            'batch_number' => 'VTC-2608',
+            'expiration_date' => '2029-10-31',
+            'stock_quantity' => 275,
+            'unit_price' => 3.00,
+            'selling_price' => 5.00,
+            'prescription_required' => 0,
+        ],
+        [
+            'name' => 'Hydrocortisone Cream 1%',
+            'generic_name' => 'Hydrocortisone',
+            'brand' => 'Cortaid',
+            'dosage_form' => 'Cream',
+            'strength' => '1%',
+            'unit' => 'Tube',
+            'category' => 'Dermatology',
+            'description' => 'Topical cream for temporary relief of minor skin irritation.',
+            'ingredients' => "Active: Hydrocortisone\nInactive: Petrolatum, mineral oil, cetyl alcohol, emulsifying wax, purified water",
+            'batch_number' => 'HYD-2609',
+            'expiration_date' => '2028-05-31',
+            'stock_quantity' => 65,
+            'unit_price' => 45.00,
+            'selling_price' => 60.00,
+            'prescription_required' => 0,
+        ],
+        [
+            'name' => 'Oral Rehydration Salts',
+            'generic_name' => 'Oral Rehydration Salts',
+            'brand' => 'Hydrite',
+            'dosage_form' => 'Powder',
+            'strength' => 'Standard',
+            'unit' => 'Sachet',
+            'category' => 'Oral Rehydration & Electrolytes',
+            'description' => 'Powder intended to be prepared as an oral rehydration solution.',
+            'ingredients' => "Active: Sodium chloride, potassium chloride, glucose\nInactive: Flavoring agent, permitted color",
+            'batch_number' => 'ORS-2610',
+            'expiration_date' => '2029-02-28',
+            'stock_quantity' => 100,
+            'unit_price' => 7.00,
+            'selling_price' => 10.00,
+            'prescription_required' => 0,
+        ],
+    ];
+
+    $exists = $pdo->prepare('
+        SELECT id FROM medicines
+        WHERE pharmacy_id = ? AND (batch_number = ? OR medicine_code = ?)
+        LIMIT 1
+    ');
+    $insert = $pdo->prepare('
+        INSERT INTO medicines (
+            pharmacy_id, medicine_code, name, generic_name, brand, dosage_form, strength, unit, category, dosage,
+            description, ingredients, batch_number, expiration_date, stock_quantity, minimum_stock,
+            unit_price, selling_price, prescription_required, is_active
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, 1)
+    ');
+
+    foreach ($pharmacyIds as $pharmacyId) {
+        $pharmacyId = trim((string) $pharmacyId);
+        if ($pharmacyId === '') {
+            continue;
+        }
+
+        foreach ($rows as $row) {
+            $exists->execute([$pharmacyId, $row['batch_number'], $row['batch_number']]);
+            if ($exists->fetch()) {
+                continue;
+            }
+
+            $dosage = trim($row['strength'] . ' ' . $row['dosage_form']);
+            $insert->execute([
+                $pharmacyId,
+                $row['batch_number'],
+                $row['name'],
+                $row['generic_name'],
+                $row['brand'],
+                $row['dosage_form'],
+                $row['strength'],
+                $row['unit'],
+                $row['category'],
+                $dosage,
+                $row['description'],
+                $row['ingredients'],
+                $row['batch_number'],
+                $row['expiration_date'],
+                $row['stock_quantity'],
+                $row['unit_price'],
+                $row['selling_price'],
+                $row['prescription_required'],
+            ]);
+        }
+    }
 }

@@ -235,6 +235,25 @@ function caps_run_migrations(PDO $pdo): void
     caps_clear_sample_reports($pdo);
     caps_ensure_admin_account($pdo);
     caps_reset_admin_operational_data($pdo);
+    caps_seed_tgp_inventory();
+}
+
+function caps_seed_tgp_inventory(): void
+{
+    $pharmacyDatabase = dirname(__DIR__) . '/pharmacy/includes/database.php';
+    $pharmacyConfig = dirname(__DIR__) . '/pharmacy/config.php';
+    if (!is_file($pharmacyDatabase) || !is_file($pharmacyConfig)) {
+        return;
+    }
+
+    require_once $pharmacyConfig;
+    require_once $pharmacyDatabase;
+
+    try {
+        pharmacy_db();
+    } catch (Throwable) {
+        // Inventory seed runs again on the next request that can reach MySQL.
+    }
 }
 
 function caps_clear_sample_reports(PDO $pdo): void
