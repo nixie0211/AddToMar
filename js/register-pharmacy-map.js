@@ -451,6 +451,30 @@
     });
   }
 
+  window.resetPharmacyRegisterMap = function resetPharmacyRegisterMap() {
+    reverseRequestId += 1;
+    hideSearchResults();
+    setMapStatus('');
+    setLocateLoading(false);
+    setLogoUrl('');
+    if (userMarker && map) {
+      map.removeLayer(userMarker);
+      userMarker = null;
+    }
+    const latInput = el(ids.lat);
+    const lngInput = el(ids.lng);
+    if (latInput) latInput.value = '';
+    if (lngInput) lngInput.value = '';
+    const searchInput = el(ids.search);
+    if (searchInput) searchInput.value = '';
+    if (map) {
+      const bounds = getServiceBounds();
+      if (bounds) {
+        map.fitBounds(bounds, { padding: [20, 20] });
+      }
+    }
+  };
+
   window.initPharmacyRegisterMap = function initPharmacyRegisterMap() {
     const mapEl = el(ids.map);
     if (!window.L || !mapEl) return;

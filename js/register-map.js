@@ -389,11 +389,39 @@
       setTimeout(() => map.invalidateSize(), 220);
     }
 
-    return { init };
+    function reset() {
+      reverseRequestId += 1;
+      hideSearchResults();
+      setMapStatus('');
+      setLocateLoading(false);
+      userPos = null;
+      if (userMarker && map) {
+        map.removeLayer(userMarker);
+        userMarker = null;
+      }
+      const latInput = el(ids.lat);
+      const lngInput = el(ids.lng);
+      if (latInput) latInput.value = '';
+      if (lngInput) lngInput.value = '';
+      const searchInput = el(ids.search);
+      if (searchInput) searchInput.value = '';
+      if (map) {
+        const bounds = getServiceBounds();
+        if (bounds) {
+          map.fitBounds(bounds, { padding: [20, 20] });
+        }
+      }
+    }
+
+    return { init, reset };
   }
 
   const registerPicker = createLocationMap(REGISTER_IDS);
   const googlePicker = createLocationMap(GOOGLE_IDS);
+
+  window.resetRegisterMap = function resetRegisterMap() {
+    registerPicker.reset();
+  };
 
   window.initRegisterMap = function initRegisterMap() {
     registerPicker.init();

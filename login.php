@@ -3868,12 +3868,73 @@ function showPharmacyPanel() {
   });
 }
 
+function wipeSignupForm(form) {
+  if (!form) return;
+  form.querySelectorAll('input, textarea, select').forEach((field) => {
+    if (field.type === 'hidden' && field.name === 'action') return;
+    if (field.type === 'checkbox' || field.type === 'radio') {
+      field.checked = false;
+      return;
+    }
+    field.value = '';
+  });
+  form.querySelectorAll('.is-mismatch').forEach((el) => el.classList.remove('is-mismatch'));
+  form.querySelectorAll('.setup-mismatch').forEach((el) => { el.hidden = true; });
+}
+
+function resetSignupPasswordField(inputId, buttonId) {
+  const input = document.getElementById(inputId);
+  const button = document.getElementById(buttonId);
+  if (input) input.type = 'password';
+  button?.setAttribute('aria-label', 'Show password');
+}
+
+function resetCustomerRegisterForm() {
+  wipeSignupForm(document.getElementById('customer-register-form'));
+  document.getElementById('panel-register')?.querySelectorAll('.setup-alert').forEach((el) => el.remove());
+  resetSignupPasswordField('register-password', 'toggle-register-password');
+  resetSignupPasswordField('register-password-confirm', 'toggle-register-password-confirm');
+  window.resetRegisterMap?.();
+  window.resetRegisterWizard?.();
+}
+
+function resetPharmacyRegisterForm() {
+  wipeSignupForm(document.getElementById('pharmacy-register-form'));
+  document.getElementById('panel-pharmacy')?.querySelectorAll('.setup-alert').forEach((el) => el.remove());
+  resetSignupPasswordField('pharmacy-register-password', 'toggle-pharmacy-register-password');
+  resetSignupPasswordField('pharmacy-register-password-confirm', 'toggle-pharmacy-register-password-confirm');
+
+  const preview = document.getElementById('pharmacy-logo-preview-img');
+  const box = document.getElementById('pharmacy-logo-preview');
+  const placeholder = document.querySelector('#pharmacy-logo-preview .pharm-logo-text');
+  if (preview) {
+    preview.removeAttribute('src');
+    preview.hidden = true;
+  }
+  box?.classList.remove('has-image');
+  if (placeholder) placeholder.hidden = false;
+
+  window.updatePharmacyRegisterMapLogo?.('');
+  window.resetPharmacyDocUploads?.();
+  window.resetPharmacyRegisterMap?.();
+  document.querySelectorAll('#pharmacy-register-form .pharm-hours-row').forEach((row) => {
+    row.querySelector('input[name="operation_days[]"]')?.dispatchEvent(new Event('change'));
+  });
+  window.resetPharmacyWizard?.();
+}
+
 function openRegisterModal() { showRegisterPanel(); }
-function closeRegisterModal() { showLoginPanel(); }
+function closeRegisterModal() {
+  resetCustomerRegisterForm();
+  showLoginPanel();
+}
 
 openRegisterBtn?.addEventListener('click', (e) => { e.preventDefault(); showRegisterPanel(); });
-registerBackBtn?.addEventListener('click', showLoginPanel);
-pharmacyBackBtn?.addEventListener('click', showLoginPanel);
+registerBackBtn?.addEventListener('click', closeRegisterModal);
+pharmacyBackBtn?.addEventListener('click', () => {
+  resetPharmacyRegisterForm();
+  showLoginPanel();
+});
 
 if (shouldOpenRegister) { showRegisterPanel(); }
 
@@ -4392,6 +4453,7 @@ function openPharmacyRegisterModal() {
 }
 
 function closePharmacyRegisterModal() {
+  resetPharmacyRegisterForm();
   showLoginPanel();
 }
 
@@ -4429,7 +4491,7 @@ window.PHARMACY_REGISTER_MAP_CONFIG = <?= json_encode([
   'reverseGeocodeUrl' => app_url('ajax/reverse-geocode.php'),
 ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
 </script>
-<script src="<?= htmlspecialchars(app_url('js/register-pharmacy-map.js'), ENT_QUOTES, 'UTF-8') ?>?v=service-overlay-1"></script>
+<script src="<?= htmlspecialchars(app_url('js/register-pharmacy-map.js'), ENT_QUOTES, 'UTF-8') ?>?v=reset-on-close-1"></script>
 <script>
 window.REGISTER_MAP_CONFIG = <?= json_encode([
   'tileUrl' => MAP_TILE_URL,
@@ -4449,7 +4511,7 @@ window.REGISTER_MAP_CONFIG = <?= json_encode([
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="<?= htmlspecialchars(app_url('js/map-area-popup.js'), ENT_QUOTES, 'UTF-8') ?>?v=1"></script>
 <script src="<?= htmlspecialchars(app_url('js/map-service-overlay.js'), ENT_QUOTES, 'UTF-8') ?>?v=4"></script>
-<script src="<?= htmlspecialchars(app_url('js/register-map.js'), ENT_QUOTES, 'UTF-8') ?>?v=out-of-area-popup-1"></script>
+<script src="<?= htmlspecialchars(app_url('js/register-map.js'), ENT_QUOTES, 'UTF-8') ?>?v=reset-on-close-1"></script>
 <?php if ($openGoogleLocation): ?>
 <script>
 if (typeof window.openGoogleLocationModal === 'function') {
