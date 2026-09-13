@@ -371,6 +371,7 @@ if ((string) ($_GET['google'] ?? '') === 'verify' && $googlePending === null && 
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Playfair+Display:wght@600;700&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/login.css?v=account-location-pin-2">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<link rel="stylesheet" href="<?= htmlspecialchars(app_url('css/map-service-overlay.css'), ENT_QUOTES, 'UTF-8') ?>?v=1">
 <style>
   :root{
     --ink:#0d0d0f;
@@ -4343,12 +4344,13 @@ window.PHARMACY_REGISTER_MAP_CONFIG = <?= json_encode([
   'minZoom' => MAP_MIN_ZOOM,
   'maxZoom' => MAP_MAX_ZOOM,
   'bounds' => maps_bounds(),
+  'serviceOverlay' => maps_service_overlay(),
   'serviceCities' => MAP_SERVICE_CITIES,
   'geocodeUrl' => app_url('ajax/geocode-search.php'),
   'reverseGeocodeUrl' => app_url('ajax/reverse-geocode.php'),
 ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
 </script>
-<script src="<?= htmlspecialchars(app_url('js/register-pharmacy-map.js'), ENT_QUOTES, 'UTF-8') ?>?v=red-pin-marker"></script>
+<script src="<?= htmlspecialchars(app_url('js/register-pharmacy-map.js'), ENT_QUOTES, 'UTF-8') ?>?v=service-overlay-1"></script>
 <script>
 window.REGISTER_MAP_CONFIG = <?= json_encode([
   'tileUrl' => MAP_TILE_URL,
@@ -4359,13 +4361,15 @@ window.REGISTER_MAP_CONFIG = <?= json_encode([
   'minZoom' => MAP_MIN_ZOOM,
   'maxZoom' => MAP_MAX_ZOOM,
   'bounds' => maps_bounds(),
+  'serviceOverlay' => maps_service_overlay(),
   'serviceCities' => MAP_SERVICE_CITIES,
   'geocodeUrl' => app_url('ajax/geocode-search.php'),
   'reverseGeocodeUrl' => app_url('ajax/reverse-geocode.php'),
 ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
 </script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-<script src="<?= htmlspecialchars(app_url('js/register-map.js'), ENT_QUOTES, 'UTF-8') ?>?v=esri-satellite-1"></script>
+<script src="<?= htmlspecialchars(app_url('js/map-service-overlay.js'), ENT_QUOTES, 'UTF-8') ?>?v=1"></script>
+<script src="<?= htmlspecialchars(app_url('js/register-map.js'), ENT_QUOTES, 'UTF-8') ?>?v=esri-satellite-2"></script>
 <?php if ($openGoogleLocation): ?>
 <script>
 if (typeof window.openGoogleLocationModal === 'function') {

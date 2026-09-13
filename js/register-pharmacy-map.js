@@ -134,6 +134,9 @@
   }
 
   function isInServiceArea(lat, lng) {
+    if (typeof window.pointInServiceOverlay === 'function') {
+      return window.pointInServiceOverlay(lat, lng, cfg);
+    }
     const bounds = getServiceBounds();
     return bounds ? bounds.contains([lat, lng]) : true;
   }
@@ -469,6 +472,10 @@
         maxZoom: cfg.maxZoom || 18,
         minZoom: cfg.minZoom || 11,
       }).addTo(map);
+
+      if (typeof window.addServiceAreaOverlay === 'function') {
+        window.addServiceAreaOverlay(map, cfg);
+      }
 
       bindMapInteractions();
 

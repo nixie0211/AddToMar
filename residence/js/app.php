@@ -3031,6 +3031,10 @@ function addressMapBounds(){
 }
 
 function addressMapInService(lat, lng){
+  const cfg = window.RESIDENCE_CONFIG || {};
+  if(typeof window.pointInServiceOverlay === 'function'){
+    return window.pointInServiceOverlay(lat, lng, cfg);
+  }
   const bounds = addressMapBounds();
   return bounds ? bounds.contains([lat, lng]) : true;
 }
@@ -3199,6 +3203,10 @@ function ensureAddressMap(){
       attribution: cfg.tileAttribution || '',
       maxZoom: cfg.maxZoom || 19,
     }).addTo(addressMapInstance);
+
+    if(typeof window.addServiceAreaOverlay === 'function'){
+      window.addServiceAreaOverlay(addressMapInstance, cfg);
+    }
 
     const bounds = addressMapBounds();
     if(bounds){
@@ -4388,6 +4396,10 @@ function initLocatorMap(){
       attribution: cfg.tileAttribution || '',
       maxZoom: cfg.maxZoom || 19,
     }).addTo(locatorMapInstance);
+
+    if(typeof window.addServiceAreaOverlay === 'function'){
+      window.addServiceAreaOverlay(locatorMapInstance, cfg);
+    }
 
     locatorMarkersLayer = L.layerGroup().addTo(locatorMapInstance);
   } else {

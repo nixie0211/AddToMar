@@ -10,30 +10,92 @@ define('MAP_DEFAULT_ZOOM', 12);
 define('MAP_MIN_ZOOM', 11);
 define('MAP_MAX_ZOOM', 19);
 
-/** Southwest and northeast corners: Laoag, San Nicolas, and Batac service area */
+/** Southwest and northeast corners used as a padded view box around the service polygon */
 define('MAP_BOUNDS_SOUTH', 18.02);
-define('MAP_BOUNDS_WEST', 120.52);
-define('MAP_BOUNDS_NORTH', 18.22);
-define('MAP_BOUNDS_EAST', 120.62);
+define('MAP_BOUNDS_WEST', 120.48);
+define('MAP_BOUNDS_NORTH', 18.24);
+define('MAP_BOUNDS_EAST', 120.76);
 
 define('MAP_SERVICE_CITIES', 'Laoag City, San Nicolas, and Batac City');
 
-function maps_bounds(): array
+function maps_service_polygon(): array
 {
     return [
-        'south' => MAP_BOUNDS_SOUTH,
-        'west' => MAP_BOUNDS_WEST,
-        'north' => MAP_BOUNDS_NORTH,
-        'east' => MAP_BOUNDS_EAST,
+        ['lat' => 18.218, 'lng' => 120.502],
+        ['lat' => 18.210, 'lng' => 120.585],
+        ['lat' => 18.186, 'lng' => 120.668],
+        ['lat' => 18.152, 'lng' => 120.724],
+        ['lat' => 18.116, 'lng' => 120.738],
+        ['lat' => 18.096, 'lng' => 120.672],
+        ['lat' => 18.088, 'lng' => 120.598],
+        ['lat' => 18.032, 'lng' => 120.562],
+        ['lat' => 18.040, 'lng' => 120.508],
+        ['lat' => 18.142, 'lng' => 120.492],
     ];
+}
+
+function maps_service_overlay(): array
+{
+    $polygon = maps_service_polygon();
+
+    return [
+        'polygon' => $polygon,
+        'start' => [
+            'lat' => $polygon[0]['lat'],
+            'lng' => $polygon[0]['lng'],
+            'label' => 'Start (Coastline)',
+        ],
+        'end' => [
+            'lat' => $polygon[4]['lat'],
+            'lng' => $polygon[4]['lng'],
+            'label' => 'End (Road Point)',
+        ],
+        'title' => 'Only available in this area',
+        'subtitle' => '(From Start to End)',
+    ];
+}
+
+function maps_bounds(): array
+{
+    $polygon = maps_service_polygon();
+    $lats = array_column($polygon, 'lat');
+    $lngs = array_column($polygon, 'lng');
+    $pad = 0.02;
+
+    return [
+        'south' => min($lats) - $pad,
+        'west' => min($lngs) - $pad,
+        'north' => max($lats) + $pad,
+        'east' => max($lngs) + $pad,
+    ];
+}
+
+function maps_point_in_polygon(float $lat, float $lng, array $polygon): bool
+{
+    $inside = false;
+    $count = count($polygon);
+    for ($i = 0, $j = $count - 1; $i < $count; $j = $i++) {
+        $yi = (float) $polygon[$i]['lat'];
+        $xi = (float) $polygon[$i]['lng'];
+        $yj = (float) $polygon[$j]['lat'];
+        $xj = (float) $polygon[$j]['lng'];
+        $denom = $yj - $yi;
+        if ($denom == 0.0) {
+            $denom = 0.0000001;
+        }
+        $intersect = (($yi > $lat) !== ($yj > $lat))
+            && ($lng < ($xj - $xi) * ($lat - $yi) / $denom + $xi);
+        if ($intersect) {
+            $inside = !$inside;
+        }
+    }
+
+    return $inside;
 }
 
 function maps_point_in_service_area(float $lat, float $lng): bool
 {
-    return $lat >= MAP_BOUNDS_SOUTH
-        && $lat <= MAP_BOUNDS_NORTH
-        && $lng >= MAP_BOUNDS_WEST
-        && $lng <= MAP_BOUNDS_EAST;
+    return maps_point_in_polygon($lat, $lng, maps_service_polygon());
 }
 
 function maps_navigate_url(float $destLat, float $destLng, ?float $originLat = null, ?float $originLng = null): string
