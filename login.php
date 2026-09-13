@@ -1573,7 +1573,8 @@ if ((string) ($_GET['google'] ?? '') === 'verify' && $googlePending === null && 
   }
   .signup-location-map .register-map-badge{
     position:absolute;
-    top:12px;
+    top:auto;
+    bottom:12px;
     left:12px;
     z-index:5;
     padding:10px 14px;
@@ -1992,6 +1993,11 @@ if ((string) ($_GET['google'] ?? '') === 'verify' && $googlePending === null && 
     color:#5f6f76;
   }
   .google-location-modal .register-map-badge{
+    position:absolute;
+    top:auto;
+    bottom:12px;
+    left:12px;
+    z-index:5;
     padding:10px 14px;
     border-radius:16px;
     background:#fff;
