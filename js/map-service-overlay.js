@@ -94,7 +94,7 @@
     }
 
     const title = overlay.title || 'Only available in this area';
-    const subtitle = overlay.subtitle || '(From Start to End)';
+    const subtitle = overlay.subtitle || '(Laoag City, San Nicolas, and Batac)';
     L.marker(centroid(ring), {
       icon: L.divIcon({
         className: 'service-area-badge',

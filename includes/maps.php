@@ -10,48 +10,37 @@ define('MAP_DEFAULT_ZOOM', 12);
 define('MAP_MIN_ZOOM', 11);
 define('MAP_MAX_ZOOM', 19);
 
-/** Southwest and northeast corners used as a padded view box around the service polygon */
+/** Inland view box around Laoag City, San Nicolas, and Batac City */
 define('MAP_BOUNDS_SOUTH', 18.02);
-define('MAP_BOUNDS_WEST', 120.48);
-define('MAP_BOUNDS_NORTH', 18.24);
-define('MAP_BOUNDS_EAST', 120.76);
+define('MAP_BOUNDS_WEST', 120.52);
+define('MAP_BOUNDS_NORTH', 18.23);
+define('MAP_BOUNDS_EAST', 120.64);
 
 define('MAP_SERVICE_CITIES', 'Laoag City, San Nicolas, and Batac City');
 
 function maps_service_polygon(): array
 {
     return [
-        ['lat' => 18.218, 'lng' => 120.502],
-        ['lat' => 18.210, 'lng' => 120.585],
-        ['lat' => 18.186, 'lng' => 120.668],
-        ['lat' => 18.152, 'lng' => 120.724],
-        ['lat' => 18.116, 'lng' => 120.738],
-        ['lat' => 18.096, 'lng' => 120.672],
-        ['lat' => 18.088, 'lng' => 120.598],
-        ['lat' => 18.032, 'lng' => 120.562],
-        ['lat' => 18.040, 'lng' => 120.508],
-        ['lat' => 18.142, 'lng' => 120.492],
+        ['lat' => 18.222, 'lng' => 120.558],
+        ['lat' => 18.222, 'lng' => 120.618],
+        ['lat' => 18.188, 'lng' => 120.628],
+        ['lat' => 18.155, 'lng' => 120.618],
+        ['lat' => 18.100, 'lng' => 120.598],
+        ['lat' => 18.038, 'lng' => 120.582],
+        ['lat' => 18.028, 'lng' => 120.548],
+        ['lat' => 18.048, 'lng' => 120.532],
+        ['lat' => 18.112, 'lng' => 120.542],
+        ['lat' => 18.168, 'lng' => 120.552],
+        ['lat' => 18.205, 'lng' => 120.548],
     ];
 }
 
 function maps_service_overlay(): array
 {
-    $polygon = maps_service_polygon();
-
     return [
-        'polygon' => $polygon,
-        'start' => [
-            'lat' => $polygon[0]['lat'],
-            'lng' => $polygon[0]['lng'],
-            'label' => 'Start (Coastline)',
-        ],
-        'end' => [
-            'lat' => $polygon[4]['lat'],
-            'lng' => $polygon[4]['lng'],
-            'label' => 'End (Road Point)',
-        ],
+        'polygon' => maps_service_polygon(),
         'title' => 'Only available in this area',
-        'subtitle' => '(From Start to End)',
+        'subtitle' => '(Laoag City, San Nicolas, and Batac)',
     ];
 }
 
