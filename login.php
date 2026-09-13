@@ -1573,9 +1573,19 @@ if ((string) ($_GET['google'] ?? '') === 'verify' && $googlePending === null && 
   }
   .signup-location-map .register-map-badge{
     position:absolute;
-    top:10px;
-    left:10px;
+    top:12px;
+    left:12px;
     z-index:5;
+    padding:10px 14px;
+    border-radius:16px;
+    background:#fff;
+    color:#1b2b34;
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    box-shadow:0 10px 28px rgba(15,23,42,.18);
+    border:1px solid rgba(255,255,255,.9);
   }
   #customer-register-form .signup-location-map #register-map,
   #pharmacy-register-form .signup-location-map #pharmacy-register-map{
@@ -1982,8 +1992,15 @@ if ((string) ($_GET['google'] ?? '') === 'verify' && $googlePending === null && 
     color:#5f6f76;
   }
   .google-location-modal .register-map-badge{
-    background:rgba(15,122,114,.12);
-    color:var(--teal, #0b806f);
+    padding:10px 14px;
+    border-radius:16px;
+    background:#fff;
+    color:#1b2b34;
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:0.04em;
+    box-shadow:0 10px 28px rgba(15,23,42,.18);
+    border:1px solid rgba(255,255,255,.9);
   }
   .google-location-modal .register-map-search-input{
     border:1px solid #d7e8e3;
@@ -2181,8 +2198,7 @@ if ((string) ($_GET['google'] ?? '') === 'verify' && $googlePending === null && 
   .signup-location-tools .setup-location-label{
     font-size:12.5px;font-weight:600;color:var(--navy);
   }
-  .register-map-block-inline .register-map-badge,
-  .signup-location-map .register-map-badge{
+  .register-map-block-inline .register-map-badge{
     background:rgba(15,122,114,.12);color:var(--teal);
   }
   .register-map-block-inline .register-map-search-input,
