@@ -61,11 +61,6 @@ $badgeLabel = match ($spotlightBadge) {
             <?php elseif ($statusLabel !== ''): ?>
             <span class="med-card-flag med-card-flag--<?= htmlspecialchars($status, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($statusLabel, ENT_QUOTES, 'UTF-8') ?></span>
             <?php endif; ?>
-            <?php if (!empty($medicine['is_featured'])): ?>
-            <span class="med-card-heart is-on" aria-label="Featured product" title="Featured">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
-            </span>
-            <?php endif; ?>
 
             <?php if ($rxRequired): ?>
             <div class="med-card-frame med-card-frame--rx">
