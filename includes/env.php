@@ -2,11 +2,37 @@
 
 declare(strict_types=1);
 
+function addtomar_runtime_env(): array
+{
+    static $loaded = null;
+    if (is_array($loaded)) {
+        return $loaded;
+    }
+
+    $file = '/tmp/addtomar-runtime-env.php';
+    if (is_file($file)) {
+        $data = require $file;
+        $loaded = is_array($data) ? $data : [];
+        return $loaded;
+    }
+
+    $loaded = [];
+    return $loaded;
+}
+
 function addtomar_env(string $key, string $default = ''): string
 {
+    $runtime = addtomar_runtime_env();
+    if (isset($runtime[$key]) && is_string($runtime[$key]) && trim($runtime[$key]) !== '') {
+        return trim($runtime[$key]);
+    }
+
     $value = getenv($key);
     if ($value === false || $value === '') {
-        $raw = $_ENV[$key] ?? $_SERVER[$key] ?? '';
+        $apache = function_exists('apache_getenv') ? apache_getenv($key, true) : false;
+        $raw = ($apache !== false && $apache !== '')
+            ? $apache
+            : ($_ENV[$key] ?? $_SERVER[$key] ?? '');
         $value = is_string($raw) ? $raw : '';
     }
 
@@ -127,67 +153,59 @@ function addtomar_mysql_options(): array
 
     if (addtomar_mysql_ssl_enabled()) {
         $ca = addtomar_mysql_ssl_ca_path();
-        if ($ca !== '') {
-            $options[PDO::MYSQL_ATTR_SSL_CA] = $ca;
-        }
+        $options[PDO::MYSQL_ATTR_SSL_CA] = $ca !== '' ? $ca : '/etc/ssl/certs/ca-certificates.crt';
         $options[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false;
     }
 
     return $options;
 }
 
+function addtomar_mysql_open(string $host, string $user, string $pass, string $charset, array $options, string $name = ''): PDO
+{
+    $pdo = new PDO(addtomar_mysql_dsn($host, $name, $charset, $name !== ''), $user, $pass, $options);
+    addtomar_mysql_disable_ansi_quotes($pdo);
+
+    return $pdo;
+}
+
 function addtomar_mysql_connect(string $host, string $name, string $user, string $pass, string $charset): PDO
 {
     $options = addtomar_mysql_options();
-    $dsn = addtomar_mysql_dsn($host, $name, $charset);
     $last = null;
-
-    for ($attempt = 1; $attempt <= 3; $attempt++) {
-        try {
-            $pdo = new PDO($dsn, $user, $pass, $options);
-            addtomar_mysql_disable_ansi_quotes($pdo);
-
-            return $pdo;
-        } catch (PDOException $error) {
-            $last = $error;
-            $message = $error->getMessage();
-            $previous = $error->getPrevious();
-            if ($previous instanceof Throwable) {
-                $message .= ' ' . $previous->getMessage();
-            }
-            $retryable = str_contains($message, 'getaddrinfo')
-                || str_contains($message, '2002')
-                || str_contains($message, 'timed out')
-                || str_contains($message, 'Connection refused');
-            if ($retryable && $attempt < 3) {
-                usleep(400000 * $attempt);
-                continue;
-            }
-            break;
-        }
+    $names = [$name];
+    if (addtomar_mysql_is_tidb()) {
+        array_push($names, 'test', '');
+        $names = array_values(array_unique($names));
     }
 
-    $unknownDatabase = $last instanceof PDOException && (
-        str_contains($last->getMessage(), 'Unknown database')
-        || str_contains($last->getMessage(), '1049')
-    );
+    foreach ($names as $tryName) {
+        for ($attempt = 1; $attempt <= 3; $attempt++) {
+            try {
+                $pdo = addtomar_mysql_open($host, $user, $pass, $charset, $options, $tryName);
+                $safeName = preg_replace('/[^A-Za-z0-9_]/', '', $name) ?: 'CAPS';
+                if ($safeName !== '' && $tryName !== $safeName) {
+                    $pdo->exec('CREATE DATABASE IF NOT EXISTS `' . $safeName . '`');
+                    $pdo->exec('USE `' . $safeName . '`');
+                }
 
-    if ($last instanceof PDOException && ($unknownDatabase || addtomar_mysql_can_create_database())) {
-        try {
-            $fallback = new PDO(
-                addtomar_mysql_dsn($host, $name, $charset, false),
-                $user,
-                $pass,
-                $options
-            );
-            $safeName = preg_replace('/[^A-Za-z0-9_]/', '', $name) ?: 'CAPS';
-            $fallback->exec('CREATE DATABASE IF NOT EXISTS `' . $safeName . '`');
-            $fallback->exec('USE `' . $safeName . '`');
-            addtomar_mysql_disable_ansi_quotes($fallback);
-
-            return $fallback;
-        } catch (PDOException) {
-            // Fall through and throw the original connection error.
+                return $pdo;
+            } catch (PDOException $error) {
+                $last = $error;
+                $message = $error->getMessage();
+                $previous = $error->getPrevious();
+                if ($previous instanceof Throwable) {
+                    $message .= ' ' . $previous->getMessage();
+                }
+                $retryable = str_contains($message, 'getaddrinfo')
+                    || str_contains($message, '2002')
+                    || str_contains($message, 'timed out')
+                    || str_contains($message, 'Connection refused');
+                if ($retryable && $attempt < 3) {
+                    usleep(400000 * $attempt);
+                    continue;
+                }
+                break;
+            }
         }
     }
 

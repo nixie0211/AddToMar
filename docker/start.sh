@@ -16,4 +16,18 @@ mkdir -p /var/www/html/data/uploads/receipts \
 
 chown -R www-data:www-data /var/www/html/data || true
 
+php -r '
+$keys = ["DB_HOST","DB_PORT","DB_NAME","DB_USER","DB_PASS","DB_SSL","DB_SSL_CA","APP_URL"];
+$out = [];
+foreach ($keys as $key) {
+    $value = getenv($key);
+    if ($value !== false) {
+        $out[$key] = $value;
+    }
+}
+file_put_contents("/tmp/addtomar-runtime-env.php", "<?php\nreturn " . var_export($out, true) . ";\n");
+'
+chmod 640 /tmp/addtomar-runtime-env.php || true
+chown www-data:www-data /tmp/addtomar-runtime-env.php || true
+
 exec apache2-foreground

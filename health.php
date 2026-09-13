@@ -18,8 +18,13 @@ $host = addtomar_env('DB_HOST', '(empty)');
 $port = addtomar_env('DB_PORT', '(empty)');
 $name = addtomar_env('DB_NAME', '(empty)');
 
+$user = addtomar_env('DB_USER', '(empty)');
+$passLen = strlen(addtomar_env('DB_PASS', ''));
+
 echo "database unavailable\n";
 echo 'host=' . $host . "\n";
 echo 'port=' . ($port !== '(empty)' ? $port : addtomar_mysql_default_port()) . "\n";
 echo 'name=' . $name . "\n";
+echo 'user=' . $user . "\n";
+echo 'pass_len=' . $passLen . "\n";
 echo 'error=' . ($error !== '' ? $error : '(none)');
