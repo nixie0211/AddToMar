@@ -1,4 +1,7 @@
 {
+  "buildCommand": null,
+  "outputDirectory": "vercel-gateway",
+  "framework": null,
   "rewrites": [
     { "source": "/login", "destination": "https://addtomar.onrender.com/login.php" },
     { "source": "/login/", "destination": "https://addtomar.onrender.com/login.php" },
