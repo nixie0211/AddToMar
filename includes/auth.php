@@ -3,17 +3,10 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/env.php';
+require_once __DIR__ . '/sessions.php';
 
 if (session_status() === PHP_SESSION_NONE) {
-    $secure = addtomar_is_https();
-    session_set_cookie_params([
-        'lifetime' => 0,
-        'path' => '/',
-        'secure' => $secure,
-        'httponly' => true,
-        'samesite' => 'Lax',
-    ]);
-    session_start();
+    addtomar_boot_session();
 }
 
 if (!defined('APP_TIMEZONE')) {

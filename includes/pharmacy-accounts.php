@@ -16,6 +16,14 @@ function pharmacy_accounts_uploads_root(): string
 
 function pharmacy_accounts_load_all(): array
 {
+    $fromFile = pharmacy_accounts_load_from_file();
+    $fromDatabase = pharmacy_accounts_load_from_database();
+
+    return array_replace($fromFile, $fromDatabase);
+}
+
+function pharmacy_accounts_load_from_file(): array
+{
     $path = pharmacy_accounts_storage_path();
 
     if (!is_file($path)) {
@@ -30,6 +38,26 @@ function pharmacy_accounts_load_all(): array
     $data = json_decode($raw, true);
 
     return is_array($data) ? $data : [];
+}
+
+function pharmacy_accounts_load_from_database(): array
+{
+    try {
+        $rows = caps_db()->query('SELECT * FROM pharmacies')->fetchAll();
+        $accounts = [];
+        foreach ($rows as $row) {
+            $account = pharmacy_accounts_hydrate_db_row($row);
+            $email = pharmacy_accounts_normalize_email((string) ($account['email'] ?? ''));
+            if ($email === '') {
+                continue;
+            }
+            $accounts[$email] = $account;
+        }
+
+        return $accounts;
+    } catch (Throwable) {
+        return [];
+    }
 }
 
 function pharmacy_accounts_save_all(array $accounts): bool

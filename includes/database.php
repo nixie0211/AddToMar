@@ -204,9 +204,17 @@ function caps_run_migrations(PDO $pdo): void
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     ');
 
+    $pdo->exec('
+        CREATE TABLE IF NOT EXISTS php_sessions (
+            id VARCHAR(128) NOT NULL PRIMARY KEY,
+            data MEDIUMTEXT NOT NULL,
+            updated_at INT UNSIGNED NOT NULL,
+            INDEX idx_php_sessions_updated (updated_at)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    ');
+
     caps_clear_sample_reports($pdo);
     caps_ensure_admin_account($pdo);
-    caps_wipe_non_admin_accounts($pdo);
 }
 
 function caps_clear_sample_reports(PDO $pdo): void
@@ -279,85 +287,22 @@ function caps_wipe_directory(string $path): void
 
 function caps_wipe_non_admin_accounts(PDO $pdo): void
 {
-    $pdo->exec('
-        CREATE TABLE IF NOT EXISTS app_meta (
-            meta_key VARCHAR(64) NOT NULL PRIMARY KEY,
-            meta_value VARCHAR(255) NOT NULL
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-    ');
-
-    $stmt = $pdo->prepare('SELECT meta_value FROM app_meta WHERE meta_key = ? LIMIT 1');
-    $stmt->execute(['wipe_non_admin_accounts_v1']);
-    if ($stmt->fetchColumn()) {
-        return;
-    }
-
-    $adminEmails = $pdo->query("SELECT email FROM users WHERE role = 'admin'")->fetchAll(PDO::FETCH_COLUMN);
-    $adminEmails = array_values(array_filter(array_map('strval', $adminEmails)));
-    if ($adminEmails === []) {
-        $adminEmails = ['addtomar@gmail.com'];
-    }
-
-    $placeholders = implode(',', array_fill(0, count($adminEmails), '?'));
-
-    $pdo->exec('SET FOREIGN_KEY_CHECKS = 0');
-
-    foreach (['order_items', 'orders', 'medicines', 'customers', 'suppliers', 'pharmacy_settings', 'cart', 'pharmacy_reports', 'pharmacies'] as $table) {
-        if (caps_table_exists($pdo, $table)) {
-            $pdo->exec('DELETE FROM `' . $table . '`');
-        }
-    }
-
-    if (caps_table_exists($pdo, 'user_addresses')) {
-        $deleteAddresses = $pdo->prepare("DELETE FROM user_addresses WHERE user_email NOT IN ($placeholders)");
-        $deleteAddresses->execute($adminEmails);
-    }
-    if (caps_table_exists($pdo, 'resident_notifications')) {
-        $deleteNotes = $pdo->prepare("DELETE FROM resident_notifications WHERE user_email NOT IN ($placeholders)");
-        $deleteNotes->execute($adminEmails);
-    }
-    if (caps_table_exists($pdo, 'users')) {
-        $pdo->exec("DELETE FROM users WHERE role <> 'admin'");
-    }
-
-    $pdo->exec('SET FOREIGN_KEY_CHECKS = 1');
-
-    $root = dirname(__DIR__);
-    caps_wipe_json_file($root . '/data/pharmacy-accounts.json', "{}\n");
-    caps_wipe_json_file($root . '/data/pharmacy-reports.json', "[]\n");
-    caps_wipe_json_file($root . '/data/admin-notifications.json', "[]\n");
-    caps_wipe_directory($root . '/data/uploads/pharmacies');
-
-    $insert = $pdo->prepare('INSERT INTO app_meta (meta_key, meta_value) VALUES (?, ?)');
-    $insert->execute(['wipe_non_admin_accounts_v1', date('c')]);
+    // One-time cleanup already ran. Do not delete live accounts on later deploys.
 }
 
 function caps_ensure_admin_account(PDO $pdo): void
 {
     $email = 'addtomar@gmail.com';
-    $passwordHash = password_hash('admin123', PASSWORD_DEFAULT);
 
     $stmt = $pdo->prepare('SELECT id FROM users WHERE email = ? LIMIT 1');
     $stmt->execute([$email]);
-    $existing = $stmt->fetch();
-
-    if ($existing) {
-        $update = $pdo->prepare(
-            'UPDATE users
-             SET full_name = ?, password_hash = ?, role = ?, contact_number = ?, address = ?
-             WHERE email = ?'
-        );
-        $update->execute([
-            'AddToMar Admin',
-            $passwordHash,
-            'admin',
-            '09171234567',
-            'AddToMar, Laoag City, Ilocos Norte',
-            $email,
-        ]);
+    if ($stmt->fetch()) {
+        $role = $pdo->prepare("UPDATE users SET role = 'admin' WHERE email = ? AND role <> 'admin'");
+        $role->execute([$email]);
         return;
     }
 
+    $passwordHash = password_hash('admin123', PASSWORD_DEFAULT);
     $insert = $pdo->prepare(
         'INSERT INTO users (email, full_name, contact_number, address, latitude, longitude, password_hash, role)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
