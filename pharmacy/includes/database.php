@@ -23,7 +23,11 @@ function pharmacy_db(): PDO
             PHARMACY_DB_PASS,
             $options
         );
-    } catch (PDOException) {
+    } catch (PDOException $first) {
+        if (!function_exists('addtomar_mysql_can_create_database') || !addtomar_mysql_can_create_database()) {
+            throw $first;
+        }
+
         $dsn = 'mysql:host=' . PHARMACY_DB_HOST . ';port=' . addtomar_env('DB_PORT', '3306') . ';charset=' . PHARMACY_DB_CHARSET;
         $pdo = new PDO($dsn, PHARMACY_DB_USER, PHARMACY_DB_PASS, $options);
         $pdo->exec('CREATE DATABASE IF NOT EXISTS `' . PHARMACY_DB_NAME . '` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci');

@@ -25,6 +25,17 @@ function addtomar_is_https(): bool
         || ((string) ($_SERVER['SERVER_PORT'] ?? '') === '443');
 }
 
+function addtomar_mysql_can_create_database(): bool
+{
+    if (addtomar_env('ADDTOMAR_CREATE_DB', '') === '1') {
+        return true;
+    }
+
+    $host = strtolower(addtomar_env('DB_HOST', 'localhost'));
+
+    return $host === 'localhost' || $host === '127.0.0.1' || $host === '::1';
+}
+
 function addtomar_mysql_dsn(string $host, string $name, string $charset): string
 {
     $port = addtomar_env('DB_PORT', '3306');
