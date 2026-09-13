@@ -171,11 +171,27 @@ function google_oauth_begin_verification(string $email, string $fullName, string
         return ['ok' => false, 'error' => 'Google did not return a valid email address.'];
     }
 
+    // Existing AddToMar logins (password already set) skip the email code
+    // and return to the sign-in form.
+    if (!google_oauth_needs_password_setup($email)) {
+        if ($googleId !== '') {
+            customers_register_from_google($email, trim($fullName), $googleId);
+        }
+        google_oauth_clear_pending();
+        $_SESSION['google_existing_login_email'] = $email;
+
+        return [
+            'ok' => true,
+            'redirect' => login_url() . '?google=existing',
+            'mail_sent' => false,
+        ];
+    }
+
     $_SESSION['google_oauth_pending'] = [
         'email' => $email,
         'full_name' => trim($fullName),
         'google_id' => trim($googleId),
-        'existing_account' => !google_oauth_needs_password_setup($email),
+        'existing_account' => false,
         'attempts' => 0,
     ];
 

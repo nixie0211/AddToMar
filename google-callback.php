@@ -77,5 +77,6 @@ if (!$result['ok']) {
     exit;
 }
 
-header('Location: ' . login_url() . '?google=verify', true, 302);
+$redirect = trim((string) ($result['redirect'] ?? ''));
+header('Location: ' . ($redirect !== '' ? $redirect : login_url() . '?google=verify'), true, 302);
 exit;

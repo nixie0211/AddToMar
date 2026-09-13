@@ -333,11 +333,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $googleFlow === '') {
     google_oauth_clear_pending();
 }
 $googlePending = google_oauth_pending();
+$googleExistingNotice = false;
 $googleExistingLoginEmail = trim((string) ($_SESSION['google_existing_login_email'] ?? ''));
 if ($googleExistingLoginEmail !== '' && (string) ($_GET['google'] ?? '') === 'existing') {
     $email = $googleExistingLoginEmail;
     unset($_SESSION['google_existing_login_email']);
-    $error = 'This Gmail already has an AddToMar account. Enter your password to continue.';
+    $googleExistingNotice = true;
 }
 $forgotPasswordLoginEmail = trim((string) ($_SESSION['forgot_password_login_email'] ?? ''));
 if ($forgotPasswordLoginEmail !== '' && (string) ($_GET['reset'] ?? '') === 'success') {
@@ -1845,6 +1846,8 @@ if ((string) ($_GET['google'] ?? '') === 'verify' && $googlePending === null && 
   .forgot-code-panel h1{font-size:30px;line-height:1.15;color:#0b5f52;margin:0 0 10px;font-family:'Plus Jakarta Sans',sans-serif;}
   .forgot-code-lead{font-size:15px;line-height:1.45;color:#7b8c93;margin:0 0 6px;font-weight:500;}
   .google-existing-notice{font-size:13px;line-height:1.4;color:#0b806f;font-weight:700;margin:0 0 6px;}
+  .login-form + .google-existing-notice,
+  .login-alert.google-existing-notice{margin:0 0 14px;}
   .forgot-code-email{display:block;font-weight:800;font-size:16px;color:#0b5f52;overflow-wrap:anywhere;margin:0 0 28px;}
   .forgot-code-inputs{display:flex;justify-content:center;gap:14px;width:100%;margin:0 0 18px;}
   .forgot-code-inputs input{
@@ -2926,6 +2929,9 @@ if ((string) ($_GET['google'] ?? '') === 'verify' && $googlePending === null && 
         <?php if ($pharmacyRegisterSuccess !== ''): ?>
         <div class="login-alert success"><?= htmlspecialchars($pharmacyRegisterSuccess, ENT_QUOTES, 'UTF-8') ?></div>
         <?php endif; ?>
+        <?php if ($googleExistingNotice): ?>
+        <div class="login-alert success google-existing-notice">This Gmail already has an AddToMar account.</div>
+        <?php endif; ?>
         <?php if ($error !== ''): ?>
         <div class="login-alert error"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></div>
         <?php endif; ?>
@@ -3766,6 +3772,9 @@ toggleBtn?.addEventListener('click', () => {
 passwordInput?.addEventListener('input', updatePasswordToggle);
 passwordInput?.addEventListener('change', updatePasswordToggle);
 updatePasswordToggle();
+<?php if ($googleExistingNotice): ?>
+passwordInput?.focus();
+<?php endif; ?>
 
 function bindPasswordToggle(inputId, buttonId) {
   const input = document.getElementById(inputId);
