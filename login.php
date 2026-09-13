@@ -2752,6 +2752,18 @@ if ((string) ($_GET['google'] ?? '') === 'verify' && $googlePending === null && 
   }
   .login-btn:hover{background:#0a6059;}
   .login-btn:active{transform:scale(.99);}
+  .login-btn.is-loading,
+  .login-btn:disabled{
+    cursor:wait;
+    opacity:.88;
+    pointer-events:none;
+    transform:none;
+  }
+  .google-btn.is-loading{
+    cursor:wait;
+    pointer-events:none;
+    opacity:.88;
+  }
 
   .signup-row{
     text-align:center;
@@ -2956,7 +2968,7 @@ if ((string) ($_GET['google'] ?? '') === 'verify' && $googlePending === null && 
         <div class="login-alert error"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></div>
         <?php endif; ?>
 
-        <form class="login-form" method="post" action="">
+        <form class="login-form" id="login-form" method="post" action="">
           <div class="field">
             <div class="input-wrap">
               <input id="email" name="email" type="email" placeholder="Email" value="<?= htmlspecialchars($email, ENT_QUOTES, 'UTF-8') ?>" required autocomplete="username">
@@ -2980,9 +2992,9 @@ if ((string) ($_GET['google'] ?? '') === 'verify' && $googlePending === null && 
           <div class="forgot-row">
             <a href="#" id="open-forgot-password">Forgot password?</a>
           </div>
-          <button type="submit" class="login-btn">Login</button>
+          <button type="submit" class="login-btn" id="login-submit-btn">Login</button>
           <div class="divider">OR</div>
-          <a class="google-btn" href="<?= htmlspecialchars(app_url('google-login.php'), ENT_QUOTES, 'UTF-8') ?>">
+          <a class="google-btn" id="google-login-btn" href="<?= htmlspecialchars(app_url('google-login.php'), ENT_QUOTES, 'UTF-8') ?>">
             <svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.9 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 8 3l6-6C34.5 5.5 29.5 3.5 24 3.5 12.7 3.5 3.5 12.7 3.5 24S12.7 44.5 24 44.5 44.5 35.3 44.5 24c0-1.2-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.5 15.9 18.9 13 24 13c3.1 0 5.8 1.1 8 3l6-6C34.5 5.5 29.5 3.5 24 3.5c-7.7 0-14.4 4.4-17.7 10.8z"/><path fill="#4CAF50" d="M24 44.5c5.4 0 10.3-1.9 14.1-5.1l-6.5-5.5C29.5 35.6 26.9 36.5 24 36.5c-5.3 0-9.7-3.1-11.3-7.6l-6.6 5.1C9.5 40 16.2 44.5 24 44.5z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.2 5.7l6.5 5.5C41.5 36 44.5 30.6 44.5 24c0-1.2-.1-2.4-.9-3.5z"/></svg>
             Login with Google
           </a>
@@ -3792,6 +3804,25 @@ toggleBtn?.addEventListener('click', () => {
 passwordInput?.addEventListener('input', updatePasswordToggle);
 passwordInput?.addEventListener('change', updatePasswordToggle);
 updatePasswordToggle();
+
+const loginForm = document.getElementById('login-form');
+const loginSubmitBtn = document.getElementById('login-submit-btn');
+const googleLoginBtn = document.getElementById('google-login-btn');
+
+loginForm?.addEventListener('submit', () => {
+  if (!loginSubmitBtn || loginSubmitBtn.classList.contains('is-loading')) return;
+  loginSubmitBtn.classList.add('is-loading');
+  loginSubmitBtn.disabled = true;
+  loginSubmitBtn.setAttribute('aria-busy', 'true');
+  loginSubmitBtn.textContent = 'Logging in';
+});
+
+googleLoginBtn?.addEventListener('click', () => {
+  if (googleLoginBtn.classList.contains('is-loading')) return;
+  googleLoginBtn.classList.add('is-loading');
+  googleLoginBtn.setAttribute('aria-busy', 'true');
+  googleLoginBtn.lastChild.textContent = ' Logging in';
+});
 <?php if ($googleExistingNotice): ?>
 passwordInput?.focus();
 <?php endif; ?>
