@@ -39,8 +39,6 @@ function maps_service_overlay(): array
 {
     return [
         'polygon' => maps_service_polygon(),
-        'title' => 'Only available in this area',
-        'subtitle' => '(Laoag City, San Nicolas, and Batac)',
     ];
 }
 

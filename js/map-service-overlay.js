@@ -27,16 +27,6 @@
     return inside;
   }
 
-  function centroid(ring) {
-    let lat = 0;
-    let lng = 0;
-    ring.forEach((point) => {
-      lat += point[0];
-      lng += point[1];
-    });
-    return [lat / ring.length, lng / ring.length];
-  }
-
   function endpointIcon(kind, label) {
     return L.divIcon({
       className: 'service-area-endpoint',
@@ -77,7 +67,7 @@
 
     if (overlay.start) {
       L.marker([overlay.start.lat, overlay.start.lng], {
-        icon: endpointIcon('start', overlay.start.label || 'Start (Coastline)'),
+        icon: endpointIcon('start', overlay.start.label || 'Start'),
         interactive: false,
         keyboard: false,
         zIndexOffset: 400,
@@ -86,25 +76,11 @@
 
     if (overlay.end) {
       L.marker([overlay.end.lat, overlay.end.lng], {
-        icon: endpointIcon('end', overlay.end.label || 'End (Road Point)'),
+        icon: endpointIcon('end', overlay.end.label || 'End'),
         interactive: false,
         keyboard: false,
         zIndexOffset: 400,
       }).addTo(layer);
     }
-
-    const title = overlay.title || 'Only available in this area';
-    const subtitle = overlay.subtitle || '(Laoag City, San Nicolas, and Batac)';
-    L.marker(centroid(ring), {
-      icon: L.divIcon({
-        className: 'service-area-badge',
-        html: `<div class="service-area-badge-card"><strong><span class="service-area-badge-check">✓</span> ${title}</strong><span>${subtitle}</span></div>`,
-        iconSize: [0, 0],
-        iconAnchor: [0, 0],
-      }),
-      interactive: false,
-      keyboard: false,
-      zIndexOffset: 500,
-    }).addTo(layer);
   };
 })(window);
