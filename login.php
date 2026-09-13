@@ -1510,6 +1510,12 @@ if ((string) ($_GET['google'] ?? '') === 'verify' && $googlePending === null && 
   .signup-location-tools .setup-location-label{
     margin:0;
   }
+  .signup-location-controls .register-map-toolbar{
+    flex-wrap:nowrap;
+    flex-direction:row;
+    margin:0;
+    align-items:stretch;
+  }
   .signup-location-controls .register-map-locate-btn{
     white-space:nowrap;
     width:auto;
