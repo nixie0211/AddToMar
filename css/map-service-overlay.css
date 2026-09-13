@@ -1,3 +1,66 @@
+.service-area-polygon{
+  pointer-events:none !important;
+}
+.legal-modal.map-area-modal,
+.map-area-modal{
+  position:fixed;
+  inset:0;
+  z-index:200000 !important;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:24px 16px;
+}
+.map-area-modal[hidden]{
+  display:none !important;
+}
+.map-area-modal .legal-modal-backdrop{
+  position:absolute;
+  inset:0;
+  border:0;
+  padding:0;
+  background:rgba(11,34,48,.45);
+  backdrop-filter:blur(4px);
+  -webkit-backdrop-filter:blur(4px);
+  cursor:pointer;
+}
+.map-area-modal .legal-modal-dialog{
+  position:relative;
+  z-index:1;
+  width:100%;
+  max-width:420px;
+  max-height:none;
+  padding:28px 26px 22px;
+  text-align:center;
+  background:#fff7f7;
+  border:1px solid #f0b4b4;
+  border-radius:24px;
+  box-shadow:0 24px 60px rgba(15,23,42,.18);
+}
+.map-area-modal .legal-modal-dialog h2{
+  font-size:1.2rem;
+  margin:0 0 8px;
+  color:#c73e3e;
+}
+.map-area-modal .legal-modal-lead{
+  margin:0 0 18px;
+  color:#c73e3e;
+  font-weight:600;
+  line-height:1.45;
+}
+.map-area-modal .legal-modal-ok{
+  width:100%;
+  min-height:44px;
+  border:none;
+  border-radius:12px;
+  background:#c73e3e;
+  color:#fff;
+  font:700 15px/1 'Inter',sans-serif;
+  cursor:pointer;
+}
+.map-area-modal .legal-modal-ok:hover{
+  background:#a83232;
+}
 .service-area-endpoint{
   background:transparent !important;
   border:none !important;

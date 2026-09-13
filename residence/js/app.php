@@ -3069,7 +3069,11 @@ function setAddressMapPin(lat, lng, options = {}){
   }
 
   if(!addressMapInService(lat, lng)){
-    setAddressMapStatus('Choose a location in Laoag City, San Nicolas, or Batac City.');
+    if(typeof window.showMapAreaPopup === 'function'){
+      window.showMapAreaPopup('Pick a location within Laoag City, San Nicolas, or Batac City.');
+    }else{
+      setAddressMapStatus('Choose a location in Laoag City, San Nicolas, or Batac City.');
+    }
     return;
   }
 

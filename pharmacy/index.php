@@ -30,7 +30,7 @@ require_once dirname(__DIR__) . '/includes/maps.php';
 <head>
 <?php include PHARMACY_ROOT . '/partials/head.php'; ?>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
-<link rel="stylesheet" href="<?= htmlspecialchars(app_url('css/map-service-overlay.css'), ENT_QUOTES, 'UTF-8') ?>?v=1">
+<link rel="stylesheet" href="<?= htmlspecialchars(app_url('css/map-service-overlay.css'), ENT_QUOTES, 'UTF-8') ?>?v=2">
 <link rel="stylesheet" href="css/base.css?v=unified-mint-outer-canvas">
 <link rel="stylesheet" href="css/orders.css?v=completed-paid-total-2">
 <link rel="stylesheet" href="css/reports.css">
@@ -47,6 +47,7 @@ require_once dirname(__DIR__) . '/includes/maps.php';
 <?php endforeach; ?>
 
 <?php include PHARMACY_ROOT . '/partials/shell-end.php'; ?>
+<?php include dirname(__DIR__) . '/partials/map-area-modal.php'; ?>
 
 <script src="js/app.php"></script>
 <script type="application/json" id="pharmacy-chart-data"><?= json_encode($chartData ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>
@@ -95,8 +96,9 @@ window.PHARMACY_REGISTER_MAP_CONFIG = <?= json_encode([
 ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
 </script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-<script src="<?= htmlspecialchars(app_url('js/map-service-overlay.js'), ENT_QUOTES, 'UTF-8') ?>?v=3"></script>
-<script src="<?= htmlspecialchars(app_url('js/register-pharmacy-map.js'), ENT_QUOTES, 'UTF-8') ?>?v=settings-map-pin"></script>
+<script src="<?= htmlspecialchars(app_url('js/map-area-popup.js'), ENT_QUOTES, 'UTF-8') ?>?v=1"></script>
+<script src="<?= htmlspecialchars(app_url('js/map-service-overlay.js'), ENT_QUOTES, 'UTF-8') ?>?v=4"></script>
+<script src="<?= htmlspecialchars(app_url('js/register-pharmacy-map.js'), ENT_QUOTES, 'UTF-8') ?>?v=out-of-area-popup-1"></script>
 <script src="js/settings.php"></script>
 <?php live_sync_render_script('pharmacy'); ?>
 </body>

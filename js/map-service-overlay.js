@@ -63,6 +63,7 @@
       fillColor: '#f5c400',
       fillOpacity: 0.12,
       interactive: false,
+      className: 'service-area-polygon',
     }).addTo(layer);
 
     if (overlay.start) {

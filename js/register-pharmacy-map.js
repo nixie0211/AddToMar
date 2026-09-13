@@ -320,8 +320,6 @@
   }
 
   function applyLocation(lat, lng, options = {}) {
-    setHiddenCoords(lat, lng);
-
     if (!isInServiceArea(lat, lng)) {
       if (userMarker && map) {
         map.removeLayer(userMarker);
@@ -331,6 +329,8 @@
       showOutOfAreaPopup();
       return;
     }
+
+    setHiddenCoords(lat, lng);
 
     if (options.userAction) {
       syncLogoFromDom();

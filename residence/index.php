@@ -124,9 +124,11 @@ window.RESIDENCE_CONFIG = <?= json_encode([
 window.nearbyPharmacies = window.RESIDENCE_CONFIG.pharmacies || [];
 </script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
-<link rel="stylesheet" href="<?= htmlspecialchars(app_url('css/map-service-overlay.css'), ENT_QUOTES, 'UTF-8') ?>?v=1">
+<link rel="stylesheet" href="<?= htmlspecialchars(app_url('css/map-service-overlay.css'), ENT_QUOTES, 'UTF-8') ?>?v=2">
+<?php include dirname(__DIR__) . '/partials/map-area-modal.php'; ?>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-<script src="<?= htmlspecialchars(app_url('js/map-service-overlay.js'), ENT_QUOTES, 'UTF-8') ?>?v=3"></script>
+<script src="<?= htmlspecialchars(app_url('js/map-service-overlay.js'), ENT_QUOTES, 'UTF-8') ?>?v=4"></script>
+<script src="<?= htmlspecialchars(app_url('js/map-area-popup.js'), ENT_QUOTES, 'UTF-8') ?>?v=1"></script>
 <script type="application/json" id="residence-live-payload"><?= json_encode([
   'profile' => $residenceProfile,
   'pharmacies' => $residencePharmacyCatalog,
@@ -141,7 +143,7 @@ window.nearbyPharmacies = window.RESIDENCE_CONFIG.pharmacies || [];
   'featuredProductIds' => array_values(array_map(static fn(array $item): int => (int) ($item['id'] ?? 0), $residenceFeaturedProducts)),
   'topSellerIds' => array_values(array_map(static fn(array $item): int => (int) ($item['id'] ?? 0), $residenceTopSellers)),
 ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>
-<script src="<?= residence_asset('js/app.php') ?>?v=service-overlay-1"></script>
+<script src="<?= residence_asset('js/app.php') ?>?v=out-of-area-popup-1"></script>
 <?php live_sync_render_script('residence'); ?>
 <script>
 window.openProductPreview = window.openProductPreview || function(card) {

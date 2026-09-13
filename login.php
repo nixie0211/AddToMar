@@ -371,7 +371,7 @@ if ((string) ($_GET['google'] ?? '') === 'verify' && $googlePending === null && 
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Playfair+Display:wght@600;700&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/login.css?v=account-location-pin-2">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
-<link rel="stylesheet" href="<?= htmlspecialchars(app_url('css/map-service-overlay.css'), ENT_QUOTES, 'UTF-8') ?>?v=1">
+<link rel="stylesheet" href="<?= htmlspecialchars(app_url('css/map-service-overlay.css'), ENT_QUOTES, 'UTF-8') ?>?v=2">
 <style>
   :root{
     --ink:#0d0d0f;
@@ -1870,7 +1870,7 @@ if ((string) ($_GET['google'] ?? '') === 'verify' && $googlePending === null && 
     z-index:90;
   }
   .legal-modal.map-area-modal{
-    z-index:10000;
+    z-index:200000;
   }
   .map-area-modal .legal-modal-dialog{
     max-width:420px;
@@ -3138,15 +3138,6 @@ if ((string) ($_GET['google'] ?? '') === 'verify' && $googlePending === null && 
     </div>
   </div>
 
-  <div class="legal-modal map-area-modal" id="map-area-modal" hidden>
-    <button type="button" class="legal-modal-backdrop" data-map-area-close aria-label="Close"></button>
-    <div class="legal-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="map-area-modal-title">
-      <h2 id="map-area-modal-title">Location not available</h2>
-      <p class="legal-modal-lead" id="map-area-modal-message">Pick a location within Laoag City, San Nicolas, or Batac City.</p>
-      <button type="button" class="legal-modal-ok" data-map-area-close>OK</button>
-    </div>
-  </div>
-
   <div class="legal-modal google-location-modal" id="google-location-modal" hidden>
     <div class="legal-modal-backdrop" aria-hidden="true"></div>
     <div class="legal-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="google-location-title">
@@ -3177,6 +3168,8 @@ if ((string) ($_GET['google'] ?? '') === 'verify' && $googlePending === null && 
       <button type="button" class="google-location-submit" id="google-location-submit">Save location and continue</button>
     </div>
   </div>
+
+  <?php include __DIR__ . '/partials/map-area-modal.php'; ?>
 
 <script>
 function toastComingSoon() {
@@ -3620,7 +3613,12 @@ function toastComingSoon() {
         window.location.href = result.redirect;
         return;
       }
-      if (status) status.textContent = result.message || 'Could not save your location. Please try again.';
+      const message = result.message || 'Could not save your location. Please try again.';
+      if (typeof window.showMapAreaPopup === 'function' && /Laoag|San Nicolas|Batac/i.test(message)) {
+        window.showMapAreaPopup(message);
+      } else if (status) {
+        status.textContent = message;
+      }
     } catch (error) {
       if (status) status.textContent = 'Could not save your location right now. Please try again.';
     } finally {
@@ -3628,37 +3626,6 @@ function toastComingSoon() {
     }
   });
 
-})();
-
-(function setupMapAreaModal() {
-  const modal = document.getElementById('map-area-modal');
-  const messageEl = document.getElementById('map-area-modal-message');
-  if (!modal) return;
-
-  function closeMapArea() {
-    modal.hidden = true;
-    const locationOpen = document.getElementById('google-location-modal')?.hidden === false;
-    if (!locationOpen) {
-      document.body.classList.remove('modal-open');
-    }
-  }
-
-  window.showMapAreaPopup = function (message) {
-    if (messageEl && message) {
-      messageEl.textContent = message;
-    }
-    document.body.appendChild(modal);
-    modal.hidden = false;
-    document.body.classList.add('modal-open');
-  };
-
-  modal.querySelectorAll('[data-map-area-close]').forEach((el) => {
-    el.addEventListener('click', closeMapArea);
-  });
-
-  document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape' && !modal.hidden) closeMapArea();
-  });
 })();
 
 const passwordInput = document.getElementById('password');
@@ -4368,8 +4335,9 @@ window.REGISTER_MAP_CONFIG = <?= json_encode([
 ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
 </script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-<script src="<?= htmlspecialchars(app_url('js/map-service-overlay.js'), ENT_QUOTES, 'UTF-8') ?>?v=3"></script>
-<script src="<?= htmlspecialchars(app_url('js/register-map.js'), ENT_QUOTES, 'UTF-8') ?>?v=esri-satellite-2"></script>
+<script src="<?= htmlspecialchars(app_url('js/map-area-popup.js'), ENT_QUOTES, 'UTF-8') ?>?v=1"></script>
+<script src="<?= htmlspecialchars(app_url('js/map-service-overlay.js'), ENT_QUOTES, 'UTF-8') ?>?v=4"></script>
+<script src="<?= htmlspecialchars(app_url('js/register-map.js'), ENT_QUOTES, 'UTF-8') ?>?v=out-of-area-popup-1"></script>
 <?php if ($openGoogleLocation): ?>
 <script>
 if (typeof window.openGoogleLocationModal === 'function') {

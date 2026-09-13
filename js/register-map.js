@@ -237,8 +237,6 @@
 
     function applyUserLocation(lat, lng, options = {}) {
       const inServiceArea = isInServiceArea(lat, lng);
-      userPos = { lat, lng, inServiceArea };
-      setHiddenCoords(lat, lng);
 
       if (!inServiceArea) {
         if (userMarker && map) {
@@ -249,6 +247,9 @@
         showOutOfAreaPopup();
         return;
       }
+
+      userPos = { lat, lng, inServiceArea };
+      setHiddenCoords(lat, lng);
 
       setUserMarker(lat, lng);
 
