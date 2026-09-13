@@ -176,6 +176,17 @@ function pharmacy_run_migrations(PDO $pdo): void
     pharmacy_ensure_column($pdo, 'suppliers', 'pharmacy_id', 'VARCHAR(32) NULL AFTER id');
     pharmacy_ensure_column($pdo, 'pharmacy_settings', 'pharmacy_id', 'VARCHAR(32) NULL AFTER id');
 
+    $pdo->exec('
+        CREATE TABLE IF NOT EXISTS medicine_images (
+            medicine_id INT NOT NULL PRIMARY KEY,
+            filename VARCHAR(255) NOT NULL,
+            mime VARCHAR(127) NOT NULL DEFAULT \'application/octet-stream\',
+            content LONGBLOB NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    ');
+
     $indexStmt = $pdo->prepare('
         SELECT COUNT(*) FROM information_schema.STATISTICS
         WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND INDEX_NAME = ?

@@ -59,6 +59,7 @@ if ($expiration === '') {
 $dosageSummary = trim(implode(' ', array_filter([$strength, $dosageForm], static fn(string $part): bool => $part !== '')));
 
 $imagePath = null;
+$imageUpload = null;
 $file = $_FILES['image'] ?? null;
 if (is_array($file) && (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
     if ((int) ($file['error'] ?? UPLOAD_ERR_OK) !== UPLOAD_ERR_OK) {
@@ -67,7 +68,8 @@ if (is_array($file) && (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_E
         exit;
     }
 
-    $mime = (string) mime_content_type((string) $file['tmp_name']);
+    $tmpName = (string) ($file['tmp_name'] ?? '');
+    $mime = (string) mime_content_type($tmpName);
     $allowed = [
         'image/jpeg' => 'jpg',
         'image/png' => 'png',
@@ -84,21 +86,18 @@ if (is_array($file) && (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_E
         exit;
     }
 
-    $dir = dirname(__DIR__, 2) . '/data/uploads/medicines';
-    if (!is_dir($dir) && !mkdir($dir, 0775, true) && !is_dir($dir)) {
-        http_response_code(500);
-        echo json_encode(['success' => false, 'message' => 'Could not store the image.']);
+    $bytes = file_get_contents($tmpName);
+    if ($bytes === false || $bytes === '') {
+        http_response_code(422);
+        echo json_encode(['success' => false, 'message' => 'Could not read the image.']);
         exit;
     }
 
-    $filename = bin2hex(random_bytes(8)) . '.' . $allowed[$mime];
-    if (!move_uploaded_file((string) $file['tmp_name'], $dir . '/' . $filename)) {
-        http_response_code(500);
-        echo json_encode(['success' => false, 'message' => 'Could not store the image.']);
-        exit;
-    }
-
-    $imagePath = 'data/uploads/medicines/' . $filename;
+    $imageUpload = [
+        'filename' => bin2hex(random_bytes(8)) . '.' . $allowed[$mime],
+        'mime' => $mime,
+        'content' => $bytes,
+    ];
 }
 
 try {
@@ -118,7 +117,11 @@ try {
             exit;
         }
 
-        $finalImagePath = $imagePath ?? ($existing['image_path'] ?? null);
+        $finalImagePath = $existing['image_path'] ?? null;
+        if ($imageUpload !== null) {
+            pharmacy_medicine_store_image($medicineId, $imageUpload['filename'], $imageUpload['mime'], $imageUpload['content']);
+            $finalImagePath = 'medicine-image.php?id=' . $medicineId;
+        }
 
         $stmt = $pdo->prepare('
             UPDATE medicines SET
@@ -190,10 +193,17 @@ try {
         $imagePath,
     ]);
 
+    $medicineId = (int) $pdo->lastInsertId();
+    if ($imageUpload !== null && $medicineId > 0) {
+        pharmacy_medicine_store_image($medicineId, $imageUpload['filename'], $imageUpload['mime'], $imageUpload['content']);
+        $pdo->prepare('UPDATE medicines SET image_path = ? WHERE id = ? AND ' . pharmacy_scope_sql())
+            ->execute(['medicine-image.php?id=' . $medicineId, $medicineId]);
+    }
+
     echo json_encode([
         'success' => true,
         'message' => 'Medicine saved successfully',
-        'medicine_id' => (int) $pdo->lastInsertId(),
+        'medicine_id' => $medicineId,
     ]);
 } catch (Throwable $e) {
     http_response_code(500);

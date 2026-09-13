@@ -843,14 +843,110 @@ function pharmacy_order_down_payment_percent(array $order, float $defaultPercent
     return (int) round(($down / $total) * 100);
 }
 
+function pharmacy_medicine_db_image_ids(bool $refresh = false): array
+{
+    static $ids = null;
+    if ($refresh) {
+        $ids = null;
+    }
+    if (is_array($ids)) {
+        return $ids;
+    }
+
+    try {
+        $rows = pharmacy_db()->query('SELECT medicine_id FROM medicine_images')->fetchAll(PDO::FETCH_COLUMN);
+        $ids = [];
+        foreach ($rows ?: [] as $rowId) {
+            $ids[(int) $rowId] = true;
+        }
+    } catch (Throwable) {
+        $ids = [];
+    }
+
+    return $ids;
+}
+
+function pharmacy_medicine_store_image(int $medicineId, string $filename, string $mime, string $content): void
+{
+    if ($medicineId <= 0 || $content === '') {
+        return;
+    }
+
+    $stmt = pharmacy_db()->prepare(
+        'INSERT INTO medicine_images (medicine_id, filename, mime, content)
+         VALUES (?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE filename = VALUES(filename), mime = VALUES(mime), content = VALUES(content)'
+    );
+    $stmt->execute([$medicineId, $filename, $mime, $content]);
+    pharmacy_medicine_db_image_ids(true);
+}
+
+function pharmacy_medicine_get_image(int $medicineId): ?array
+{
+    if ($medicineId <= 0) {
+        return null;
+    }
+
+    try {
+        $stmt = pharmacy_db()->prepare(
+            'SELECT medicine_id, filename, mime, content FROM medicine_images WHERE medicine_id = ? LIMIT 1'
+        );
+        $stmt->execute([$medicineId]);
+        $row = $stmt->fetch();
+        if (!is_array($row)) {
+            return null;
+        }
+        if (is_resource($row['content'] ?? null)) {
+            $row['content'] = stream_get_contents($row['content']);
+        }
+
+        return $row;
+    } catch (Throwable) {
+        return null;
+    }
+}
+
 function pharmacy_medicine_image_url(array $medicine): ?string
 {
+    $id = (int) ($medicine['id'] ?? $medicine['medicine_id'] ?? 0);
     $path = trim((string) ($medicine['image_path'] ?? ''));
+    $hasDb = $id > 0 && (
+        str_contains($path, 'medicine-image.php')
+        || isset(pharmacy_medicine_db_image_ids()[$id])
+    );
+    if ($hasDb) {
+        return function_exists('app_url') ? app_url('medicine-image.php?id=' . $id) : ('medicine-image.php?id=' . $id);
+    }
+
     if ($path === '') {
         return null;
     }
 
     $absolute = dirname(__DIR__, 2) . '/' . ltrim($path, '/');
+    if ($id > 0 && is_file($absolute)) {
+        $bytes = file_get_contents($absolute);
+        if (is_string($bytes) && $bytes !== '') {
+            $filename = basename($path);
+            $ext = strtolower((string) pathinfo($filename, PATHINFO_EXTENSION));
+            $mime = match ($ext) {
+                'jpg', 'jpeg' => 'image/jpeg',
+                'png' => 'image/png',
+                'webp' => 'image/webp',
+                default => 'application/octet-stream',
+            };
+            try {
+                pharmacy_medicine_store_image($id, $filename, $mime, $bytes);
+                pharmacy_db()->prepare('UPDATE medicines SET image_path = ? WHERE id = ?')
+                    ->execute(['medicine-image.php?id=' . $id, $id]);
+            } catch (Throwable) {
+                // Fall back to the disk URL below if the database copy cannot be stored.
+            }
+            if (isset(pharmacy_medicine_db_image_ids()[$id])) {
+                return function_exists('app_url') ? app_url('medicine-image.php?id=' . $id) : ('medicine-image.php?id=' . $id);
+            }
+        }
+    }
+
     if (!is_file($absolute)) {
         return null;
     }
