@@ -1454,6 +1454,10 @@ if ((string) ($_GET['google'] ?? '') === 'verify' && $googlePending === null && 
     max-width:480px;
     margin:0;
   }
+  #customer-register-form .signup-step[data-step="3"] .setup-field,
+  #pharmacy-register-form .signup-step[data-step="4"] .setup-field{
+    max-width:none;
+  }
   #customer-register-form .signup-step[data-step="3"]:not([hidden]),
   #pharmacy-register-form .signup-step[data-step="4"]:not([hidden]){
     justify-content:flex-start;
@@ -1502,7 +1506,7 @@ if ((string) ($_GET['google'] ?? '') === 'verify' && $googlePending === null && 
   }
   .signup-location-tools{
     flex:1.7 1 380px;
-    min-width:0;
+    min-width:260px;
     display:flex;
     flex-direction:column;
     gap:6px;
@@ -2145,7 +2149,8 @@ if ((string) ($_GET['google'] ?? '') === 'verify' && $googlePending === null && 
   }
   .register-map-block-inline{margin:4px 0 14px;}
   .register-map-block-inline .register-map-head label,
-  .signup-location-map .setup-location-label{
+  .signup-location-map .setup-location-label,
+  .signup-location-tools .setup-location-label{
     font-size:12.5px;font-weight:600;color:var(--navy);
   }
   .register-map-block-inline .register-map-badge,
@@ -2153,19 +2158,34 @@ if ((string) ($_GET['google'] ?? '') === 'verify' && $googlePending === null && 
     background:rgba(15,122,114,.12);color:var(--teal);
   }
   .register-map-block-inline .register-map-search-input,
-  .signup-location-map .register-map-search-input{
+  .signup-location-map .register-map-search-input,
+  .signup-location-controls .register-map-search-input{
     border:1px solid #d7e8e3;background:#f6fbf9;color:var(--text);font-size:13px;
   }
   .register-map-block-inline .register-map-search-input::placeholder,
-  .signup-location-map .register-map-search-input::placeholder{color:#adaaa2;}
+  .signup-location-map .register-map-search-input::placeholder,
+  .signup-location-controls .register-map-search-input::placeholder{color:#adaaa2;}
   .register-map-block-inline .register-map-tool-btn,
-  .signup-location-map .register-map-tool-btn{
+  .signup-location-map .register-map-tool-btn,
+  .signup-location-controls .register-map-tool-btn{
     border:1px solid #d8d5d0;background:#f4f3f0;color:var(--text);
   }
   .register-map-block-inline .register-map-tool-btn:hover:not(:disabled),
-  .signup-location-map .register-map-tool-btn:hover:not(:disabled){background:#e8e6e2;}
+  .signup-location-map .register-map-tool-btn:hover:not(:disabled),
+  .signup-location-controls .register-map-tool-btn:hover:not(:disabled){background:#e8e6e2;}
   .register-map-block-inline .register-map-hint,
-  .signup-location-map .register-map-hint{color:#9a968f;}
+  .signup-location-map .register-map-hint,
+  .signup-location-grid > .register-map-hint{color:#9a968f;}
+  .signup-location-controls .register-map-search-results{
+    background:#fff;
+    border:1px solid #d7e8e3;
+    box-shadow:0 12px 28px rgba(15,23,42,.12);
+  }
+  .signup-location-controls .register-map-search-item,
+  .signup-location-controls .register-map-search-empty{
+    color:#1b2b34;
+  }
+  .signup-location-controls .register-map-search-item:hover{background:#f0f7f5;}
   .signup-location-map .register-map{
     border:1px solid #d7e8e3;
   }
