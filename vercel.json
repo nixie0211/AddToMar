@@ -2,10 +2,8 @@
   "buildCommand": null,
   "outputDirectory": "vercel-gateway",
   "framework": null,
-  "rewrites": [
-    { "source": "/login", "destination": "https://addtomar.onrender.com/login.php" },
-    { "source": "/login/", "destination": "https://addtomar.onrender.com/login.php" },
-    { "source": "/login.php", "destination": "https://addtomar.onrender.com/login.php" },
-    { "source": "/:path*", "destination": "https://addtomar.onrender.com/:path*" }
+  "routes": [
+    { "src": "^/login/?$", "dest": "https://addtomar.onrender.com/login.php" },
+    { "src": "^/(.*)$", "dest": "https://addtomar.onrender.com/$1" }
   ]
 }
