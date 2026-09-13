@@ -486,8 +486,8 @@ function pharmacyProfileBadgeForCard(card){
   const topIds = new Set((cfg.topSellerIds || []).map(String));
   const featuredIds = new Set((cfg.featuredProductIds || []).map(String));
   if(card.dataset.isNew === '1' || newIds.has(id)) return { type:'new', label:'New' };
+  if(card.dataset.featured === '1' || featuredIds.has(id)) return { type:'featured', label:'Featured' };
   if(topIds.has(id)) return { type:'top', label:'Top Seller' };
-  if(featuredIds.has(id)) return { type:'featured', label:'Featured' };
   return null;
 }
 

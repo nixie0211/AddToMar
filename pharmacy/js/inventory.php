@@ -42,11 +42,51 @@ function initInventoryFilters(){
     grid.hidden = visible === 0;
   }
 
+  function toggleFeaturedMedicine(button){
+    const medicineId = parseInt(button.getAttribute('data-feature-medicine') || '0', 10);
+    if(medicineId < 1 || button.dataset.busy === '1') return;
+
+    const nextFeatured = button.classList.contains('is-on') ? 0 : 1;
+    button.dataset.busy = '1';
+    const body = new FormData();
+    body.append('medicine_id', String(medicineId));
+    body.append('featured', String(nextFeatured));
+
+    fetch('api/toggle-featured.php', { method:'POST', body, credentials:'same-origin' })
+      .then(function(response){ return response.json(); })
+      .then(function(data){
+        if(!data || !data.success) throw new Error(data?.message || 'Could not update featured status.');
+        const on = !!data.featured;
+        button.classList.toggle('is-on', on);
+        button.setAttribute('aria-pressed', on ? 'true' : 'false');
+        button.setAttribute('aria-label', on ? 'Remove from featured products' : 'Feature this product on the resident dashboard');
+        button.title = on ? 'Featured on resident dashboard' : 'Feature on resident dashboard';
+        const card = button.closest('.med-card');
+        if(card){
+          card.classList.toggle('is-featured', on);
+          card.dataset.featured = on ? '1' : '0';
+        }
+      })
+      .catch(function(){
+        window.alert('Could not update featured status. Try again.');
+      })
+      .finally(function(){
+        delete button.dataset.busy;
+      });
+  }
+
   searchInput?.addEventListener('input', applyFilters);
   categoryFilter?.addEventListener('change', applyFilters);
   statusFilter?.addEventListener('change', applyFilters);
 
   grid.addEventListener('click', function(e){
+    const heartBtn = e.target.closest('[data-feature-medicine]');
+    if(heartBtn){
+      e.preventDefault();
+      e.stopPropagation();
+      toggleFeaturedMedicine(heartBtn);
+      return;
+    }
     const editBtn = e.target.closest('[data-edit-medicine]');
     if(!editBtn) return;
     e.preventDefault();

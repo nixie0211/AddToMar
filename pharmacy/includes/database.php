@@ -183,6 +183,7 @@ function pharmacy_run_migrations(PDO $pdo): void
     pharmacy_ensure_column($pdo, 'order_items', 'prescription_path', 'VARCHAR(255) NULL AFTER prescription_required');
 
     pharmacy_ensure_column($pdo, 'medicines', 'pharmacy_id', 'VARCHAR(32) NULL AFTER id');
+    pharmacy_ensure_column($pdo, 'medicines', 'is_featured', 'TINYINT(1) NOT NULL DEFAULT 0 AFTER is_active');
     pharmacy_ensure_column($pdo, 'orders', 'pharmacy_id', 'VARCHAR(32) NULL AFTER id');
     pharmacy_ensure_column($pdo, 'customers', 'pharmacy_id', 'VARCHAR(32) NULL AFTER id');
     pharmacy_ensure_column($pdo, 'suppliers', 'pharmacy_id', 'VARCHAR(32) NULL AFTER id');

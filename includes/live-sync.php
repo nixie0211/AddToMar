@@ -121,7 +121,7 @@ function live_sync_residence_versions(string $email): array
             "SELECT COUNT(*) AS c,
                     COALESCE(MAX(updated_at), '') AS u,
                     COALESCE(SUM(stock_quantity), 0) AS q,
-                    COALESCE(SUM(CRC32(CONCAT(id, '|', IFNULL(is_active, 0), '|', IFNULL(selling_price, 0)))), 0) AS s
+                    COALESCE(SUM(CRC32(CONCAT(id, '|', IFNULL(is_active, 0), '|', IFNULL(is_featured, 0), '|', IFNULL(selling_price, 0)))), 0) AS s
              FROM medicines"
         );
         $orders = $email === ''
@@ -184,7 +184,7 @@ function live_sync_pharmacy_versions(string $pharmacyId): array
         "SELECT COUNT(*) AS c,
                 COALESCE(MAX(updated_at), '') AS u,
                 COALESCE(SUM(stock_quantity), 0) AS q,
-                COALESCE(SUM(CRC32(CONCAT(id, '|', IFNULL(is_active, 0), '|', IFNULL(selling_price, 0)))), 0) AS s
+                COALESCE(SUM(CRC32(CONCAT(id, '|', IFNULL(is_active, 0), '|', IFNULL(is_featured, 0), '|', IFNULL(selling_price, 0)))), 0) AS s
          FROM medicines
          WHERE pharmacy_id = ?",
         [$pharmacyId]

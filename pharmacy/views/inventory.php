@@ -51,12 +51,23 @@
               ]));
             ?>
             <article
-              class="med-card<?= $requiresRx ? ' med-card--rx' : '' ?><?= $statusKey === 'expired' ? ' med-card--expired' : '' ?>"
+              class="med-card<?= $requiresRx ? ' med-card--rx' : '' ?><?= $statusKey === 'expired' ? ' med-card--expired' : '' ?><?= !empty($medicine['is_featured']) ? ' is-featured' : '' ?>"
               data-medicine-id="<?= (int) ($medicine['id'] ?? 0) ?>"
               data-search="<?= htmlspecialchars($searchBlob, ENT_QUOTES, 'UTF-8') ?>"
               data-category="<?= htmlspecialchars($categoryKey, ENT_QUOTES, 'UTF-8') ?>"
               data-status="<?= htmlspecialchars($statusKey, ENT_QUOTES, 'UTF-8') ?>"
+              data-featured="<?= !empty($medicine['is_featured']) ? '1' : '0' ?>"
             >
+              <button
+                type="button"
+                class="med-card-heart<?= !empty($medicine['is_featured']) ? ' is-on' : '' ?>"
+                data-feature-medicine="<?= (int) ($medicine['id'] ?? 0) ?>"
+                aria-pressed="<?= !empty($medicine['is_featured']) ? 'true' : 'false' ?>"
+                aria-label="<?= !empty($medicine['is_featured']) ? 'Remove from featured products' : 'Feature this product on the resident dashboard' ?>"
+                title="<?= !empty($medicine['is_featured']) ? 'Featured on resident dashboard' : 'Feature on resident dashboard' ?>"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+              </button>
               <?php if ($statusKey === 'expired'): ?>
               <span class="med-card-flag med-card-flag--expired">Expired</span>
               <?php elseif ($isNew): ?>

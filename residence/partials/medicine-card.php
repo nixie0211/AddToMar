@@ -47,6 +47,7 @@ $badgeLabel = match ($spotlightBadge) {
             data-price="<?= htmlspecialchars(number_format($price, 2, '.', ''), ENT_QUOTES, 'UTF-8') ?>"
             data-created-at="<?= htmlspecialchars((string) ($medicine['created_at'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
             data-is-new="<?= !empty($medicine['is_new']) ? '1' : '0' ?>"
+            data-featured="<?= !empty($medicine['is_featured']) ? '1' : '0' ?>"
             data-rx="<?= $rxRequired ? '1' : '0' ?>"
             data-distance="999"
             data-desc="<?= htmlspecialchars($description, ENT_QUOTES, 'UTF-8') ?>"
@@ -59,6 +60,11 @@ $badgeLabel = match ($spotlightBadge) {
             <span class="med-card-flag med-card-flag--<?= htmlspecialchars((string) $spotlightBadge, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($badgeLabel, ENT_QUOTES, 'UTF-8') ?></span>
             <?php elseif ($statusLabel !== ''): ?>
             <span class="med-card-flag med-card-flag--<?= htmlspecialchars($status, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($statusLabel, ENT_QUOTES, 'UTF-8') ?></span>
+            <?php endif; ?>
+            <?php if (!empty($medicine['is_featured'])): ?>
+            <span class="med-card-heart is-on" aria-label="Featured product" title="Featured">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+            </span>
             <?php endif; ?>
 
             <?php if ($rxRequired): ?>

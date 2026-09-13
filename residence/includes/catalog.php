@@ -133,6 +133,7 @@ function residence_catalog_hydrate_medicine(array $row, array $pharmacy): array
         'image_url' => pharmacy_medicine_image_url($row),
         'created_at' => (string) ($row['created_at'] ?? ''),
         'is_new' => pharmacy_medicine_is_new($row),
+        'is_featured' => !empty($row['is_featured']),
         'units_sold' => (int) ($row['units_sold'] ?? 0),
     ];
 }
@@ -205,39 +206,12 @@ function residence_catalog_featured_products(array $catalog, int $limit = 12): a
 {
     $items = array_values(array_filter(
         $catalog,
-        static function (array $medicine): bool {
-            return (int) ($medicine['stock_quantity'] ?? 0) >= 5;
-        }
+        static fn(array $medicine): bool => !empty($medicine['is_featured'])
     ));
 
     usort($items, static function (array $a, array $b): int {
-        $imageA = trim((string) ($a['image_url'] ?? '')) !== '' ? 1 : 0;
-        $imageB = trim((string) ($b['image_url'] ?? '')) !== '' ? 1 : 0;
-        if ($imageA !== $imageB) {
-            return $imageB <=> $imageA;
-        }
-
-        $stockCompare = (int) ($b['stock_quantity'] ?? 0) <=> (int) ($a['stock_quantity'] ?? 0);
-        if ($stockCompare !== 0) {
-            return $stockCompare;
-        }
-
         return strcmp((string) ($a['name'] ?? ''), (string) ($b['name'] ?? ''));
     });
-
-    if (count($items) < $limit) {
-        $seen = array_flip(array_column($items, 'id'));
-        foreach ($catalog as $medicine) {
-            if (isset($seen[$medicine['id']])) {
-                continue;
-            }
-            $items[] = $medicine;
-            $seen[$medicine['id']] = true;
-            if (count($items) >= $limit) {
-                break;
-            }
-        }
-    }
 
     return array_slice($items, 0, $limit);
 }
