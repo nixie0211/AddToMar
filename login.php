@@ -893,8 +893,8 @@ if ((string) ($_GET['google'] ?? '') === 'verify' && $googlePending === null && 
     grid-template-columns:1fr;
   }
   .login-panel--register .signup-card #pharmacy-register-map{
-    min-height:280px;
-    height:320px;
+    min-height:0;
+    height:100%;
   }
   .signup-progress--compact li,
   .signup-progress--compact li{font-size:10.5px;}
@@ -1463,6 +1463,9 @@ if ((string) ($_GET['google'] ?? '') === 'verify' && $googlePending === null && 
     justify-content:flex-start;
     align-items:stretch;
     gap:8px;
+    overflow:hidden;
+    flex:1 1 auto;
+    min-height:0;
   }
   #pharmacy-register-form .signup-step[data-step="3"]:not([hidden]){
     display:flex;
@@ -1547,22 +1550,41 @@ if ((string) ($_GET['google'] ?? '') === 'verify' && $googlePending === null && 
     color:#9a968f;
     margin:0;
   }
+  .signup-location-controls,
+  .signup-location-grid > .register-map-hint,
+  .signup-location-grid > .register-map-status{
+    flex-shrink:0;
+  }
   .signup-location-map{
+    flex:1 1 auto;
     min-width:0;
     min-height:0;
     display:flex;
     flex-direction:column;
-    gap:10px;
+    gap:0;
+  }
+  .signup-location-map-frame{
+    position:relative;
+    flex:1 1 auto;
+    min-height:220px;
+    width:100%;
+    border-radius:16px;
+    overflow:hidden;
   }
   .signup-location-map .register-map-badge{
-    align-self:flex-start;
+    position:absolute;
+    top:10px;
+    left:10px;
+    z-index:5;
   }
   #customer-register-form .signup-location-map #register-map,
   #pharmacy-register-form .signup-location-map #pharmacy-register-map{
-    flex:1 1 auto;
-    min-height:320px;
-    height:auto;
+    position:absolute;
+    inset:0;
+    flex:none;
     width:100%;
+    height:100% !important;
+    min-height:0;
     border-radius:16px;
     overflow:hidden;
   }
@@ -2353,9 +2375,8 @@ if ((string) ($_GET['google'] ?? '') === 'verify' && $googlePending === null && 
   }
   .signup-card #register-map,
   .signup-card #pharmacy-register-map{
-    flex:1;
-    min-height:260px;
-    height:auto;
+    min-height:0;
+    height:100%;
   }
   .signup-bottom{margin-top:8px;}
   .setup-pair{
@@ -2455,10 +2476,9 @@ if ((string) ($_GET['google'] ?? '') === 'verify' && $googlePending === null && 
   .setup-btn-save:hover{background:#0a6059;}
   @media (max-width: 1100px){
     .signup-layout{grid-template-columns:1fr;}
-    #customer-register-form .signup-location-map #register-map,
-    #pharmacy-register-form .signup-location-map #pharmacy-register-map{
-      min-height:280px;
-      height:320px;
+    #customer-register-form .signup-location-map-frame,
+    #pharmacy-register-form .signup-location-map-frame{
+      min-height:240px;
     }
     .login-panel--register{
       flex-direction:column;
