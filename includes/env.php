@@ -66,7 +66,10 @@ function addtomar_mysql_ssl_enabled(): bool
 
     $host = strtolower(addtomar_env('DB_HOST', ''));
 
-    return str_contains($host, 'aivencloud.com') || str_contains($host, '.aiven.');
+    return str_contains($host, 'aivencloud.com')
+        || str_contains($host, '.aiven.')
+        || str_contains($host, 'tidbcloud.com')
+        || str_contains($host, '.tidb.');
 }
 
 function addtomar_mysql_options(): array
