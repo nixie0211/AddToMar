@@ -179,10 +179,10 @@ $selectedDays = $pharmacyRegisterValues['operation_days'] ?? [];
           <div class="signup-location-controls">
             <div class="setup-field signup-location-address">
               <label for="pharmacy-register-address">Pharmacy address</label>
-              <textarea id="pharmacy-register-address" name="address" rows="2" placeholder="Street, barangay, city" required><?= htmlspecialchars($pharmacyRegisterValues['address'], ENT_QUOTES, 'UTF-8') ?></textarea>
+              <input id="pharmacy-register-address" name="address" type="text" class="register-map-search-input" placeholder="Street, barangay, city" value="<?= htmlspecialchars($pharmacyRegisterValues['address'], ENT_QUOTES, 'UTF-8') ?>" required autocomplete="street-address">
             </div>
             <div class="signup-location-tools">
-              <span class="setup-location-label">Pin your pharmacy location</span>
+              <label class="setup-location-label" for="pharmacy-register-map-search">Pin your pharmacy location</label>
               <div class="register-map-toolbar">
                 <div class="register-map-search-wrap">
                   <input type="search" id="pharmacy-register-map-search" class="register-map-search-input" placeholder="Search barangay, street, or landmark…" autocomplete="off" aria-label="Search pharmacy location">

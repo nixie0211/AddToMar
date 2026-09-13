@@ -1486,39 +1486,51 @@ if ((string) ($_GET['google'] ?? '') === 'verify' && $googlePending === null && 
     min-height:0;
   }
   .signup-location-controls{
-    display:flex;
-    align-items:flex-end;
-    gap:12px;
+    display:grid;
+    grid-template-columns:minmax(220px, 0.95fr) minmax(340px, 1.55fr);
+    gap:6px 12px;
+    align-items:end;
     width:100%;
     min-width:0;
   }
-  .signup-location-address{
-    flex:1 1 240px;
-    min-width:200px;
-    max-width:none;
-    width:auto;
-    margin:0;
-  }
-  .signup-location-address textarea{
-    min-height:42px;
-    height:42px;
-    resize:vertical;
-  }
+  .signup-location-address,
   .signup-location-tools{
-    flex:1.7 1 380px;
-    min-width:260px;
     display:flex;
     flex-direction:column;
     gap:6px;
-  }
-  .signup-location-tools .setup-location-label{
+    min-width:0;
     margin:0;
+    width:auto;
+    max-width:none;
+  }
+  .signup-location-address label,
+  .signup-location-tools .setup-location-label{
+    display:block;
+    margin:0;
+    min-height:16px;
+    font-size:12.5px;
+    font-weight:600;
+    line-height:1.2;
+    color:var(--navy);
+  }
+  .signup-location-address .register-map-search-input,
+  .signup-location-controls .register-map-search-input,
+  .signup-location-controls .register-map-tool-btn{
+    box-sizing:border-box;
+    height:42px;
+    min-height:42px;
+    padding:0 12px;
+    border-radius:10px;
+    font-size:13px;
+    line-height:42px;
   }
   .signup-location-controls .register-map-toolbar{
+    flex:1 1 auto;
     flex-wrap:nowrap;
     flex-direction:row;
     margin:0;
     align-items:stretch;
+    height:42px;
   }
   .signup-location-controls .register-map-locate-btn{
     white-space:nowrap;
@@ -1527,13 +1539,7 @@ if ((string) ($_GET['google'] ?? '') === 'verify' && $googlePending === null && 
   }
   @media (max-width: 900px){
     .signup-location-controls{
-      flex-wrap:wrap;
-      align-items:stretch;
-    }
-    .signup-location-address,
-    .signup-location-tools{
-      flex:1 1 100%;
-      min-width:0;
+      grid-template-columns:1fr;
     }
   }
   .signup-location-grid > .register-map-hint,
@@ -3108,10 +3114,10 @@ if ((string) ($_GET['google'] ?? '') === 'verify' && $googlePending === null && 
                 <div class="signup-location-controls">
                   <div class="setup-field signup-location-address">
                     <label for="register-address">Address</label>
-                    <textarea id="register-address" name="address" rows="2" placeholder="House no., street, barangay, city" required><?= htmlspecialchars($registerValues['address'], ENT_QUOTES, 'UTF-8') ?></textarea>
+                    <input id="register-address" name="address" type="text" class="register-map-search-input" placeholder="House no., street, barangay, city" value="<?= htmlspecialchars($registerValues['address'], ENT_QUOTES, 'UTF-8') ?>" required autocomplete="street-address">
                   </div>
                   <div class="signup-location-tools">
-                    <span class="setup-location-label">Pin your location</span>
+                    <label class="setup-location-label" for="register-map-search">Pin your location</label>
                     <div class="register-map-toolbar">
                       <div class="register-map-search-wrap">
                         <input type="search" id="register-map-search" class="register-map-search-input" placeholder="Search barangay, street, or landmark…" autocomplete="off" aria-label="Search location on map">
