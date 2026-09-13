@@ -54,15 +54,31 @@ function addtomar_mysql_dsn(string $host, string $name, string $charset): string
     return sprintf('mysql:host=%s;port=%s;dbname=%s;charset=%s', $host, $port, $name, $charset);
 }
 
+function addtomar_mysql_ssl_enabled(): bool
+{
+    $flag = strtolower(addtomar_env('DB_SSL', ''));
+    if (in_array($flag, ['1', 'true', 'yes'], true)) {
+        return true;
+    }
+    if (in_array($flag, ['0', 'false', 'no'], true)) {
+        return false;
+    }
+
+    $host = strtolower(addtomar_env('DB_HOST', ''));
+
+    return str_contains($host, 'aivencloud.com') || str_contains($host, '.aiven.');
+}
+
 function addtomar_mysql_options(): array
 {
     $options = [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         PDO::ATTR_EMULATE_PREPARES => false,
+        PDO::ATTR_TIMEOUT => 8,
     ];
 
-    if (addtomar_env('DB_SSL', '0') === '1') {
+    if (addtomar_mysql_ssl_enabled()) {
         $ca = addtomar_env('DB_SSL_CA', '/etc/ssl/certs/ca-certificates.crt');
         if (is_file($ca)) {
             $options[PDO::MYSQL_ATTR_SSL_CA] = $ca;
@@ -71,6 +87,54 @@ function addtomar_mysql_options(): array
     }
 
     return $options;
+}
+
+function addtomar_mysql_connect(string $host, string $name, string $user, string $pass, string $charset): PDO
+{
+    $options = addtomar_mysql_options();
+    $dsn = addtomar_mysql_dsn($host, $name, $charset);
+    $last = null;
+
+    for ($attempt = 1; $attempt <= 3; $attempt++) {
+        try {
+            $pdo = new PDO($dsn, $user, $pass, $options);
+            addtomar_mysql_disable_ansi_quotes($pdo);
+
+            return $pdo;
+        } catch (PDOException $error) {
+            $last = $error;
+            $message = $error->getMessage();
+            $previous = $error->getPrevious();
+            if ($previous instanceof Throwable) {
+                $message .= ' ' . $previous->getMessage();
+            }
+            $retryable = str_contains($message, 'getaddrinfo')
+                || str_contains($message, '2002')
+                || str_contains($message, 'timed out')
+                || str_contains($message, 'Connection refused');
+            if ($retryable && $attempt < 3) {
+                usleep(400000 * $attempt);
+                continue;
+            }
+            break;
+        }
+    }
+
+    if ($last instanceof PDOException && addtomar_mysql_can_create_database()) {
+        $fallback = new PDO(
+            'mysql:host=' . $host . ';port=' . addtomar_env('DB_PORT', '3306') . ';charset=' . $charset,
+            $user,
+            $pass,
+            $options
+        );
+        $fallback->exec('CREATE DATABASE IF NOT EXISTS `' . $name . '` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci');
+        $fallback->exec('USE `' . $name . '`');
+        addtomar_mysql_disable_ansi_quotes($fallback);
+
+        return $fallback;
+    }
+
+    throw $last ?? new PDOException('Could not connect to the database.');
 }
 
 function addtomar_mysql_disable_ansi_quotes(PDO $pdo): void

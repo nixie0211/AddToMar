@@ -276,17 +276,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'regis
         $customer = customers_find_by_email($email);
 
         if (customers_is_admin($customer) || customers_normalize_email($email) === addtomar_admin_email()) {
-            caps_ensure_admin_account(caps_db());
-            $customer = customers_find_by_email($email) ?? $customer;
-            if (!$customer || !customers_verify_password($customer, $password)) {
-                $error = 'Incorrect password. Please try again.';
-            } else {
-                $_SESSION['portal'] = 'admin';
-                $_SESSION['user_email'] = customers_normalize_email($email);
-                $_SESSION['user_name'] = $customer['full_name'] ?? 'Admin';
-                $_SESSION['user_role'] = 'admin';
-                header('Location: ' . app_url('admin/'), true, 302);
-                exit;
+            try {
+                if (!caps_bootstrap()) {
+                    $error = 'Database is temporarily unavailable. Please try again in a moment.';
+                } else {
+                    caps_ensure_admin_account(caps_db());
+                    $customer = customers_find_by_email($email) ?? $customer;
+                    if (!$customer || !customers_verify_password($customer, $password)) {
+                        $error = 'Incorrect password. Please try again.';
+                    } else {
+                        $_SESSION['portal'] = 'admin';
+                        $_SESSION['user_email'] = customers_normalize_email($email);
+                        $_SESSION['user_name'] = $customer['full_name'] ?? 'Admin';
+                        $_SESSION['user_role'] = 'admin';
+                        header('Location: ' . app_url('admin/'), true, 302);
+                        exit;
+                    }
+                }
+            } catch (Throwable) {
+                $error = 'Database is temporarily unavailable. Please try again in a moment.';
             }
         } elseif ($pharmacy) {
             if (!pharmacy_accounts_verify_password($pharmacy, $password)) {

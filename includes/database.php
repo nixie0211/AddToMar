@@ -30,20 +30,7 @@ function caps_db(): PDO
 
     $options = addtomar_mysql_options();
 
-    try {
-        $pdo = new PDO(addtomar_mysql_dsn(DB_HOST, DB_NAME, DB_CHARSET), DB_USER, DB_PASS, $options);
-    } catch (PDOException $first) {
-        if (!addtomar_mysql_can_create_database()) {
-            throw $first;
-        }
-
-        $dsn = 'mysql:host=' . DB_HOST . ';port=' . addtomar_env('DB_PORT', '3306') . ';charset=' . DB_CHARSET;
-        $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
-        $pdo->exec('CREATE DATABASE IF NOT EXISTS `' . DB_NAME . '` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci');
-        $pdo->exec('USE `' . DB_NAME . '`');
-    }
-
-    addtomar_mysql_disable_ansi_quotes($pdo);
+    $pdo = addtomar_mysql_connect(DB_HOST, DB_NAME, DB_USER, DB_PASS, DB_CHARSET);
 
     caps_run_migrations($pdo);
 
