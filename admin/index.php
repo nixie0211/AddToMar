@@ -7,7 +7,6 @@ require_once __DIR__ . '/config.php';
 $adminPageTitle = match ($adminPage) {
     'pharmacies' => 'Pharmacies',
     'reports' => 'Reports',
-    'database' => 'Database',
     default => 'Overview',
 };
 
@@ -504,9 +503,6 @@ require __DIR__ . '/partials/shell-start.php';
   ?>
 </div>
 <?php endif; ?>
-
-<?php elseif ($adminPage === 'database'): ?>
-<?php require __DIR__ . '/partials/database-page.php'; ?>
 
 <?php else: ?>
 <?php require __DIR__ . '/partials/reports-page.php'; ?>
