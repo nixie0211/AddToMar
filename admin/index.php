@@ -427,12 +427,51 @@ require __DIR__ . '/partials/shell-start.php';
   $closeTime = pharmacy_accounts_format_time((string) ($viewPharmacy['close_time'] ?? ''));
   $logoPath = (string) ($viewPharmacy['logo_path'] ?? '');
   $logoExists = $logoPath !== '' && is_file(dirname(__DIR__) . '/' . $logoPath);
-  $pharmacyDocs = [
-      ['label' => 'Business permit', 'path' => (string) ($viewPharmacy['business_permit_path'] ?? '')],
-      ['label' => 'Pharmacy license', 'path' => (string) ($viewPharmacy['pharmacy_license_path'] ?? '')],
-      ['label' => 'BIR certificate', 'path' => (string) ($viewPharmacy['bir_certificate_path'] ?? '')],
-  ];
   $pharmacyId = (string) ($viewPharmacy['id'] ?? '');
+  pharmacy_accounts_backfill_documents($viewPharmacy);
+  $storedDocs = pharmacy_accounts_list_documents($pharmacyId);
+  $docsByKey = [];
+  foreach ($storedDocs as $storedDoc) {
+      $docsByKey[(string) ($storedDoc['doc_key'] ?? '')][] = $storedDoc;
+  }
+  $pharmacyDocs = [];
+  foreach ([
+      'business_permit' => 'Business permit',
+      'pharmacy_license' => 'Pharmacy license',
+      'bir_certificate' => 'BIR certificate',
+  ] as $docKey => $docLabel) {
+      $copies = $docsByKey[$docKey] ?? [];
+      if ($copies !== []) {
+          foreach ($copies as $index => $copy) {
+              $pharmacyDocs[] = [
+                  'label' => count($copies) > 1 ? $docLabel . ' ' . ($index + 1) : $docLabel,
+                  'path' => '',
+                  'doc_id' => (int) ($copy['id'] ?? 0),
+                  'filename' => (string) ($copy['filename'] ?? ''),
+              ];
+          }
+          continue;
+      }
+
+      $paths = pharmacy_accounts_document_paths($viewPharmacy, $docKey);
+      if ($paths === []) {
+          $pharmacyDocs[] = ['label' => $docLabel, 'path' => '', 'doc_id' => 0, 'filename' => ''];
+          continue;
+      }
+      foreach ($paths as $index => $path) {
+          $pharmacyDocs[] = [
+              'label' => count($paths) > 1 ? $docLabel . ' ' . ($index + 1) : $docLabel,
+              'path' => $path,
+              'doc_id' => 0,
+              'filename' => basename($path),
+          ];
+      }
+  }
+  $logoDocs = $docsByKey['logo'] ?? [];
+  if ($logoDocs !== [] && !$logoExists) {
+      $logoPath = 'admin/document.php?id=' . (int) ($logoDocs[0]['id'] ?? 0);
+      $logoExists = true;
+  }
   // Closing the detail panel removes only the selected-pharmacy parameter.
   $pharmacyReviewListQuery = $pharmacyQuery(['pharmacy' => '']);
   $contact = residence_format_contact((string) ($viewPharmacy['contact_number'] ?? ''));

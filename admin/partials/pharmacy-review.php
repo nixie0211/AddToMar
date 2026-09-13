@@ -107,12 +107,15 @@ $pharmacyReviewCloseLabel = $pharmacyReviewContext === 'panel' ? 'Close' : 'Back
       <div class="rx-docs">
         <?php foreach ($pharmacyDocs as $doc): ?>
         <?php
-          $docPath = $doc['path'];
+          $docPath = (string) ($doc['path'] ?? '');
+          $docId = (int) ($doc['doc_id'] ?? 0);
           $docAbs = $docPath !== '' ? $appRoot . '/' . $docPath : '';
-          $docExists = $docAbs !== '' && is_file($docAbs);
-          $docUrl = $docExists ? app_url($docPath) : '';
-          $docExt = $docExists ? strtolower(pathinfo($docPath, PATHINFO_EXTENSION)) : '';
-          $docKind = $docExt === 'pdf' ? 'pdf' : ($docExists ? 'img' : 'empty');
+          $docExists = $docId > 0 || ($docAbs !== '' && is_file($docAbs));
+          $docUrl = $docId > 0
+            ? admin_url('document.php?id=' . $docId)
+            : ($docExists ? app_url($docPath) : '');
+          $docExt = strtolower(pathinfo((string) ($doc['filename'] ?? $docPath), PATHINFO_EXTENSION));
+          $docKind = $docExt === 'pdf' ? 'pdf' : ($docExists && $docExt !== '' ? 'img' : 'empty');
           $tag = $docExists
             ? '<a class="rx-doc-card" href="' . htmlspecialchars($docUrl, ENT_QUOTES, 'UTF-8') . '" target="_blank" rel="noopener">'
             : '<div class="rx-doc-card is-empty">';

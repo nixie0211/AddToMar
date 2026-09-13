@@ -325,7 +325,150 @@ function pharmacy_accounts_store_upload(array $file, string $accountId, string $
         return null;
     }
 
-    return 'data/uploads/pharmacies/' . $accountId . '/' . $filename;
+    $relative = 'data/uploads/pharmacies/' . $accountId . '/' . $filename;
+    pharmacy_accounts_persist_document_file($accountId, $basename, $relative, $absolute);
+
+    return $relative;
+}
+
+function pharmacy_accounts_mime_for_extension(string $extension): string
+{
+    return match (strtolower($extension)) {
+        'pdf' => 'application/pdf',
+        'jpg', 'jpeg' => 'image/jpeg',
+        'png' => 'image/png',
+        'webp' => 'image/webp',
+        'gif' => 'image/gif',
+        'svg' => 'image/svg+xml',
+        default => 'application/octet-stream',
+    };
+}
+
+function pharmacy_accounts_doc_key_from_filename(string $basename): string
+{
+    $basename = strtolower($basename);
+    if (str_starts_with($basename, 'business_permit')) {
+        return 'business_permit';
+    }
+    if (str_starts_with($basename, 'pharmacy_license')) {
+        return 'pharmacy_license';
+    }
+    if (str_starts_with($basename, 'bir_certificate')) {
+        return 'bir_certificate';
+    }
+    if (str_starts_with($basename, 'logo')) {
+        return 'logo';
+    }
+
+    return $basename;
+}
+
+function pharmacy_accounts_persist_document_file(string $pharmacyId, string $basename, string $relativePath, string $absolutePath): void
+{
+    if ($pharmacyId === '' || !is_file($absolutePath)) {
+        return;
+    }
+
+    $contents = file_get_contents($absolutePath);
+    if ($contents === false || $contents === '') {
+        return;
+    }
+
+    $filename = basename($relativePath);
+    $mime = pharmacy_accounts_mime_for_extension(pathinfo($filename, PATHINFO_EXTENSION));
+    $docKey = pharmacy_accounts_doc_key_from_filename($basename !== '' ? $basename : pathinfo($filename, PATHINFO_FILENAME));
+
+    try {
+        $pdo = caps_db();
+        $sortStmt = $pdo->prepare('SELECT COALESCE(MAX(sort_order), -1) + 1 FROM pharmacy_documents WHERE pharmacy_id = ? AND doc_key = ?');
+        $sortStmt->execute([$pharmacyId, $docKey]);
+        $sort = (int) $sortStmt->fetchColumn();
+
+        $stmt = $pdo->prepare(
+            'INSERT INTO pharmacy_documents (pharmacy_id, doc_key, filename, mime, content, sort_order)
+             VALUES (?, ?, ?, ?, ?, ?)'
+        );
+        $stmt->execute([$pharmacyId, $docKey, $filename, $mime, $contents, $sort]);
+    } catch (Throwable) {
+        // Keep the disk copy even if the database copy cannot be stored.
+    }
+}
+
+function pharmacy_accounts_list_documents(string $pharmacyId, ?string $docKey = null): array
+{
+    if ($pharmacyId === '') {
+        return [];
+    }
+
+    try {
+        if ($docKey) {
+            $stmt = caps_db()->prepare(
+                'SELECT id, pharmacy_id, doc_key, filename, mime, sort_order
+                 FROM pharmacy_documents
+                 WHERE pharmacy_id = ? AND doc_key = ?
+                 ORDER BY sort_order ASC, id ASC'
+            );
+            $stmt->execute([$pharmacyId, $docKey]);
+        } else {
+            $stmt = caps_db()->prepare(
+                'SELECT id, pharmacy_id, doc_key, filename, mime, sort_order
+                 FROM pharmacy_documents
+                 WHERE pharmacy_id = ?
+                 ORDER BY doc_key ASC, sort_order ASC, id ASC'
+            );
+            $stmt->execute([$pharmacyId]);
+        }
+
+        return $stmt->fetchAll() ?: [];
+    } catch (Throwable) {
+        return [];
+    }
+}
+
+function pharmacy_accounts_get_document(int $documentId): ?array
+{
+    if ($documentId <= 0) {
+        return null;
+    }
+
+    try {
+        $stmt = caps_db()->prepare(
+            'SELECT id, pharmacy_id, doc_key, filename, mime, content
+             FROM pharmacy_documents
+             WHERE id = ?
+             LIMIT 1'
+        );
+        $stmt->execute([$documentId]);
+        $row = $stmt->fetch();
+
+        return is_array($row) ? $row : null;
+    } catch (Throwable) {
+        return null;
+    }
+}
+
+function pharmacy_accounts_backfill_documents(array $account): void
+{
+    $pharmacyId = trim((string) ($account['id'] ?? ''));
+    if ($pharmacyId === '' || pharmacy_accounts_list_documents($pharmacyId) !== []) {
+        return;
+    }
+
+    $root = dirname(__DIR__);
+    $keys = ['logo' => 'logo', 'business_permit' => 'business_permit', 'pharmacy_license' => 'pharmacy_license', 'bir_certificate' => 'bir_certificate'];
+    foreach ($keys as $key => $basename) {
+        $paths = $key === 'logo'
+            ? array_values(array_filter([(string) ($account['logo_path'] ?? '')]))
+            : pharmacy_accounts_document_paths($account, $key);
+        foreach ($paths as $index => $relative) {
+            $absolute = $root . '/' . ltrim($relative, '/');
+            if (!is_file($absolute)) {
+                continue;
+            }
+            $name = $index === 0 ? $basename : $basename . '-' . ($index + 1);
+            pharmacy_accounts_persist_document_file($pharmacyId, $name, $relative, $absolute);
+        }
+    }
 }
 
 function pharmacy_accounts_register(array $input, array $files): array
@@ -620,6 +763,12 @@ function pharmacy_accounts_sync_database(array $account): array
     $birPath = (string) ($account['bir_certificate_path'] ?? '');
     $adminNote = (string) ($account['admin_note'] ?? '');
     $statusHistory = pharmacy_accounts_encode_json(pharmacy_accounts_status_events($account));
+    $documentPaths = pharmacy_accounts_encode_json([
+        'business_permit' => pharmacy_accounts_document_paths($account, 'business_permit'),
+        'pharmacy_license' => pharmacy_accounts_document_paths($account, 'pharmacy_license'),
+        'bir_certificate' => pharmacy_accounts_document_paths($account, 'bir_certificate'),
+        'logo' => array_values(array_filter([(string) ($account['logo_path'] ?? '')])),
+    ]);
     $operationDays = is_array($account['operation_days'] ?? null) ? $account['operation_days'] : [];
     $operatingHours = is_array($account['operating_hours'] ?? null) ? $account['operating_hours'] : [];
 
@@ -630,8 +779,8 @@ function pharmacy_accounts_sync_database(array $account): array
             INSERT INTO pharmacies (
                 id, email, pharmacy_name, contact_number, address, latitude, longitude, password_hash,
                 open_time, close_time, operation_days, operating_hours, logo_path, business_permit_path,
-                pharmacy_license_path, bir_certificate_path, status, admin_note, status_history
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                pharmacy_license_path, bir_certificate_path, document_paths, status, admin_note, status_history
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON DUPLICATE KEY UPDATE
                 email = VALUES(email),
                 pharmacy_name = VALUES(pharmacy_name),
@@ -648,6 +797,7 @@ function pharmacy_accounts_sync_database(array $account): array
                 business_permit_path = VALUES(business_permit_path),
                 pharmacy_license_path = VALUES(pharmacy_license_path),
                 bir_certificate_path = VALUES(bir_certificate_path),
+                document_paths = VALUES(document_paths),
                 status = VALUES(status),
                 admin_note = VALUES(admin_note),
                 status_history = VALUES(status_history)
@@ -669,6 +819,7 @@ function pharmacy_accounts_sync_database(array $account): array
             $permitPath,
             $licensePath,
             $birPath,
+            $documentPaths,
             $status,
             $adminNote,
             $statusHistory,
@@ -755,6 +906,24 @@ function pharmacy_accounts_hydrate_db_row(array $row): array
     $row['operating_hours'] = is_array($hours) ? $hours : [];
     $history = json_decode((string) ($row['status_history'] ?? ''), true);
     $row['status_history'] = is_array($history) ? $history : [];
+    $storedPaths = json_decode((string) ($row['document_paths'] ?? ''), true);
+    if (is_array($storedPaths)) {
+        foreach (['business_permit', 'pharmacy_license', 'bir_certificate'] as $key) {
+            $paths = $storedPaths[$key] ?? [];
+            if (!is_array($paths)) {
+                $paths = [];
+            }
+            $paths = array_values(array_filter(array_map('strval', $paths)));
+            if ($paths !== []) {
+                $row[$key . '_paths'] = $paths;
+                $row[$key . '_path'] = $paths[0];
+            }
+        }
+        $logoPaths = $storedPaths['logo'] ?? [];
+        if (is_array($logoPaths) && isset($logoPaths[0]) && trim((string) $logoPaths[0]) !== '') {
+            $row['logo_path'] = (string) $logoPaths[0];
+        }
+    }
     $row['latitude'] = isset($row['latitude']) && $row['latitude'] !== null && $row['latitude'] !== ''
         ? (float) $row['latitude']
         : null;

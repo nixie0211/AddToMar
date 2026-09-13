@@ -213,6 +213,25 @@ function caps_run_migrations(PDO $pdo): void
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     ');
 
+    $pdo->exec('
+        CREATE TABLE IF NOT EXISTS pharmacy_documents (
+            id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            pharmacy_id VARCHAR(32) NOT NULL,
+            doc_key VARCHAR(64) NOT NULL,
+            filename VARCHAR(255) NOT NULL,
+            mime VARCHAR(127) NOT NULL DEFAULT \'application/octet-stream\',
+            content LONGBLOB NOT NULL,
+            sort_order INT NOT NULL DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_pharmacy_documents_pharmacy (pharmacy_id, doc_key)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    ');
+
+    $documentPathsColumn = $pdo->query("SHOW COLUMNS FROM pharmacies LIKE 'document_paths'")->fetch();
+    if (!$documentPathsColumn) {
+        $pdo->exec('ALTER TABLE pharmacies ADD COLUMN document_paths TEXT NULL AFTER bir_certificate_path');
+    }
+
     caps_clear_sample_reports($pdo);
     caps_ensure_admin_account($pdo);
 }
