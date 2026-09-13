@@ -39,7 +39,10 @@ function toggleNotificationMenu(event){
   if(!menu) return;
   const dropdown = menu.querySelector('.topbar-notification-dropdown');
   const open = dropdown?.hidden !== false;
-  if(dropdown) dropdown.hidden = !open;
+  if(dropdown){
+    dropdown.hidden = !open;
+    if(open) applyResidentNotificationFilter(dropdown, activeResidentNotificationMode(dropdown));
+  }
   menu.querySelector('.topbar-nav-item')?.setAttribute('aria-expanded', String(open));
 }
 
@@ -61,16 +64,11 @@ function expandNotificationHistory(event){
   event?.preventDefault?.();
   event?.stopPropagation?.();
   const dropdown = document.querySelector('#topbar-notification-menu .topbar-notification-dropdown');
-  const scroll = dropdown?.querySelector('.topbar-notification-scroll');
   const footer = dropdown?.querySelector('.topbar-notification-footer');
-  if(!dropdown || !scroll) return;
+  if(!dropdown) return;
   dropdown.classList.add('is-expanded');
   if(footer) footer.hidden = true;
-  requestAnimationFrame(() => {
-    const previewHeight = 240;
-    const next = Math.min(scroll.scrollHeight, scroll.scrollTop + previewHeight);
-    scroll.scrollTo({ top: next, behavior: 'smooth' });
-  });
+  applyResidentNotificationFilter(dropdown, activeResidentNotificationMode(dropdown));
 }
 window.expandNotificationHistory = expandNotificationHistory;
 
@@ -193,22 +191,36 @@ function activeResidentNotificationMode(scope){
 
 function applyResidentNotificationFilter(scope, mode){
   if(!scope) return;
-  const items = scope.querySelectorAll('.topbar-notification-item, .notif-full');
+  const expanded = !scope.classList.contains('topbar-notification-dropdown') || scope.classList.contains('is-expanded');
+  const items = scope.querySelectorAll('.topbar-notification-item');
   let visible = 0;
+  let hiddenLater = 0;
   items.forEach(item => {
     const unread = isResidentNotificationUnread(item);
-    const show = mode !== 'unread' || unread;
+    const matchesTab = mode !== 'unread' || unread;
+    const later = !expanded && item.classList.contains('is-later');
+    const show = matchesTab && !later;
     item.hidden = !show;
     item.style.display = show ? '' : 'none';
     if(show) visible += 1;
+    if(matchesTab && later) hiddenLater += 1;
+  });
+  scope.querySelectorAll('[data-notification-group]').forEach(group => {
+    if(!group.classList.contains('topbar-notification-group')) return;
+    const groupVisible = Array.from(group.querySelectorAll('.topbar-notification-item')).some(item => !item.hidden);
+    group.hidden = !groupVisible;
   });
   const empty = scope.querySelector('[data-notification-empty]');
   if(empty){
     const hasItems = items.length > 0;
-    const showEmpty = visible < 1 && (mode === 'unread' || !hasItems);
+    const showEmpty = visible < 1 && hiddenLater < 1 && (mode === 'unread' || !hasItems);
     empty.hidden = !showEmpty;
     empty.style.display = showEmpty ? '' : 'none';
     empty.textContent = mode === 'unread' ? 'No unread notifications' : 'No notifications';
+  }
+  const footer = scope.querySelector('.topbar-notification-footer');
+  if(footer && scope.classList.contains('topbar-notification-dropdown')){
+    footer.hidden = expanded || hiddenLater < 1;
   }
 }
 

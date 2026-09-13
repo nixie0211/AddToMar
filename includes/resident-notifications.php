@@ -110,6 +110,88 @@ function resident_notifications_for_user(string $email): array
     }
 }
 
+function resident_notification_is_today(?string $value): bool
+{
+    $timestamp = strtotime((string) $value);
+    if ($timestamp === false) {
+        return false;
+    }
+
+    $timezone = function_exists('app_timezone') ? app_timezone() : new DateTimeZone('Asia/Manila');
+    $created = (new DateTimeImmutable('@' . $timestamp))->setTimezone($timezone);
+    $now = new DateTimeImmutable('now', $timezone);
+
+    return $created->format('Y-m-d') === $now->format('Y-m-d');
+}
+
+function resident_notification_relative_short(?string $value): string
+{
+    $timestamp = strtotime((string) $value);
+    if ($timestamp === false) {
+        return '';
+    }
+
+    $seconds = time() - $timestamp;
+    if ($seconds < 0) {
+        $seconds = 0;
+    }
+    if ($seconds < 60) {
+        return 'Just now';
+    }
+    if ($seconds < 3600) {
+        return (string) (int) floor($seconds / 60) . 'm';
+    }
+    if ($seconds < 86400) {
+        return (string) (int) floor($seconds / 3600) . 'h';
+    }
+    if ($seconds < 604800) {
+        return (string) (int) floor($seconds / 86400) . 'd';
+    }
+
+    $timezone = function_exists('app_timezone') ? app_timezone() : new DateTimeZone('Asia/Manila');
+    return (new DateTimeImmutable('@' . $timestamp))->setTimezone($timezone)->format('M j');
+}
+
+function resident_notification_initials(array $notification): string
+{
+    $message = trim((string) ($notification['message'] ?? ''));
+    $title = trim((string) ($notification['title'] ?? ''));
+    $source = $message !== '' ? $message : $title;
+    if (preg_match('/\bat\s+([A-Z][\w&.\'-]*(?:\s+[A-Z][\w&.\'-]*){0,3})/', $message, $match)) {
+        $source = $match[1];
+    } elseif (preg_match('/^([A-Z][\w&.\'-]*(?:\s+[A-Z][\w&.\'-]*){0,2})\s/', $message, $match)) {
+        $source = $match[1];
+    }
+
+    $parts = preg_split('/\s+/', trim($source)) ?: [];
+    $initials = '';
+    foreach (array_slice($parts, 0, 2) as $part) {
+        $initials .= strtoupper(substr($part, 0, 1));
+    }
+
+    return $initials !== '' ? $initials : 'Rx';
+}
+
+function resident_notification_tone(array $notification): int
+{
+    return abs(crc32((string) ($notification['id'] ?? $notification['title'] ?? 'n'))) % 4;
+}
+
+function resident_notifications_grouped(array $notifications): array
+{
+    $today = [];
+    $earlier = [];
+    foreach ($notifications as $notification) {
+        if (resident_notification_is_today($notification['created_at'] ?? null)) {
+            $today[] = $notification;
+        } else {
+            $earlier[] = $notification;
+        }
+    }
+
+    return ['today' => $today, 'earlier' => $earlier];
+}
+
 function resident_reports_for_user(string $email): array
 {
     try {

@@ -86,20 +86,22 @@
               </span>
               <span>Notification</span>
             </button>
-            <div class="topbar-notification-dropdown" role="dialog" aria-label="Notifications" hidden data-has-more="<?= count($residenceNotifications ?? []) > 3 ? '1' : '0' ?>">
-              <div class="topbar-notification-head"><h3>Notifications</h3></div>
-              <div class="topbar-notification-tabs"><button type="button" class="is-active" onclick="filterResidentNotificationTab('all', this, event)">All</button><button type="button" onclick="filterResidentNotificationTab('unread', this, event)">Unread</button></div>
-              <div class="topbar-notification-scroll">
-                <?php foreach ($residenceNotifications ?? [] as $notification): ?>
-                <article class="topbar-notification-item<?= empty($notification['read_at']) ? ' is-unread' : ' is-read' ?>"<?= resident_notification_click_attr($notification) ?>>
-                  <span class="topbar-notification-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 3h12v18H6z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg></span>
-                  <div class="topbar-notification-copy"><p><?= htmlspecialchars((string) $notification['title'], ENT_QUOTES, 'UTF-8') ?></p><span><?= htmlspecialchars((string) $notification['message'], ENT_QUOTES, 'UTF-8') ?></span><time><?= htmlspecialchars(date('M j, g:i A', strtotime((string) $notification['created_at'])), ENT_QUOTES, 'UTF-8') ?></time></div>
-                  <?php if (empty($notification['read_at'])): ?><i class="topbar-notification-dot" aria-label="Unread"></i><?php endif; ?>
-                </article>
-                <?php endforeach; ?>
-                <p class="topbar-notification-empty" data-notification-empty hidden>No unread notifications</p>
+            <div class="topbar-notification-dropdown" role="dialog" aria-label="Notifications" hidden data-has-more="<?= count($residenceNotifications ?? []) > 4 ? '1' : '0' ?>">
+              <div class="topbar-notification-head">
+                <h3>Notifications</h3>
+                <button type="button" class="topbar-notification-options" onclick="event.stopPropagation(); closeNotificationMenu(); go('notifications');" aria-label="See all notifications">···</button>
               </div>
-              <div class="topbar-notification-footer"<?= count($residenceNotifications ?? []) > 3 ? '' : ' hidden' ?>><button type="button" onclick="expandNotificationHistory(event)">See previous notifications</button></div>
+              <div class="topbar-notification-tabs">
+                <button type="button" class="is-active" onclick="filterResidentNotificationTab('all', this, event)">All</button>
+                <button type="button" onclick="filterResidentNotificationTab('unread', this, event)">Unread</button>
+              </div>
+              <div class="topbar-notification-scroll">
+                <?php
+                $notificationListContext = 'dropdown';
+                include RESIDENCE_ROOT . '/partials/notification-list.php';
+                ?>
+              </div>
+              <div class="topbar-notification-footer"<?= count($residenceNotifications ?? []) > 4 ? '' : ' hidden' ?>><button type="button" onclick="expandNotificationHistory(event)">See previous notifications</button></div>
             </div>
           </div>
           <button type="button" class="topbar-nav-item" id="sb-cart-target" data-nav="cart" onclick="go('cart')">
