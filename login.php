@@ -1476,27 +1476,60 @@ if ((string) ($_GET['google'] ?? '') === 'verify' && $googlePending === null && 
   .signup-location-grid{
     display:flex;
     flex-direction:column;
-    gap:20px;
+    gap:12px;
     width:100%;
     flex:1 1 auto;
     min-height:0;
   }
-  .signup-location-fields{
+  .signup-location-controls{
+    display:flex;
+    align-items:flex-end;
+    gap:12px;
+    width:100%;
+    min-width:0;
+  }
+  .signup-location-address{
+    flex:1 1 240px;
+    min-width:200px;
+    max-width:none;
+    width:auto;
+    margin:0;
+  }
+  .signup-location-address textarea{
+    min-height:42px;
+    height:42px;
+    resize:vertical;
+  }
+  .signup-location-tools{
+    flex:1.7 1 380px;
     min-width:0;
     display:flex;
     flex-direction:column;
-    gap:10px;
+    gap:6px;
   }
-  .signup-location-fields .setup-field{
-    max-width:none;
-    width:100%;
+  .signup-location-tools .setup-location-label{
+    margin:0;
   }
-  .signup-location-map .register-map-toolbar{
-    flex-wrap:wrap;
+  .signup-location-controls .register-map-locate-btn{
+    white-space:nowrap;
+    width:auto;
+    flex-shrink:0;
   }
-  .signup-location-map .register-map-hint,
-  .signup-location-map .register-map-status{
+  @media (max-width: 900px){
+    .signup-location-controls{
+      flex-wrap:wrap;
+      align-items:stretch;
+    }
+    .signup-location-address,
+    .signup-location-tools{
+      flex:1 1 100%;
+      min-width:0;
+    }
+  }
+  .signup-location-grid > .register-map-hint,
+  .signup-location-grid > .register-map-status{
     color:#9a968f;
+    margin:0;
   }
   .signup-location-map{
     min-width:0;
@@ -3046,27 +3079,29 @@ if ((string) ($_GET['google'] ?? '') === 'verify' && $googlePending === null && 
 
             <div class="signup-step" data-step="3" hidden>
               <div class="signup-location-grid">
-                <div class="signup-location-fields">
-                  <div class="setup-field">
+                <div class="signup-location-controls">
+                  <div class="setup-field signup-location-address">
                     <label for="register-address">Address</label>
-                    <textarea id="register-address" name="address" rows="3" placeholder="House no., street, barangay, city" required><?= htmlspecialchars($registerValues['address'], ENT_QUOTES, 'UTF-8') ?></textarea>
+                    <textarea id="register-address" name="address" rows="2" placeholder="House no., street, barangay, city" required><?= htmlspecialchars($registerValues['address'], ENT_QUOTES, 'UTF-8') ?></textarea>
+                  </div>
+                  <div class="signup-location-tools">
+                    <span class="setup-location-label">Pin your location</span>
+                    <div class="register-map-toolbar">
+                      <div class="register-map-search-wrap">
+                        <input type="search" id="register-map-search" class="register-map-search-input" placeholder="Search barangay, street, or landmark…" autocomplete="off" aria-label="Search location on map">
+                        <button type="button" id="register-map-search-btn" class="register-map-tool-btn">Search</button>
+                        <ul id="register-map-search-results" class="register-map-search-results" hidden></ul>
+                      </div>
+                      <button type="button" id="register-map-locate-btn" class="register-map-tool-btn register-map-locate-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s7-4.35 7-10a7 7 0 1 0-14 0c0 5.65 7 10 7 10z"/><circle cx="12" cy="11" r="2.5"/></svg>
+                        Use my location
+                      </button>
+                    </div>
                   </div>
                 </div>
+                <p class="register-map-hint">Click the map, search, or use your location.</p>
+                <p id="register-map-status" class="register-map-status" hidden aria-live="polite"></p>
                 <div class="signup-location-map">
-                  <span class="setup-location-label">Pin your location</span>
-                  <div class="register-map-toolbar">
-                    <div class="register-map-search-wrap">
-                      <input type="search" id="register-map-search" class="register-map-search-input" placeholder="Search barangay, street, or landmark…" autocomplete="off" aria-label="Search location on map">
-                      <button type="button" id="register-map-search-btn" class="register-map-tool-btn">Search</button>
-                      <ul id="register-map-search-results" class="register-map-search-results" hidden></ul>
-                    </div>
-                    <button type="button" id="register-map-locate-btn" class="register-map-tool-btn register-map-locate-btn">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s7-4.35 7-10a7 7 0 1 0-14 0c0 5.65 7 10 7 10z"/><circle cx="12" cy="11" r="2.5"/></svg>
-                      Use my location
-                    </button>
-                  </div>
-                  <p class="register-map-hint">Click the map, search, or use your location.</p>
-                  <p id="register-map-status" class="register-map-status" hidden aria-live="polite"></p>
                   <div class="signup-location-map-frame">
                     <span class="register-map-badge">Laoag · San Nicolas · Batac</span>
                     <div id="register-map" class="register-map" aria-label="Map for setting your pickup location"></div>

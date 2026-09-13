@@ -176,29 +176,31 @@ $selectedDays = $pharmacyRegisterValues['operation_days'] ?? [];
 
       <div class="signup-step" data-step="4" hidden>
         <div class="signup-location-grid">
-          <div class="signup-location-fields">
-            <div class="setup-field">
+          <div class="signup-location-controls">
+            <div class="setup-field signup-location-address">
               <label for="pharmacy-register-address">Pharmacy address</label>
-              <textarea id="pharmacy-register-address" name="address" rows="3" placeholder="Street, barangay, city" required><?= htmlspecialchars($pharmacyRegisterValues['address'], ENT_QUOTES, 'UTF-8') ?></textarea>
+              <textarea id="pharmacy-register-address" name="address" rows="2" placeholder="Street, barangay, city" required><?= htmlspecialchars($pharmacyRegisterValues['address'], ENT_QUOTES, 'UTF-8') ?></textarea>
+            </div>
+            <div class="signup-location-tools">
+              <span class="setup-location-label">Pin your pharmacy location</span>
+              <div class="register-map-toolbar">
+                <div class="register-map-search-wrap">
+                  <input type="search" id="pharmacy-register-map-search" class="register-map-search-input" placeholder="Search barangay, street, or landmark…" autocomplete="off" aria-label="Search pharmacy location">
+                  <button type="button" id="pharmacy-register-map-search-btn" class="register-map-tool-btn">Search</button>
+                  <ul id="pharmacy-register-map-search-results" class="register-map-search-results" hidden></ul>
+                </div>
+                <button type="button" id="pharmacy-register-map-locate-btn" class="register-map-tool-btn register-map-locate-btn">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M12 21s7-4.35 7-10a7 7 0 1 0-14 0c0 5.65 7 10 7 10z"/><circle cx="12" cy="11" r="2.5"/>
+                  </svg>
+                  Use my location
+                </button>
+              </div>
             </div>
           </div>
+          <p class="register-map-hint">Click the map or drag the pin to set your pharmacy location.</p>
+          <p id="pharmacy-register-map-status" class="register-map-status" hidden aria-live="polite"></p>
           <div class="signup-location-map">
-            <span class="setup-location-label">Pin your pharmacy location</span>
-            <div class="register-map-toolbar">
-              <div class="register-map-search-wrap">
-                <input type="search" id="pharmacy-register-map-search" class="register-map-search-input" placeholder="Search barangay, street, or landmark…" autocomplete="off" aria-label="Search pharmacy location">
-                <button type="button" id="pharmacy-register-map-search-btn" class="register-map-tool-btn">Search</button>
-                <ul id="pharmacy-register-map-search-results" class="register-map-search-results" hidden></ul>
-              </div>
-              <button type="button" id="pharmacy-register-map-locate-btn" class="register-map-tool-btn register-map-locate-btn">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <path d="M12 21s7-4.35 7-10a7 7 0 1 0-14 0c0 5.65 7 10 7 10z"/><circle cx="12" cy="11" r="2.5"/>
-                </svg>
-                Use my location
-              </button>
-            </div>
-            <p class="register-map-hint">Click the map or drag the pin to set your pharmacy location.</p>
-            <p id="pharmacy-register-map-status" class="register-map-status" hidden aria-live="polite"></p>
             <div class="signup-location-map-frame">
               <span class="register-map-badge">Laoag · San Nicolas · Batac</span>
               <div id="pharmacy-register-map" class="register-map" aria-label="Map for pinning pharmacy location"></div>
