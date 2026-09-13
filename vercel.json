@@ -1,12 +1,8 @@
 {
-  "functions": {
-    "api/index.php": {
-      "runtime": "vercel-php@0.7.4",
-      "includeFiles": "{*.php,ajax/**,admin/**,pharmacy/**,residence/**,includes/**,config/**,partials/**,css/**,js/**,api/**}"
-    }
-  },
-  "routes": [
-    { "src": "/login/?", "dest": "/api/index.php" },
-    { "src": "/(.*)", "dest": "/api/index.php" }
+  "rewrites": [
+    { "source": "/login", "destination": "https://addtomar.onrender.com/login.php" },
+    { "source": "/login/", "destination": "https://addtomar.onrender.com/login.php" },
+    { "source": "/login.php", "destination": "https://addtomar.onrender.com/login.php" },
+    { "source": "/:path*", "destination": "https://addtomar.onrender.com/:path*" }
   ]
 }
