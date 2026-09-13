@@ -234,6 +234,7 @@ function caps_run_migrations(PDO $pdo): void
 
     caps_clear_sample_reports($pdo);
     caps_ensure_admin_account($pdo);
+    caps_reset_admin_operational_data($pdo);
 }
 
 function caps_clear_sample_reports(PDO $pdo): void
@@ -306,7 +307,71 @@ function caps_wipe_directory(string $path): void
 
 function caps_wipe_non_admin_accounts(PDO $pdo): void
 {
-    // One-time cleanup already ran. Do not delete live accounts on later deploys.
+    // Disabled. Use caps_reset_admin_operational_data() for a one-time clear.
+}
+
+function caps_reset_admin_operational_data(PDO $pdo): void
+{
+    $pdo->exec('
+        CREATE TABLE IF NOT EXISTS app_meta (
+            meta_key VARCHAR(64) NOT NULL PRIMARY KEY,
+            meta_value VARCHAR(255) NOT NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    ');
+
+    $stmt = $pdo->prepare('SELECT meta_value FROM app_meta WHERE meta_key = ? LIMIT 1');
+    $stmt->execute(['reset_admin_operational_data_v1']);
+    if ($stmt->fetchColumn()) {
+        return;
+    }
+
+    $pdo->exec('SET FOREIGN_KEY_CHECKS = 0');
+    foreach ([
+        'order_items',
+        'orders',
+        'medicines',
+        'customers',
+        'suppliers',
+        'pharmacy_settings',
+        'pharmacy_documents',
+        'cart',
+        'pharmacy_reports',
+        'pharmacies',
+        'php_sessions',
+    ] as $table) {
+        if (caps_table_exists($pdo, $table)) {
+            $pdo->exec('DELETE FROM `' . $table . '`');
+        }
+    }
+
+    $adminEmails = $pdo->query("SELECT email FROM users WHERE role = 'admin'")->fetchAll(PDO::FETCH_COLUMN);
+    $adminEmails = array_values(array_filter(array_map('strval', $adminEmails)));
+    if ($adminEmails === []) {
+        $adminEmails = ['addtomar@gmail.com'];
+    }
+    $placeholders = implode(',', array_fill(0, count($adminEmails), '?'));
+
+    if (caps_table_exists($pdo, 'user_addresses')) {
+        $deleteAddresses = $pdo->prepare("DELETE FROM user_addresses WHERE user_email NOT IN ($placeholders)");
+        $deleteAddresses->execute($adminEmails);
+    }
+    if (caps_table_exists($pdo, 'resident_notifications')) {
+        $deleteNotes = $pdo->prepare("DELETE FROM resident_notifications WHERE user_email NOT IN ($placeholders)");
+        $deleteNotes->execute($adminEmails);
+    }
+    if (caps_table_exists($pdo, 'users')) {
+        $pdo->exec("DELETE FROM users WHERE role <> 'admin'");
+    }
+    $pdo->exec('SET FOREIGN_KEY_CHECKS = 1');
+
+    $root = dirname(__DIR__);
+    caps_wipe_json_file($root . '/data/pharmacy-accounts.json', "{}\n");
+    caps_wipe_json_file($root . '/data/pharmacy-reports.json', "[]\n");
+    caps_wipe_json_file($root . '/data/admin-notifications.json', "[]\n");
+    caps_wipe_directory($root . '/data/uploads/pharmacies');
+
+    $insert = $pdo->prepare('INSERT INTO app_meta (meta_key, meta_value) VALUES (?, ?)');
+    $insert->execute(['reset_admin_operational_data_v1', date('c')]);
 }
 
 function caps_ensure_admin_account(PDO $pdo): void
