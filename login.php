@@ -3151,7 +3151,6 @@ if ((string) ($_GET['google'] ?? '') === 'verify' && $googlePending === null && 
                     </div>
                   </div>
                 </div>
-                <p class="register-map-hint">Click the map, search, or use your location.</p>
                 <p id="register-map-status" class="register-map-status" hidden aria-live="polite"></p>
                 <div class="signup-location-map">
                   <div class="signup-location-map-frame">
@@ -3241,7 +3240,6 @@ if ((string) ($_GET['google'] ?? '') === 'verify' && $googlePending === null && 
           Use my location
         </button>
       </div>
-      <p class="register-map-hint">Click the map, search, or use your location.</p>
       <p id="google-location-map-status" class="register-map-status" hidden aria-live="polite"></p>
       <div class="signup-location-map-frame">
         <span class="register-map-badge">Laoag · San Nicolas · Batac</span>
