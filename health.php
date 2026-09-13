@@ -20,6 +20,6 @@ $name = addtomar_env('DB_NAME', '(empty)');
 
 echo "database unavailable\n";
 echo 'host=' . $host . "\n";
-echo 'port=' . $port . "\n";
+echo 'port=' . ($port !== '(empty)' ? $port : addtomar_mysql_default_port()) . "\n";
 echo 'name=' . $name . "\n";
 echo 'error=' . ($error !== '' ? $error : '(none)');

@@ -12,9 +12,11 @@ services:
       - key: DB_HOST
         sync: false
       - key: DB_PORT
-        value: "3306"
+        value: "4000"
       - key: DB_NAME
         value: CAPS
+      - key: DB_SSL
+        value: "1"
       - key: DB_USER
         sync: false
       - key: DB_PASS

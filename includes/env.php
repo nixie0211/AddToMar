@@ -37,9 +37,20 @@ function addtomar_admin_bootstrap_password(): string
     return $password !== '' ? $password : 'admin123';
 }
 
+function addtomar_mysql_is_tidb(): bool
+{
+    $host = strtolower(addtomar_env('DB_HOST', ''));
+
+    return str_contains($host, 'tidbcloud.com') || str_contains($host, '.tidb.');
+}
+
 function addtomar_mysql_can_create_database(): bool
 {
     if (addtomar_env('ADDTOMAR_CREATE_DB', '') === '1') {
+        return true;
+    }
+
+    if (addtomar_mysql_is_tidb()) {
         return true;
     }
 
@@ -48,10 +59,43 @@ function addtomar_mysql_can_create_database(): bool
     return $host === 'localhost' || $host === '127.0.0.1' || $host === '::1';
 }
 
-function addtomar_mysql_dsn(string $host, string $name, string $charset): string
+function addtomar_mysql_default_port(): string
 {
-    $port = addtomar_env('DB_PORT', '3306');
-    return sprintf('mysql:host=%s;port=%s;dbname=%s;charset=%s', $host, $port, $name, $charset);
+    $port = addtomar_env('DB_PORT', '');
+    if ($port !== '') {
+        return $port;
+    }
+
+    return addtomar_mysql_is_tidb() ? '4000' : '3306';
+}
+
+function addtomar_mysql_dsn(string $host, string $name, string $charset, bool $includeDatabase = true): string
+{
+    $port = addtomar_mysql_default_port();
+    if ($includeDatabase && $name !== '') {
+        return sprintf('mysql:host=%s;port=%s;dbname=%s;charset=%s', $host, $port, $name, $charset);
+    }
+
+    return sprintf('mysql:host=%s;port=%s;charset=%s', $host, $port, $charset);
+}
+
+function addtomar_mysql_ssl_ca_path(): string
+{
+    $configured = addtomar_env('DB_SSL_CA', '');
+    $candidates = array_values(array_filter([
+        $configured,
+        '/etc/ssl/certs/ca-certificates.crt',
+        '/etc/ssl/cert.pem',
+        '/etc/pki/tls/certs/ca-bundle.crt',
+    ]));
+
+    foreach ($candidates as $path) {
+        if (is_file($path)) {
+            return $path;
+        }
+    }
+
+    return '';
 }
 
 function addtomar_mysql_ssl_enabled(): bool
@@ -82,8 +126,8 @@ function addtomar_mysql_options(): array
     ];
 
     if (addtomar_mysql_ssl_enabled()) {
-        $ca = addtomar_env('DB_SSL_CA', '/etc/ssl/certs/ca-certificates.crt');
-        if (is_file($ca)) {
+        $ca = addtomar_mysql_ssl_ca_path();
+        if ($ca !== '') {
             $options[PDO::MYSQL_ATTR_SSL_CA] = $ca;
         }
         $options[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false;
@@ -123,18 +167,28 @@ function addtomar_mysql_connect(string $host, string $name, string $user, string
         }
     }
 
-    if ($last instanceof PDOException && addtomar_mysql_can_create_database()) {
-        $fallback = new PDO(
-            'mysql:host=' . $host . ';port=' . addtomar_env('DB_PORT', '3306') . ';charset=' . $charset,
-            $user,
-            $pass,
-            $options
-        );
-        $fallback->exec('CREATE DATABASE IF NOT EXISTS `' . $name . '` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci');
-        $fallback->exec('USE `' . $name . '`');
-        addtomar_mysql_disable_ansi_quotes($fallback);
+    $unknownDatabase = $last instanceof PDOException && (
+        str_contains($last->getMessage(), 'Unknown database')
+        || str_contains($last->getMessage(), '1049')
+    );
 
-        return $fallback;
+    if ($last instanceof PDOException && ($unknownDatabase || addtomar_mysql_can_create_database())) {
+        try {
+            $fallback = new PDO(
+                addtomar_mysql_dsn($host, $name, $charset, false),
+                $user,
+                $pass,
+                $options
+            );
+            $safeName = preg_replace('/[^A-Za-z0-9_]/', '', $name) ?: 'CAPS';
+            $fallback->exec('CREATE DATABASE IF NOT EXISTS `' . $safeName . '`');
+            $fallback->exec('USE `' . $safeName . '`');
+            addtomar_mysql_disable_ansi_quotes($fallback);
+
+            return $fallback;
+        } catch (PDOException) {
+            // Fall through and throw the original connection error.
+        }
     }
 
     throw $last ?? new PDOException('Could not connect to the database.');
@@ -142,10 +196,14 @@ function addtomar_mysql_connect(string $host, string $name, string $user, string
 
 function addtomar_mysql_disable_ansi_quotes(PDO $pdo): void
 {
-    $mode = (string) $pdo->query('SELECT @@SESSION.sql_mode')->fetchColumn();
-    $parts = array_values(array_filter(
-        array_map('trim', explode(',', $mode)),
-        static fn (string $part): bool => !in_array(strtoupper($part), ['ANSI_QUOTES', 'ANSI'], true) && $part !== ''
-    ));
-    $pdo->exec('SET SESSION sql_mode = ' . $pdo->quote(implode(',', $parts)));
+    try {
+        $mode = (string) $pdo->query('SELECT @@SESSION.sql_mode')->fetchColumn();
+        $parts = array_values(array_filter(
+            array_map('trim', explode(',', $mode)),
+            static fn (string $part): bool => !in_array(strtoupper($part), ['ANSI_QUOTES', 'ANSI'], true) && $part !== ''
+        ));
+        $pdo->exec('SET SESSION sql_mode = ' . $pdo->quote(implode(',', $parts)));
+    } catch (Throwable) {
+        // TiDB and some managed MySQL hosts ignore sql_mode tweaks.
+    }
 }
