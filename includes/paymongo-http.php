@@ -45,7 +45,7 @@ function paymongo_http(string $method, string $endpoint, ?array $body = null): a
 
 function paymongo_app_base_url(): string
 {
-    $configured = rtrim(addtomar_env('APP_URL'), '/');
+    $configured = addtomar_public_origin();
     if ($configured !== '') {
         return $configured;
     }

@@ -17,7 +17,7 @@ mkdir -p /var/www/html/data/uploads/receipts \
 chown -R www-data:www-data /var/www/html/data || true
 
 php -r '
-$keys = ["DB_HOST","DB_PORT","DB_NAME","DB_USER","DB_PASS","DB_SSL","DB_SSL_CA","APP_URL"];
+$keys = ["DB_HOST","DB_PORT","DB_NAME","DB_USER","DB_PASS","DB_SSL","DB_SSL_CA","APP_URL","PUBLIC_APP_URL"];
 $out = [];
 foreach ($keys as $key) {
     $value = getenv($key);

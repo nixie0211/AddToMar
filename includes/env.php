@@ -51,6 +51,44 @@ function addtomar_is_https(): bool
         || ((string) ($_SERVER['SERVER_PORT'] ?? '') === '443');
 }
 
+function addtomar_header_host(string $key): string
+{
+    $fromServer = $_SERVER[$key] ?? '';
+    $fromEnv = getenv($key);
+    $raw = is_string($fromServer) && $fromServer !== ''
+        ? $fromServer
+        : (is_string($fromEnv) ? $fromEnv : '');
+    $raw = trim(explode(',', $raw)[0]);
+    $raw = strtolower((string) preg_replace('/:\d+$/', '', $raw));
+
+    return $raw;
+}
+
+function addtomar_public_origin(): string
+{
+    $forced = rtrim(addtomar_env('PUBLIC_APP_URL'), '/');
+    if ($forced !== '') {
+        return $forced;
+    }
+
+    $forwarded = addtomar_header_host('HTTP_X_FORWARDED_HOST');
+    if (str_ends_with($forwarded, '.vercel.app')) {
+        return 'https://' . $forwarded;
+    }
+
+    $configured = rtrim(addtomar_env('APP_URL'), '/');
+    if ($configured !== '') {
+        return $configured;
+    }
+
+    $host = addtomar_header_host('HTTP_HOST');
+    if ($host === '') {
+        return '';
+    }
+
+    return (addtomar_is_https() ? 'https://' : 'http://') . $host;
+}
+
 function addtomar_admin_email(): string
 {
     return strtolower(trim(addtomar_env('ADMIN_EMAIL', 'addtomar@gmail.com')));

@@ -54,12 +54,13 @@ function login_url(): string
 
 function app_absolute_url(string $path = ''): string
 {
-    $configured = rtrim(addtomar_env('APP_URL'), '/');
-    if ($configured !== '') {
+    $origin = addtomar_public_origin();
+    if ($origin !== '') {
         if ($path === '') {
-            return $configured . (app_url('') === '/' ? '' : app_url(''));
+            return $origin . (app_url('') === '/' ? '' : app_url(''));
         }
-        return $configured . '/' . ltrim(app_url($path), '/');
+
+        return $origin . '/' . ltrim(app_url($path), '/');
     }
 
     $https = addtomar_is_https();
