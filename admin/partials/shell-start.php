@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="<?= htmlspecialchars(app_url('admin/css/admin.css'), ENT_QUOTES, 'UTF-8') ?>?v=activity-status-events">
+<link rel="stylesheet" href="<?= htmlspecialchars(app_url('admin/css/admin.css'), ENT_QUOTES, 'UTF-8') ?>?v=database-browser-1">
 </head>
 <body<?= (!empty($viewPharmacyModal) || !empty($reviewReportModal)) ? ' class="modal-open"' : '' ?> data-admin-mark-read-url="<?= htmlspecialchars(admin_url(), ENT_QUOTES, 'UTF-8') ?>">
 <div class="admin-shell">
@@ -28,6 +28,10 @@
       <a href="<?= htmlspecialchars(admin_url('?page=reports'), ENT_QUOTES, 'UTF-8') ?>" class="<?= ($adminPage ?? '') === 'reports' ? 'active' : '' ?>">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 21V4h9l1 3h4v10H14l-1-3H7v7"/></svg>
         Reports
+      </a>
+      <a href="<?= htmlspecialchars(admin_url('?page=database'), ENT_QUOTES, 'UTF-8') ?>" class="<?= ($adminPage ?? '') === 'database' ? 'active' : '' ?>">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/><path d="M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg>
+        Database
       </a>
     </nav>
     <div class="admin-sidebar-profile">

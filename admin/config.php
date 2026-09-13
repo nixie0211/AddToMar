@@ -30,7 +30,7 @@ if (isset($_SESSION['admin_flash_error']) && is_string($_SESSION['admin_flash_er
     unset($_SESSION['admin_flash_error']);
 }
 
-$allowedPages = ['overview', 'pharmacies', 'reports'];
+$allowedPages = ['overview', 'pharmacies', 'reports', 'database'];
 $requestedPage = strtolower(trim((string) ($_GET['page'] ?? 'overview')));
 if (in_array($requestedPage, $allowedPages, true)) {
     $adminPage = $requestedPage;

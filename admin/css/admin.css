@@ -3335,6 +3335,97 @@ body.modal-open {
   color: var(--accent);
 }
 
+.db-layout {
+  display: grid;
+  grid-template-columns: minmax(180px, 240px) 1fr;
+  gap: 0;
+  min-height: 420px;
+  border-top: 1px solid #edf1f5;
+}
+
+.db-tables {
+  border-right: 1px solid #edf1f5;
+  background: #f7fafc;
+  padding: 16px 12px;
+}
+
+.db-tables h3,
+.db-rows-head h3 {
+  margin: 0 0 10px;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6b7c8a;
+}
+
+.db-tables ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.db-tables a {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  color: #2f3e4a;
+  text-decoration: none;
+  font-size: 0.88rem;
+}
+
+.db-tables a span {
+  color: #8a9aa8;
+  font-size: 0.78rem;
+}
+
+.db-tables a:hover,
+.db-tables a.is-active {
+  background: #fff;
+  box-shadow: 0 0 0 1px #dce7f0;
+}
+
+.db-rows {
+  padding: 16px 18px 20px;
+  min-width: 0;
+}
+
+.db-rows-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.db-rows-head p {
+  margin: 0;
+  color: #6b7c8a;
+  font-size: 0.88rem;
+}
+
+.db-browser .admin-table {
+  min-width: 640px;
+}
+
+.db-browser .admin-table td {
+  max-width: 280px;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 860px) {
+  .db-layout {
+    grid-template-columns: 1fr;
+  }
+  .db-tables {
+    border-right: 0;
+    border-bottom: 1px solid #edf1f5;
+  }
+}
+
 @media (max-width: 760px) {
   .settings-pair {
     grid-template-columns: 1fr;
