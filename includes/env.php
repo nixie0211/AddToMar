@@ -25,6 +25,18 @@ function addtomar_is_https(): bool
         || ((string) ($_SERVER['SERVER_PORT'] ?? '') === '443');
 }
 
+function addtomar_admin_email(): string
+{
+    return strtolower(trim(addtomar_env('ADMIN_EMAIL', 'addtomar@gmail.com')));
+}
+
+function addtomar_admin_bootstrap_password(): string
+{
+    $password = addtomar_env('ADMIN_BOOTSTRAP_PASSWORD', 'admin123');
+
+    return $password !== '' ? $password : 'admin123';
+}
+
 function addtomar_mysql_can_create_database(): bool
 {
     if (addtomar_env('ADDTOMAR_CREATE_DB', '') === '1') {

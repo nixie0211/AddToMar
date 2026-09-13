@@ -40,6 +40,18 @@ function customers_normalize_email(string $email): string
     return strtolower(trim($email));
 }
 
+function customers_is_admin(?array $customer): bool
+{
+    if (!is_array($customer) || $customer === []) {
+        return false;
+    }
+
+    $email = customers_normalize_email((string) ($customer['email'] ?? ''));
+    $role = strtolower(trim((string) ($customer['role'] ?? '')));
+
+    return $role === 'admin' || ($email !== '' && $email === addtomar_admin_email());
+}
+
 function customers_register(array $input): array
 {
     $email = customers_normalize_email($input['email'] ?? '');

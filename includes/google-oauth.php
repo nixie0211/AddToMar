@@ -319,6 +319,22 @@ function google_oauth_after_verified(): array
     $fullName = (string) ($pending['full_name'] ?? '');
     $googleId = (string) ($pending['google_id'] ?? '');
 
+    caps_ensure_admin_account(caps_db());
+    $customer = customers_find_by_email($email);
+    if (customers_is_admin($customer) || customers_normalize_email($email) === addtomar_admin_email()) {
+        if ($googleId !== '') {
+            customers_register_from_google($email, $fullName !== '' ? $fullName : 'AddToMar Admin', $googleId);
+            $customer = customers_find_by_email($email) ?? $customer;
+        }
+        google_oauth_clear_pending();
+        $_SESSION['portal'] = 'admin';
+        $_SESSION['user_email'] = customers_normalize_email($email);
+        $_SESSION['user_name'] = $customer['full_name'] ?? 'Admin';
+        $_SESSION['user_role'] = 'admin';
+
+        return ['ok' => true, 'redirect' => app_url('admin/')];
+    }
+
     if (google_oauth_needs_password_setup($email)) {
         return ['ok' => true, 'next' => 'password'];
     }
@@ -434,9 +450,11 @@ function google_oauth_sign_in(string $email, string $fullName, string $googleId)
         return ['ok' => false, 'error' => 'This pharmacy is still waiting for admin approval.'];
     }
 
-    if (($customer['role'] ?? 'customer') === 'admin') {
+    if (customers_is_admin($customer) || customers_normalize_email($email) === addtomar_admin_email()) {
+        caps_ensure_admin_account(caps_db());
+        $customer = customers_find_by_email($email) ?? $customer;
         $_SESSION['portal'] = 'admin';
-        $_SESSION['user_email'] = $email;
+        $_SESSION['user_email'] = customers_normalize_email($email);
         $_SESSION['user_name'] = $customer['full_name'] ?? 'Admin';
         $_SESSION['user_role'] = 'admin';
 

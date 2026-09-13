@@ -273,8 +273,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'regis
         $error = 'Enter your email and password to continue.';
     } else {
         $pharmacy = pharmacy_accounts_find_by_email($email) ?? pharmacy_accounts_find_db_by_email($email);
+        $customer = customers_find_by_email($email);
 
-        if ($pharmacy) {
+        if (customers_is_admin($customer) || customers_normalize_email($email) === addtomar_admin_email()) {
+            caps_ensure_admin_account(caps_db());
+            $customer = customers_find_by_email($email) ?? $customer;
+            if (!$customer || !customers_verify_password($customer, $password)) {
+                $error = 'Incorrect password. Please try again.';
+            } else {
+                $_SESSION['portal'] = 'admin';
+                $_SESSION['user_email'] = customers_normalize_email($email);
+                $_SESSION['user_name'] = $customer['full_name'] ?? 'Admin';
+                $_SESSION['user_role'] = 'admin';
+                header('Location: ' . app_url('admin/'), true, 302);
+                exit;
+            }
+        } elseif ($pharmacy) {
             if (!pharmacy_accounts_verify_password($pharmacy, $password)) {
                 $error = 'Incorrect password. Please try again.';
             } elseif (pharmacy_accounts_is_blocked($pharmacy)) {
@@ -298,7 +312,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'regis
                 $error = 'This pharmacy is still waiting for admin approval.';
             } elseif (!customers_verify_password($customer, $password)) {
                 $error = 'Incorrect password. Please try again.';
-            } elseif (($customer['role'] ?? 'customer') === 'admin') {
+            } elseif (customers_is_admin($customer)) {
                 $_SESSION['portal'] = 'admin';
                 $_SESSION['user_email'] = $email;
                 $_SESSION['user_name'] = $customer['full_name'] ?? 'Admin';
