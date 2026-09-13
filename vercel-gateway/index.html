@@ -10,17 +10,21 @@
     a { color: #0f7a72; }
   </style>
   <script>
-    // Paste your Render URL after the web service is live, then redeploy on Vercel.
     const RENDER_URL = "https://addtomar.onrender.com";
-    if (RENDER_URL) {
-      location.replace(RENDER_URL.replace(/\/$/, "") + location.pathname + location.search + location.hash);
-    }
+    const aliases = {
+      "/login": "/login.php",
+      "/register": "/register.php",
+      "/logout": "/logout.php"
+    };
+    let path = location.pathname.replace(/\/+$/, "") || "/";
+    path = aliases[path] || path;
+    location.replace(RENDER_URL.replace(/\/$/, "") + path + location.search + location.hash);
   </script>
 </head>
 <body>
   <main>
     <h1>AddToMar</h1>
-    <p>Opening the live app… If you are not redirected, go to <a href="https://addtomar.onrender.com">https://addtomar.onrender.com</a>.</p>
+    <p>Opening the live app… If you are not redirected, go to <a href="https://addtomar.onrender.com/login.php">https://addtomar.onrender.com/login.php</a>.</p>
   </main>
 </body>
 </html>
