@@ -4,6 +4,9 @@
   "outputDirectory": "vercel-gateway",
   "framework": null,
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/login", "destination": "https://addtomar.onrender.com/login.php" },
+    { "source": "/login/", "destination": "https://addtomar.onrender.com/login.php" },
+    { "source": "/register", "destination": "https://addtomar.onrender.com/register.php" },
+    { "source": "/:path*", "destination": "https://addtomar.onrender.com/:path*" }
   ]
 }
