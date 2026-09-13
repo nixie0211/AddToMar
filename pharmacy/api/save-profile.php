@@ -25,14 +25,7 @@ if (!$result['ok']) {
 }
 
 $account = $result['account'];
-$logoPath = (string) ($account['logo_path'] ?? '');
-$logoUrl = '';
-if ($logoPath !== '') {
-    $logoAbs = dirname(__DIR__, 2) . '/' . $logoPath;
-    if (is_file($logoAbs)) {
-        $logoUrl = app_url($logoPath) . '?t=' . filemtime($logoAbs);
-    }
-}
+$logoUrl = pharmacy_accounts_public_logo_url($account);
 
 echo json_encode([
     'ok' => true,

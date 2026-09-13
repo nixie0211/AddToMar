@@ -2260,10 +2260,9 @@ $homePharmacyCity = static function (array $pharmacy): array {
             <div class="partners-browse-grid<?= $registeredPharmacies ? ' has-registered-pharmacies' : '' ?>" id="partners-browse-grid">
               <?php foreach ($registeredPharmacies as $registeredPharmacy):
                   $registeredCity = $homePharmacyCity($registeredPharmacy);
-                  $registeredLogo = '2.png';
-                  $registeredLogoPath = trim((string) ($registeredPharmacy['logo_path'] ?? ''));
-                  if ($registeredLogoPath !== '' && is_file(__DIR__ . '/' . ltrim($registeredLogoPath, '/'))) {
-                      $registeredLogo = app_url(ltrim($registeredLogoPath, '/'));
+                  $registeredLogo = pharmacy_accounts_public_logo_url($registeredPharmacy);
+                  if ($registeredLogo === '') {
+                      $registeredLogo = '2.png';
                   }
                   $registeredName = trim((string) ($registeredPharmacy['pharmacy_name'] ?? '')) ?: 'Registered Pharmacy';
               ?>

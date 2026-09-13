@@ -30,13 +30,7 @@ $pharmacyProfileHours = is_array($pharmacyAccount['operating_hours'] ?? null) &&
     : pharmacy_accounts_default_operating_hours();
 
 $pharmacyLogoPath = (string) ($pharmacyAccount['logo_path'] ?? '');
-$pharmacyLogoUrl = '';
-if ($pharmacyLogoPath !== '') {
-    $pharmacyLogoAbs = dirname(PHARMACY_ROOT) . '/' . $pharmacyLogoPath;
-    if (is_file($pharmacyLogoAbs)) {
-        $pharmacyLogoUrl = app_url($pharmacyLogoPath) . '?t=' . filemtime($pharmacyLogoAbs);
-    }
-}
+$pharmacyLogoUrl = pharmacy_accounts_public_logo_url($pharmacyAccount);
 
 $settings = pharmacy_settings();
 $stats = pharmacy_get_dashboard_stats();

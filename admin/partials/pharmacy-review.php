@@ -16,7 +16,7 @@ $pharmacyReviewCloseLabel = $pharmacyReviewContext === 'panel' ? 'Close' : 'Back
     <a class="rx-view-btn" href="<?= htmlspecialchars($pharmacyReviewListQuery, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($pharmacyReviewCloseLabel, ENT_QUOTES, 'UTF-8') ?></a>
     <div class="rx-avatar">
       <?php if ($logoExists): ?>
-      <img src="<?= htmlspecialchars(app_url($logoPath), ENT_QUOTES, 'UTF-8') ?>" alt="">
+      <img src="<?= htmlspecialchars($logoUrl !== '' ? $logoUrl : app_url($logoPath), ENT_QUOTES, 'UTF-8') ?>" alt="">
       <?php else: ?>
       <?= htmlspecialchars(admin_initials((string) ($viewPharmacy['pharmacy_name'] ?? 'Rx')), ENT_QUOTES, 'UTF-8') ?>
       <?php endif; ?>

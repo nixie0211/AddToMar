@@ -81,6 +81,13 @@ function residence_pharmacy_logo_src(array $pharmacy): string
         return $logoUrl;
     }
 
+    if (function_exists('pharmacy_accounts_public_logo_url')) {
+        $storedLogoUrl = pharmacy_accounts_public_logo_url($pharmacy);
+        if ($storedLogoUrl !== '') {
+            return $storedLogoUrl;
+        }
+    }
+
     $logoPath = trim((string) ($pharmacy['logo_path'] ?? ''));
     if ($logoPath !== '') {
         $absolute = dirname(__DIR__, 2) . '/' . ltrim($logoPath, '/');

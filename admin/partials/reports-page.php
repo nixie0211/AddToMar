@@ -119,8 +119,8 @@ $reportResolvedPct = admin_percent($reportResolved, $reportTotal);
         $cardSchedule = admin_report_card_schedule($report);
         $avatarTone = abs(crc32((string) ($report['pharmacy_name'] ?? 'Rx'))) % 4;
         $linkedPharmacy = pharmacy_accounts_find_by_id((string) ($report['pharmacy_id'] ?? '')) ?? [];
-        $cardLogoPath = (string) ($linkedPharmacy['logo_path'] ?? '');
-        $cardLogoExists = $cardLogoPath !== '' && is_file(dirname(__DIR__, 2) . '/' . $cardLogoPath);
+        $cardLogoUrl = pharmacy_accounts_public_logo_url($linkedPharmacy);
+        $cardLogoExists = $cardLogoUrl !== '';
         $cardViewUrl = $reportQuery(['report' => (string) ($report['id'] ?? '')]);
         $reporterName = trim((string) ($report['reporter_name'] ?? ''));
         $reason = trim((string) ($report['reason'] ?? ''));
@@ -139,7 +139,7 @@ $reportResolvedPct = admin_percent($reportResolved, $reportTotal);
           </div>
           <?php if ($cardLogoExists): ?>
           <div class="pharm-card-avatar">
-            <img src="<?= htmlspecialchars(app_url($cardLogoPath), ENT_QUOTES, 'UTF-8') ?>" alt="">
+            <img src="<?= htmlspecialchars($cardLogoUrl, ENT_QUOTES, 'UTF-8') ?>" alt="">
           </div>
           <?php else: ?>
           <div class="pharm-card-avatar pharm-avatar-<?= $avatarTone ?>">

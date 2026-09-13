@@ -425,6 +425,48 @@ function pharmacy_accounts_list_documents(string $pharmacyId, ?string $docKey = 
     }
 }
 
+function pharmacy_accounts_latest_logo_document_id(string $pharmacyId): int
+{
+    if ($pharmacyId === '') {
+        return 0;
+    }
+
+    try {
+        $stmt = caps_db()->prepare(
+            'SELECT id FROM pharmacy_documents WHERE pharmacy_id = ? AND doc_key = ? ORDER BY id DESC LIMIT 1'
+        );
+        $stmt->execute([$pharmacyId, 'logo']);
+
+        return (int) $stmt->fetchColumn();
+    } catch (Throwable) {
+        return 0;
+    }
+}
+
+function pharmacy_accounts_public_logo_url(array $account): string
+{
+    if (!function_exists('app_url')) {
+        require_once __DIR__ . '/auth.php';
+    }
+
+    $id = trim((string) ($account['id'] ?? ''));
+    if ($id !== '' && pharmacy_accounts_latest_logo_document_id($id) > 0) {
+        return app_url('pharmacy-logo.php?id=' . rawurlencode($id));
+    }
+
+    $logoPath = trim((string) ($account['logo_path'] ?? ''));
+    if ($logoPath === '') {
+        return '';
+    }
+
+    $absolute = dirname(__DIR__) . '/' . ltrim($logoPath, '/');
+    if (is_file($absolute)) {
+        return app_url($logoPath);
+    }
+
+    return '';
+}
+
 function pharmacy_accounts_get_document(int $documentId): ?array
 {
     if ($documentId <= 0) {

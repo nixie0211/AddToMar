@@ -70,12 +70,8 @@ function residence_pharmacy_directory(): array
             ? $name . ' — ' . $branch
             : $name;
 
-        $logoUrl = '';
+        $logoUrl = pharmacy_accounts_public_logo_url($account);
         $logoPath = trim((string) ($account['logo_path'] ?? ''));
-        $logoAbs = $logoPath !== '' ? dirname(__DIR__, 2) . '/' . $logoPath : '';
-        if ($logoPath !== '' && is_file($logoAbs) && function_exists('app_url')) {
-            $logoUrl = app_url($logoPath);
-        }
 
         $lat = $account['latitude'] ?? null;
         $lng = $account['longitude'] ?? null;

@@ -351,8 +351,8 @@ require __DIR__ . '/partials/shell-start.php';
             $badge = admin_status_badge((string) ($pharmacy['status'] ?? 'pending'));
         $cardSchedule = admin_pharmacy_card_schedule($pharmacy);
             $avatarTone = abs(crc32((string) ($pharmacy['pharmacy_name'] ?? 'Rx'))) % 4;
-        $cardLogoPath = (string) ($pharmacy['logo_path'] ?? '');
-        $cardLogoExists = $cardLogoPath !== '' && is_file(dirname(__DIR__) . '/' . $cardLogoPath);
+        $cardLogoUrl = pharmacy_accounts_public_logo_url($pharmacy);
+        $cardLogoExists = $cardLogoUrl !== '';
         $cardContact = residence_format_contact((string) ($pharmacy['contact_number'] ?? ''));
         $cardAddress = trim((string) ($pharmacy['address'] ?? ''));
         $cardViewUrl = $pharmacyQuery(['pharmacy' => (string) ($pharmacy['id'] ?? '')]);
@@ -371,7 +371,7 @@ require __DIR__ . '/partials/shell-start.php';
           </div>
           <?php if ($cardLogoExists): ?>
           <div class="pharm-card-avatar">
-            <img src="<?= htmlspecialchars(app_url($cardLogoPath), ENT_QUOTES, 'UTF-8') ?>" alt="">
+            <img src="<?= htmlspecialchars($cardLogoUrl, ENT_QUOTES, 'UTF-8') ?>" alt="">
           </div>
           <?php else: ?>
           <div class="pharm-card-avatar pharm-avatar-<?= $avatarTone ?>">
@@ -427,7 +427,8 @@ require __DIR__ . '/partials/shell-start.php';
   $openTime = pharmacy_accounts_format_time((string) ($viewPharmacy['open_time'] ?? ''));
   $closeTime = pharmacy_accounts_format_time((string) ($viewPharmacy['close_time'] ?? ''));
   $logoPath = (string) ($viewPharmacy['logo_path'] ?? '');
-  $logoExists = $logoPath !== '' && is_file(dirname(__DIR__) . '/' . $logoPath);
+  $logoUrl = pharmacy_accounts_public_logo_url($viewPharmacy);
+  $logoExists = $logoUrl !== '';
   $pharmacyId = (string) ($viewPharmacy['id'] ?? '');
   pharmacy_accounts_backfill_documents($viewPharmacy);
   $storedDocs = pharmacy_accounts_list_documents($pharmacyId);
