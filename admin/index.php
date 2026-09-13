@@ -155,7 +155,7 @@ require __DIR__ . '/partials/shell-start.php';
     </div>
     <?php else: ?>
     <ul class="ov-activity">
-      <?php foreach (array_slice($activity, 0, 5) as $item): ?>
+      <?php foreach (array_slice($activity, 0, 8) as $item): ?>
       <li>
         <a class="ov-activity-row" href="<?= htmlspecialchars((string) $item['href'], ENT_QUOTES, 'UTF-8') ?>">
           <span class="ov-metric-icon ov-icon-sm ov-tone-<?= htmlspecialchars((string) $item['tone'], ENT_QUOTES, 'UTF-8') ?>" aria-hidden="true">

@@ -120,40 +120,43 @@ function admin_notifications_sync(array $stats): void
             continue;
         }
 
-        $id = admin_notifications_make_id('pharmacy', $pharmacyId);
         $title = (string) ($pharmacy['pharmacy_name'] ?? 'Pharmacy');
-        $time = (string) ($pharmacy['created_at'] ?? '');
-
-        if (!isset($indexed[$id])) {
-            $indexed[$id] = [
-                'id' => $id,
-                'type' => 'pharmacy',
-                'entity_id' => $pharmacyId,
-                'title' => $title,
-                'detail' => admin_notifications_pharmacy_detail($pharmacy),
-                'time' => $time,
-                'href' => admin_notifications_pharmacy_href($pharmacyId, (string) ($pharmacy['status'] ?? 'pending')),
-                'read_at' => null,
-            ];
-            $changed = true;
-            continue;
-        }
-
-        if ((string) ($indexed[$id]['title'] ?? '') !== $title) {
-            $indexed[$id]['title'] = $title;
-            $changed = true;
-        }
-
-        $detail = admin_notifications_pharmacy_detail($pharmacy);
-        if ((string) ($indexed[$id]['detail'] ?? '') !== $detail) {
-            $indexed[$id]['detail'] = $detail;
-            $changed = true;
-        }
-
         $href = admin_notifications_pharmacy_href($pharmacyId, (string) ($pharmacy['status'] ?? 'pending'));
-        if ((string) ($indexed[$id]['href'] ?? '') !== $href) {
-            $indexed[$id]['href'] = $href;
-            $changed = true;
+
+        foreach (pharmacy_accounts_status_events($pharmacy) as $event) {
+            $status = pharmacy_accounts_normalize_status((string) ($event['status'] ?? 'pending'));
+            $time = (string) ($event['at'] ?? '');
+            $id = 'pharmacy:' . $pharmacyId . ':' . $status . ':' . $time;
+            $detail = match ($status) {
+                'approved' => 'Pharmacy approved',
+                'rejected' => 'Pharmacy rejected',
+                'blocked' => 'Pharmacy blocked',
+                default => 'Pending approval request',
+            };
+
+            if (!isset($indexed[$id])) {
+                $indexed[$id] = [
+                    'id' => $id,
+                    'type' => 'pharmacy',
+                    'entity_id' => $pharmacyId,
+                    'title' => $title,
+                    'detail' => $detail,
+                    'time' => $time,
+                    'href' => $href,
+                    'read_at' => null,
+                ];
+                $changed = true;
+                continue;
+            }
+
+            if ((string) ($indexed[$id]['title'] ?? '') !== $title) {
+                $indexed[$id]['title'] = $title;
+                $changed = true;
+            }
+            if ((string) ($indexed[$id]['href'] ?? '') !== $href) {
+                $indexed[$id]['href'] = $href;
+                $changed = true;
+            }
         }
     }
 
@@ -243,7 +246,30 @@ function admin_notifications_mark_entity_read(string $type, string $entityId): b
         return false;
     }
 
-    return admin_notifications_mark_read(admin_notifications_make_id($type, $entityId));
+    $notifications = admin_notifications_load_all();
+    $changed = false;
+
+    foreach ($notifications as $index => $notification) {
+        $sameType = (string) ($notification['type'] ?? '') === $type;
+        $sameEntity = (string) ($notification['entity_id'] ?? '') === $entityId;
+        $legacyId = (string) ($notification['id'] ?? '') === admin_notifications_make_id($type, $entityId);
+        if (!$legacyId && !($sameType && $sameEntity)) {
+            continue;
+        }
+
+        if (!empty($notification['read_at'])) {
+            continue;
+        }
+
+        $notifications[$index]['read_at'] = date('c');
+        $changed = true;
+    }
+
+    if (!$changed) {
+        return true;
+    }
+
+    return admin_notifications_save_all($notifications);
 }
 
 function admin_notifications_list(): array

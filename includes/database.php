@@ -127,6 +127,11 @@ function caps_run_migrations(PDO $pdo): void
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     ');
 
+    $statusHistoryColumn = $pdo->query("SHOW COLUMNS FROM pharmacies LIKE 'status_history'")->fetch();
+    if (!$statusHistoryColumn) {
+        $pdo->exec('ALTER TABLE pharmacies ADD COLUMN status_history TEXT NULL AFTER admin_note');
+    }
+
     $pdo->exec('
         CREATE TABLE IF NOT EXISTS user_addresses (
             id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,

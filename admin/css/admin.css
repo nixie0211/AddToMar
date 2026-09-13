@@ -2080,6 +2080,11 @@ a {
   color: #c73e3e;
 }
 
+.ov-tone-rejected {
+  background: #fde8e0;
+  color: #c45c3e;
+}
+
 .ov-tone-blocked {
   background: #fee2e2;
   color: #b91c1c;

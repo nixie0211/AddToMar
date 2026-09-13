@@ -54,6 +54,86 @@ function pharmacy_accounts_normalize_email(string $email): string
     return strtolower(trim($email));
 }
 
+function pharmacy_accounts_normalize_status(string $status): string
+{
+    $status = strtolower(trim($status));
+    if ($status === 'active') {
+        return 'approved';
+    }
+
+    return $status !== '' ? $status : 'pending';
+}
+
+function pharmacy_accounts_status_events(array $account): array
+{
+    $created = (string) ($account['created_at'] ?? '');
+    $updated = (string) ($account['updated_at'] ?? $created);
+    $current = pharmacy_accounts_normalize_status((string) ($account['status'] ?? 'pending'));
+    $raw = $account['status_history'] ?? null;
+
+    if (is_string($raw) && $raw !== '') {
+        $decoded = json_decode($raw, true);
+        $raw = is_array($decoded) ? $decoded : null;
+    }
+
+    $events = [];
+    if (is_array($raw)) {
+        foreach ($raw as $entry) {
+            if (!is_array($entry)) {
+                continue;
+            }
+            $status = pharmacy_accounts_normalize_status((string) ($entry['status'] ?? ''));
+            $at = trim((string) ($entry['at'] ?? ''));
+            if ($at === '') {
+                continue;
+            }
+            $events[] = [
+                'status' => $status,
+                'at' => $at,
+                'note' => trim((string) ($entry['note'] ?? '')),
+            ];
+        }
+    }
+
+    if ($events === []) {
+        $events[] = [
+            'status' => 'pending',
+            'at' => $created !== '' ? $created : $updated,
+            'note' => '',
+        ];
+        if ($current !== 'pending' && $updated !== '') {
+            $events[] = [
+                'status' => $current,
+                'at' => $updated,
+                'note' => trim((string) ($account['admin_note'] ?? '')),
+            ];
+        }
+    }
+
+    return $events;
+}
+
+function pharmacy_accounts_append_status_event(array $account, string $status, string $at, string $note = ''): array
+{
+    $status = pharmacy_accounts_normalize_status($status);
+    $events = pharmacy_accounts_status_events($account);
+    $last = $events[array_key_last($events)] ?? null;
+    if (is_array($last) && ($last['status'] ?? '') === $status) {
+        $account['status_history'] = $events;
+
+        return $account;
+    }
+
+    $events[] = [
+        'status' => $status,
+        'at' => $at,
+        'note' => $note,
+    ];
+    $account['status_history'] = $events;
+
+    return $account;
+}
+
 function pharmacy_accounts_find_by_email(string $email): ?array
 {
     $email = pharmacy_accounts_normalize_email($email);
@@ -389,6 +469,9 @@ function pharmacy_accounts_register(array $input, array $files): array
         'status' => 'pending',
         'created_at' => $now,
         'updated_at' => $now,
+        'status_history' => [
+            ['status' => 'pending', 'at' => $now, 'note' => ''],
+        ],
     ], $storedFiles);
 
     if (!pharmacy_accounts_save_all($accounts)) {
@@ -428,14 +511,16 @@ function pharmacy_accounts_set_status(string $email, string $status, string $not
         return ['ok' => false, 'error' => 'Pharmacy account not found.'];
     }
 
+    $now = date('c');
     $accounts[$email]['status'] = $status;
-    $accounts[$email]['updated_at'] = date('c');
+    $accounts[$email]['updated_at'] = $now;
     if ($note !== '') {
         $accounts[$email]['admin_note'] = $note;
     }
     if ($status === 'blocked') {
-        $accounts[$email]['blocked_at'] = date('c');
+        $accounts[$email]['blocked_at'] = $now;
     }
+    $accounts[$email] = pharmacy_accounts_append_status_event($accounts[$email], $status, $now, $note);
 
     if (!pharmacy_accounts_save_all($accounts)) {
         return ['ok' => false, 'error' => 'Could not update pharmacy status.'];
@@ -506,6 +591,7 @@ function pharmacy_accounts_sync_database(array $account): array
     $licensePath = (string) ($account['pharmacy_license_path'] ?? '');
     $birPath = (string) ($account['bir_certificate_path'] ?? '');
     $adminNote = (string) ($account['admin_note'] ?? '');
+    $statusHistory = pharmacy_accounts_encode_json(pharmacy_accounts_status_events($account));
     $operationDays = is_array($account['operation_days'] ?? null) ? $account['operation_days'] : [];
     $operatingHours = is_array($account['operating_hours'] ?? null) ? $account['operating_hours'] : [];
 
@@ -516,8 +602,8 @@ function pharmacy_accounts_sync_database(array $account): array
             INSERT INTO pharmacies (
                 id, email, pharmacy_name, contact_number, address, latitude, longitude, password_hash,
                 open_time, close_time, operation_days, operating_hours, logo_path, business_permit_path,
-                pharmacy_license_path, bir_certificate_path, status, admin_note
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                pharmacy_license_path, bir_certificate_path, status, admin_note, status_history
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON DUPLICATE KEY UPDATE
                 email = VALUES(email),
                 pharmacy_name = VALUES(pharmacy_name),
@@ -535,7 +621,8 @@ function pharmacy_accounts_sync_database(array $account): array
                 pharmacy_license_path = VALUES(pharmacy_license_path),
                 bir_certificate_path = VALUES(bir_certificate_path),
                 status = VALUES(status),
-                admin_note = VALUES(admin_note)
+                admin_note = VALUES(admin_note),
+                status_history = VALUES(status_history)
         ');
         $stmt->execute([
             $id,
@@ -556,6 +643,7 @@ function pharmacy_accounts_sync_database(array $account): array
             $birPath,
             $status,
             $adminNote,
+            $statusHistory,
         ]);
 
         $userStmt = $pdo->prepare('SELECT email, role FROM users WHERE email = ? LIMIT 1');
@@ -637,6 +725,8 @@ function pharmacy_accounts_hydrate_db_row(array $row): array
 
     $row['operation_days'] = is_array($days) ? $days : [];
     $row['operating_hours'] = is_array($hours) ? $hours : [];
+    $history = json_decode((string) ($row['status_history'] ?? ''), true);
+    $row['status_history'] = is_array($history) ? $history : [];
     $row['latitude'] = isset($row['latitude']) && $row['latitude'] !== null && $row['latitude'] !== ''
         ? (float) $row['latitude']
         : null;

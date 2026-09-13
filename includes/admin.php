@@ -316,25 +316,39 @@ function admin_overview_activity(array $stats): array
     $items = [];
 
     foreach ($stats['all_pharmacies'] ?? [] as $pharmacy) {
-        $status = strtolower((string) ($pharmacy['status'] ?? 'pending'));
-        $badge = admin_status_badge($status);
-        $detail = match ($status) {
-            'approved', 'active' => 'Account approved',
-            'blocked' => 'Account blocked',
-            'rejected' => 'Registration rejected',
-            default => 'Registration submitted',
-        };
+        $pharmacyId = (string) ($pharmacy['id'] ?? '');
+        $title = (string) ($pharmacy['pharmacy_name'] ?? 'Pharmacy');
+        $href = $pharmacyId !== ''
+            ? admin_url('?page=pharmacies&pharmacy=' . urlencode($pharmacyId))
+            : admin_url('?page=pharmacies');
 
-        $items[] = [
-            'kind' => 'pharmacy',
-            'tone' => $status === 'approved' || $status === 'active' ? 'approved' : ($status === 'blocked' ? 'blocked' : 'pending'),
-            'title' => (string) ($pharmacy['pharmacy_name'] ?? 'Pharmacy'),
-            'detail' => $detail,
-            'status' => $badge['label'],
-            'status_class' => $badge['class'],
-            'time' => (string) ($pharmacy['updated_at'] ?? $pharmacy['created_at'] ?? ''),
-            'href' => admin_url('?page=pharmacies'),
-        ];
+        foreach (pharmacy_accounts_status_events($pharmacy) as $event) {
+            $status = pharmacy_accounts_normalize_status((string) ($event['status'] ?? 'pending'));
+            $badge = admin_status_badge($status);
+            $detail = match ($status) {
+                'approved' => 'Account approved',
+                'blocked' => 'Account blocked',
+                'rejected' => 'Registration rejected',
+                default => 'Registration submitted',
+            };
+            $tone = match ($status) {
+                'approved' => 'approved',
+                'blocked' => 'blocked',
+                'rejected' => 'rejected',
+                default => 'pending',
+            };
+
+            $items[] = [
+                'kind' => 'pharmacy',
+                'tone' => $tone,
+                'title' => $title,
+                'detail' => $detail,
+                'status' => $badge['label'],
+                'status_class' => $badge['class'],
+                'time' => (string) ($event['at'] ?? ''),
+                'href' => $href,
+            ];
+        }
     }
 
     foreach ($stats['reports'] ?? [] as $report) {
@@ -359,7 +373,7 @@ function admin_overview_activity(array $stats): array
         return strcmp((string) ($b['time'] ?? ''), (string) ($a['time'] ?? ''));
     });
 
-    return array_slice($items, 0, 5);
+    return array_slice($items, 0, 8);
 }
 
 function admin_proof_is_image(string $path): bool
