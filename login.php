@@ -1279,8 +1279,8 @@ if ((string) ($_GET['google'] ?? '') === 'verify' && $googlePending === null && 
   }
   #panel-pharmacy .register-map,
   #panel-pharmacy #pharmacy-register-map{
-    height:280px !important;
-    min-height:240px;
+    height:100% !important;
+    min-height:0;
     border-radius:16px;
     overflow:hidden;
   }
@@ -1457,6 +1457,11 @@ if ((string) ($_GET['google'] ?? '') === 'verify' && $googlePending === null && 
   #customer-register-form .signup-step[data-step="3"] .setup-field,
   #pharmacy-register-form .signup-step[data-step="4"] .setup-field{
     max-width:none;
+  }
+  #pharmacy-register-form .signup-step:not([hidden]){
+    display:flex;
+    flex-direction:column;
+    width:100%;
   }
   #customer-register-form .signup-step[data-step="3"]:not([hidden]),
   #pharmacy-register-form .signup-step[data-step="4"]:not([hidden]){
