@@ -803,16 +803,16 @@ if ((string) ($_GET['google'] ?? '') === 'verify' && $googlePending === null && 
   .login-panel--register{
     overflow:hidden;
     flex-direction:row-reverse;
-    flex-wrap:wrap;
+    flex-wrap:nowrap;
     justify-content:stretch;
     align-items:stretch;
     gap:36px;
     padding:12px 24px 12px 8px;
   }
   .signup-hero{
-    flex:0 1 38%;
-    max-width:440px;
-    min-width:0;
+    flex:0 1 34%;
+    max-width:420px;
+    min-width:280px;
     display:flex;
     flex-direction:column;
     justify-content:center;
@@ -873,9 +873,9 @@ if ((string) ($_GET['google'] ?? '') === 'verify' && $googlePending === null && 
   }
   .signup-panel-foot a:hover{text-decoration:underline;}
   .signup-card{
-    flex:1 1 70%;
-    width:100%;
-    max-width:none;
+    flex:1 1 0;
+    width:auto;
+    min-width:0;
     height:auto;
     max-height:100%;
     min-height:0;
@@ -2530,13 +2530,18 @@ if ((string) ($_GET['google'] ?? '') === 'verify' && $googlePending === null && 
     #pharmacy-register-form .signup-location-map-frame{
       min-height:240px;
     }
+  }
+  @media (max-width: 860px){
+    .setup-pair{grid-template-columns:1fr;}
+    .signup-card{padding:22px 16px 18px;border-radius:20px;height:auto;width:100%;flex:1 1 auto;}
     .login-panel--register{
       flex-direction:column;
+      flex-wrap:nowrap;
       overflow:auto;
       gap:16px;
       padding:8px;
     }
-    .signup-hero{max-width:none;flex:none;padding:16px 8px 12px;}
+    .signup-hero{max-width:none;min-width:0;flex:none;padding:16px 8px 12px;}
     .signup-hero h2{max-width:none;font-size:2rem;}
     .signup-hero-foot{position:relative;left:auto;right:auto;bottom:auto;margin-top:16px;}
     .signup-panel-foot{
@@ -2544,11 +2549,6 @@ if ((string) ($_GET['google'] ?? '') === 'verify' && $googlePending === null && 
       text-align:center;
       padding-top:4px;
     }
-    .signup-card{max-width:none;flex:1;}
-  }
-  @media (max-width: 860px){
-    .setup-pair{grid-template-columns:1fr;}
-    .signup-card{padding:22px 16px 18px;border-radius:20px;height:auto;}
     #panel-pharmacy .pharm-hours-row{
       flex-direction:column;
       align-items:stretch;
