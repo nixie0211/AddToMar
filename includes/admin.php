@@ -204,6 +204,70 @@ function admin_pharmacy_build_decision_note(string $decision, string $reasonKey,
     return $label;
 }
 
+function admin_send_pharmacy_decision_email(array $account, string $decision, string $reason = ''): void
+{
+    if (!function_exists('smtp_send_gmail') || !function_exists('residence_is_gmail')) {
+        return;
+    }
+
+    $email = strtolower(trim((string) ($account['email'] ?? '')));
+    $pharmacyName = trim((string) ($account['pharmacy_name'] ?? $account['name'] ?? 'Pharmacy'));
+    if ($email === '' || !residence_is_gmail($email)) {
+        return;
+    }
+
+    $decision = strtolower(trim($decision));
+    $safeName = htmlspecialchars($pharmacyName !== '' ? $pharmacyName : 'Pharmacy', ENT_QUOTES, 'UTF-8');
+    $safeReason = htmlspecialchars($reason, ENT_QUOTES, 'UTF-8');
+    $reasonHtml = $safeReason !== ''
+        ? '<p><strong>Reason:</strong> ' . $safeReason . '</p>'
+        : '';
+
+    if ($decision === 'approved') {
+        $safeLogin = htmlspecialchars(app_url('pharmacy/'), ENT_QUOTES, 'UTF-8');
+        smtp_send_gmail(
+            $email,
+            'Your AddToMar pharmacy registration was approved',
+            '<!doctype html><html><body style="font-family:Arial,sans-serif;color:#163948;line-height:1.6">'
+            . '<h2>Your pharmacy registration has been approved</h2>'
+            . '<p>Hello ' . $safeName . ',</p>'
+            . '<p>Your AddToMar pharmacy registration has been approved. You can now sign in to manage your pharmacy account.</p>'
+            . '<p><a href="' . $safeLogin . '" style="display:inline-block;padding:10px 16px;background:#0f8f82;color:#fff;text-decoration:none;border-radius:6px">Sign in to Pharmacy Portal</a></p>'
+            . '<p>Thank you,<br>AddToMar Team</p></body></html>'
+        );
+        return;
+    }
+
+    if ($decision === 'rejected') {
+        smtp_send_gmail(
+            $email,
+            'Your AddToMar pharmacy registration was not approved',
+            '<!doctype html><html><body style="font-family:Arial,sans-serif;color:#163948;line-height:1.6">'
+            . '<h2>Your pharmacy registration was not approved</h2>'
+            . '<p>Hello ' . $safeName . ',</p>'
+            . '<p>We reviewed your AddToMar pharmacy registration and could not approve it at this time.</p>'
+            . $reasonHtml
+            . '<p>You will not be able to sign in with this pharmacy account. If you believe this is a mistake or you can provide updated documents, please contact AddToMar support.</p>'
+            . '<p>Thank you,<br>AddToMar Team</p></body></html>'
+        );
+        return;
+    }
+
+    if ($decision === 'blocked') {
+        smtp_send_gmail(
+            $email,
+            'Your AddToMar pharmacy account has been blocked',
+            '<!doctype html><html><body style="font-family:Arial,sans-serif;color:#163948;line-height:1.6">'
+            . '<h2>Your pharmacy account has been blocked</h2>'
+            . '<p>Hello ' . $safeName . ',</p>'
+            . '<p>Your AddToMar pharmacy account has been blocked and you can no longer sign in.</p>'
+            . $reasonHtml
+            . '<p>If you have questions about this decision, please contact AddToMar support.</p>'
+            . '<p>Thank you,<br>AddToMar Team</p></body></html>'
+        );
+    }
+}
+
 function admin_pharmacy_card_schedule(array $pharmacy): array
 {
     $status = strtolower((string) ($pharmacy['status'] ?? 'pending'));

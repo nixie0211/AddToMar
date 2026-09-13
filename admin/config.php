@@ -150,6 +150,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'revie
                     $reviewReport = $report;
                     $reviewReportModal = trim((string) ($_POST['review_modal'] ?? '')) === '1';
                 } else {
+                    $blockedAccount = $block['account'] ?? pharmacy_accounts_find_by_email((string) ($report['pharmacy_email'] ?? ''));
+                    if (is_array($blockedAccount)) {
+                        admin_send_pharmacy_decision_email($blockedAccount, 'blocked', $blockNote);
+                    }
                     $update = pharmacy_reports_update($reportId, [
                         'status' => 'resolved',
                         'reviewed_at' => date('c'),
@@ -226,6 +230,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'updat
                 $adminFlashError = $update['error'] ?? 'Could not update pharmacy status.';
                 $viewPharmacy = $account;
             } else {
+                admin_send_pharmacy_decision_email($update['account'] ?? $account, $decision, $adminNote);
                 $redirectModal = trim((string) ($_POST['review_modal'] ?? '')) === '1';
                 header('Location: ' . admin_pharmacy_review_url($pharmacyId, $redirectModal), true, 302);
                 exit;
@@ -243,22 +248,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'updat
             $viewPharmacy = $account;
         } else {
             if ($decision === 'approved' && !pharmacy_accounts_is_approved($account)) {
-                $approvalEmail = strtolower(trim((string) ($account['email'] ?? '')));
-                $pharmacyName = trim((string) ($account['pharmacy_name'] ?? $account['name'] ?? 'Pharmacy'));
-                if ($approvalEmail !== '' && residence_is_gmail($approvalEmail)) {
-                    $safeName = htmlspecialchars($pharmacyName, ENT_QUOTES, 'UTF-8');
-                    $safeLogin = htmlspecialchars(app_url('pharmacy/'), ENT_QUOTES, 'UTF-8');
-                    smtp_send_gmail(
-                        $approvalEmail,
-                        'Your AddToMar pharmacy registration was approved',
-                        '<!doctype html><html><body style="font-family:Arial,sans-serif;color:#163948;line-height:1.6">'
-                        . '<h2>Your pharmacy registration has been approved</h2>'
-                        . '<p>Hello ' . $safeName . ',</p>'
-                        . '<p>Your AddToMar pharmacy registration has been approved. You can now sign in to manage your pharmacy account.</p>'
-                        . '<p><a href="' . $safeLogin . '" style="display:inline-block;padding:10px 16px;background:#0f8f82;color:#fff;text-decoration:none;border-radius:6px">Sign in to Pharmacy Portal</a></p>'
-                        . '<p>Thank you,<br>AddToMar Team</p></body></html>'
-                    );
-                }
+                admin_send_pharmacy_decision_email($update['account'] ?? $account, 'approved');
             }
             $redirectModal = trim((string) ($_POST['review_modal'] ?? '')) === '1';
             header('Location: ' . admin_pharmacy_review_url($pharmacyId, $redirectModal), true, 302);
