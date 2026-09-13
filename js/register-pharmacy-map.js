@@ -44,7 +44,7 @@
   }
 
   function makeLogoIcon(imageUrl, size) {
-    const tipHeight = 10;
+    const tipHeight = 12;
     const totalHeight = size + tipHeight;
 
     return L.divIcon({

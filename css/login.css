@@ -793,6 +793,15 @@ body.modal-open {
 .map-logo-marker {
   background: transparent !important;
   border: none !important;
+  overflow: visible !important;
+}
+
+.map-logo-marker-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+  overflow: visible;
 }
 
 .map-logo-marker-pin {
@@ -801,6 +810,17 @@ body.modal-open {
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
   overflow: hidden;
   background: #fff;
+  flex-shrink: 0;
+}
+
+.map-logo-marker-tip {
+  width: 0;
+  height: 0;
+  border-left: 9px solid transparent;
+  border-right: 9px solid transparent;
+  border-top: 12px solid #fff;
+  margin-top: -1px;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.22));
 }
 
 .map-logo-marker-pin img {

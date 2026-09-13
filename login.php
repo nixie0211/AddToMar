@@ -370,7 +370,7 @@ if ((string) ($_GET['google'] ?? '') === 'verify' && $googlePending === null && 
 <title>AddToMar — Sign In</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Playfair+Display:wght@600;700&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/login.css?v=account-location-pin-2">
+<link rel="stylesheet" href="css/login.css?v=pharmacy-pin-tip-1">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 <link rel="stylesheet" href="<?= htmlspecialchars(app_url('css/map-service-overlay.css'), ENT_QUOTES, 'UTF-8') ?>?v=2">
 <style>
@@ -1604,6 +1604,26 @@ if ((string) ($_GET['google'] ?? '') === 'verify' && $googlePending === null && 
     min-height:0;
     border-radius:16px;
     overflow:hidden;
+  }
+  #pharmacy-register-map .map-logo-marker,
+  #pharmacy-register-map .leaflet-marker-icon{
+    background:transparent !important;
+    border:none !important;
+    overflow:visible !important;
+  }
+  #pharmacy-register-map .map-logo-marker-stack{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+  #pharmacy-register-map .map-logo-marker-tip{
+    width:0;
+    height:0;
+    border-left:9px solid transparent;
+    border-right:9px solid transparent;
+    border-top:12px solid #fff;
+    margin-top:-1px;
+    filter:drop-shadow(0 2px 2px rgba(0,0,0,.22));
   }
   .signup-nav{
     display:flex;
@@ -4500,7 +4520,7 @@ window.PHARMACY_REGISTER_MAP_CONFIG = <?= json_encode([
   'reverseGeocodeUrl' => app_url('ajax/reverse-geocode.php'),
 ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
 </script>
-<script src="<?= htmlspecialchars(app_url('js/register-pharmacy-map.js'), ENT_QUOTES, 'UTF-8') ?>?v=reset-on-close-1"></script>
+<script src="<?= htmlspecialchars(app_url('js/register-pharmacy-map.js'), ENT_QUOTES, 'UTF-8') ?>?v=pin-tip-1"></script>
 <script>
 window.REGISTER_MAP_CONFIG = <?= json_encode([
   'tileUrl' => MAP_TILE_URL,
