@@ -242,7 +242,7 @@ function caps_seed_tgp_inventory(): void
     try {
         pharmacy_db();
     } catch (Throwable) {
-        // Inventory seed runs again on the next request that can reach MySQL.
+        // Pharmacy migrations also clear seeded TGP inventory once.
     }
 }
 
