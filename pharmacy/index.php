@@ -55,7 +55,7 @@ require_once dirname(__DIR__) . '/includes/maps.php';
 window.PHARMACY_CHART_DATA = <?= json_encode($chartData ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
 </script>
 <script src="js/dashboard.php"></script>
-<script src="js/add-medicine.php?v=saving-overlay-1"></script>
+<script src="js/add-medicine.php?v=saving-faster-1"></script>
 <script src="js/inventory.php?v=featured-heart-1"></script>
 <script src="js/orders.php?v=status-buttons"></script>
 <script src="js/sales.php"></script>

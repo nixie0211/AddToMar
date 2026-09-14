@@ -344,11 +344,9 @@ function initMedicineUpload(){
 
       const isEdit = !!(document.getElementById('medicine-id')?.value || '');
       showAlert((isEdit ? 'Medicine updated' : 'Medicine saved') + '. Updating inventory…', 'success');
-      window.setTimeout(function(){
-        const url = new URL(window.location.href);
-        url.searchParams.set('view', 'inventory');
-        window.location.href = url.toString();
-      }, 600);
+      const url = new URL(window.location.href);
+      url.searchParams.set('view', 'inventory');
+      window.location.href = url.toString();
     } catch (err) {
       setSaving(false);
       showAlert('Could not save this medicine. Try again.', 'error');

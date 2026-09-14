@@ -93,9 +93,18 @@ if (is_array($file) && (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_E
         exit;
     }
 
+    $storedMime = $mime;
+    $storedExt = $allowed[$mime];
+    $compressed = pharmacy_medicine_compress_image($bytes, $mime);
+    if (is_array($compressed) && ($compressed['content'] ?? '') !== '') {
+        $bytes = (string) $compressed['content'];
+        $storedMime = (string) ($compressed['mime'] ?? $mime);
+        $storedExt = $storedMime === 'image/jpeg' ? 'jpg' : $storedExt;
+    }
+
     $imageUpload = [
-        'filename' => bin2hex(random_bytes(8)) . '.' . $allowed[$mime],
-        'mime' => $mime,
+        'filename' => bin2hex(random_bytes(8)) . '.' . $storedExt,
+        'mime' => $storedMime,
         'content' => $bytes,
     ];
 }

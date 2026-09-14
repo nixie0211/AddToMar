@@ -866,6 +866,49 @@ function pharmacy_medicine_db_image_ids(bool $refresh = false): array
     return $ids;
 }
 
+function pharmacy_medicine_compress_image(string $content, string $mime): ?array
+{
+    if ($content === '' || !function_exists('imagecreatefromstring')) {
+        return null;
+    }
+
+    $image = @imagecreatefromstring($content);
+    if ($image === false) {
+        return null;
+    }
+
+    $width = imagesx($image);
+    $height = imagesy($image);
+    $maxEdge = 1200;
+    $nextWidth = $width;
+    $nextHeight = $height;
+    if ($width > $maxEdge || $height > $maxEdge) {
+        $scale = min($maxEdge / max(1, $width), $maxEdge / max(1, $height));
+        $nextWidth = max(1, (int) round($width * $scale));
+        $nextHeight = max(1, (int) round($height * $scale));
+    }
+
+    $canvas = imagecreatetruecolor($nextWidth, $nextHeight);
+    if ($canvas === false) {
+        imagedestroy($image);
+        return null;
+    }
+    $white = imagecolorallocate($canvas, 255, 255, 255);
+    imagefilledrectangle($canvas, 0, 0, $nextWidth, $nextHeight, $white);
+    imagecopyresampled($canvas, $image, 0, 0, 0, 0, $nextWidth, $nextHeight, $width, $height);
+    imagedestroy($image);
+
+    ob_start();
+    $ok = imagejpeg($canvas, null, 82);
+    $out = ob_get_clean();
+    imagedestroy($canvas);
+    if (!$ok || !is_string($out) || $out === '') {
+        return null;
+    }
+
+    return ['mime' => 'image/jpeg', 'content' => $out];
+}
+
 function pharmacy_medicine_store_image(int $medicineId, string $filename, string $mime, string $content): void
 {
     if ($medicineId <= 0 || $content === '') {
@@ -878,7 +921,6 @@ function pharmacy_medicine_store_image(int $medicineId, string $filename, string
          ON DUPLICATE KEY UPDATE filename = VALUES(filename), mime = VALUES(mime), content = VALUES(content)'
     );
     $stmt->execute([$medicineId, $filename, $mime, $content]);
-    pharmacy_medicine_db_image_ids(true);
 }
 
 function pharmacy_medicine_get_image(int $medicineId): ?array

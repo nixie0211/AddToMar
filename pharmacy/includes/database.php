@@ -42,6 +42,23 @@ function pharmacy_ensure_column(PDO $pdo, string $table, string $column, string 
 
 function pharmacy_run_migrations(PDO $pdo): void
 {
+    $schemaVersion = '2026-09-14-medicine-images';
+    try {
+        $pdo->exec('
+            CREATE TABLE IF NOT EXISTS app_meta (
+                meta_key VARCHAR(64) NOT NULL PRIMARY KEY,
+                meta_value VARCHAR(255) NOT NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ');
+        $versionStmt = $pdo->prepare('SELECT meta_value FROM app_meta WHERE meta_key = ? LIMIT 1');
+        $versionStmt->execute(['schema_version']);
+        if ((string) $versionStmt->fetchColumn() === $schemaVersion) {
+            return;
+        }
+    } catch (Throwable) {
+        // Fall through and run the full schema setup.
+    }
+
     $pdo->exec(<<<'SQL'
         CREATE TABLE IF NOT EXISTS pharmacy_settings (
             id INT PRIMARY KEY AUTO_INCREMENT,
@@ -227,6 +244,13 @@ function pharmacy_run_migrations(PDO $pdo): void
 
     pharmacy_clear_tgp_inventory($pdo);
     pharmacy_seed_tgp_inventory($pdo);
+
+    try {
+        $mark = $pdo->prepare('INSERT INTO app_meta (meta_key, meta_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE meta_value = VALUES(meta_value)');
+        $mark->execute(['schema_version', $schemaVersion]);
+    } catch (Throwable) {
+        // Schema is already applied even if the version row cannot be stored.
+    }
 }
 
 function pharmacy_clear_tgp_inventory(PDO $pdo): void
