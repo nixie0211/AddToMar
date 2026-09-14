@@ -14,6 +14,7 @@ $status = (string) ($medicine['status'] ?? 'ok');
 $rxRequired = !empty($medicine['prescription_required']);
 $imageUrl = trim((string) ($medicine['image_url'] ?? ''));
 $storeSlug = (string) ($medicine['store_slug'] ?? residence_store_slug((string) ($medicine['pharmacy_name'] ?? 'Pharmacy')));
+$storeTitle = trim((string) ($medicine['pharmacy_name'] ?? '')) ?: $storeSlug;
 $storeLogo = trim((string) ($medicine['pharmacy_logo_url'] ?? '')) ?: $brandLogo;
 $description = trim((string) ($medicine['description'] ?? ''));
 if ($description === '') {
@@ -68,7 +69,7 @@ $badgeLabel = match ($spotlightBadge) {
             <div class="med-card-frame med-card-frame--rx">
               <div class="med-card-store med-card-store--rx">
                 <img src="<?= htmlspecialchars($storeLogo, ENT_QUOTES, 'UTF-8') ?>" alt="" class="med-card-store-logo" width="18" height="18">
-                <span><?= htmlspecialchars($storeSlug, ENT_QUOTES, 'UTF-8') ?></span>
+                <span title="<?= htmlspecialchars($storeTitle, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($storeSlug, ENT_QUOTES, 'UTF-8') ?></span>
               </div>
               <div class="med-card-rx-visual">
                 <?php if ($imageUrl !== ''): ?>
@@ -85,7 +86,7 @@ $badgeLabel = match ($spotlightBadge) {
             <div class="med-card-frame">
               <div class="med-card-store">
                 <img src="<?= htmlspecialchars($storeLogo, ENT_QUOTES, 'UTF-8') ?>" alt="" class="med-card-store-logo" width="18" height="18">
-                <span><?= htmlspecialchars($storeSlug, ENT_QUOTES, 'UTF-8') ?></span>
+                <span title="<?= htmlspecialchars($storeTitle, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($storeSlug, ENT_QUOTES, 'UTF-8') ?></span>
               </div>
               <div class="med-card-visual">
                 <?php if ($imageUrl !== ''): ?>

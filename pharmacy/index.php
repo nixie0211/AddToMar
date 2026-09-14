@@ -36,7 +36,7 @@ require_once dirname(__DIR__) . '/includes/maps.php';
 <link rel="stylesheet" href="css/reports.css">
 <link rel="stylesheet" href="css/settings.css">
 <link rel="stylesheet" href="css/add-medicine.css?v=saving-overlay-1">
-<link rel="stylesheet" href="css/inventory.css?v=featured-heart-1">
+<link rel="stylesheet" href="css/inventory.css?v=store-name-ellipsis-1">
 </head>
 <body>
 

@@ -87,7 +87,7 @@
               <div class="med-card-frame med-card-frame--rx">
                 <div class="med-card-store med-card-store--rx">
                   <img src="<?= htmlspecialchars($storeLogoUrl, ENT_QUOTES, 'UTF-8') ?>" alt="" class="med-card-store-logo" width="18" height="18">
-                  <span><?= htmlspecialchars($storeSlug, ENT_QUOTES, 'UTF-8') ?></span>
+                  <span title="<?= htmlspecialchars($pharmacyName, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($storeSlug, ENT_QUOTES, 'UTF-8') ?></span>
                 </div>
 
                 <div class="med-card-rx-visual">
@@ -105,7 +105,7 @@
               <div class="med-card-frame">
                 <div class="med-card-store">
                   <img src="<?= htmlspecialchars($storeLogoUrl, ENT_QUOTES, 'UTF-8') ?>" alt="" class="med-card-store-logo" width="18" height="18">
-                  <span><?= htmlspecialchars($storeSlug, ENT_QUOTES, 'UTF-8') ?></span>
+                  <span title="<?= htmlspecialchars($pharmacyName, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($storeSlug, ENT_QUOTES, 'UTF-8') ?></span>
                 </div>
 
                 <div class="med-card-visual">

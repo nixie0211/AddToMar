@@ -107,8 +107,8 @@ function buildInventoryCardHtml(card, featured){
     : '<div class="med-card-photo med-card-photo--placeholder" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20 7L12 3 4 7v10l8 4 8-4V7z"/></svg></div>';
 
   const productVisual = requiresRx
-    ? '<div class="med-card-frame med-card-frame--rx"><div class="med-card-store med-card-store--rx"><img src="' + logo + '" alt="" class="med-card-store-logo" width="18" height="18"><span>' + store + '</span></div><div class="med-card-rx-visual">' + photo + '<span class="med-card-rx-symbol" aria-label="Prescription required">Rx</span></div></div>'
-    : '<div class="med-card-frame"><div class="med-card-store"><img src="' + logo + '" alt="" class="med-card-store-logo" width="18" height="18"><span>' + store + '</span></div><div class="med-card-visual">' + photo + '</div></div>';
+    ? '<div class="med-card-frame med-card-frame--rx"><div class="med-card-store med-card-store--rx"><img src="' + logo + '" alt="" class="med-card-store-logo" width="18" height="18"><span title="' + store + '">' + store + '</span></div><div class="med-card-rx-visual">' + photo + '<span class="med-card-rx-symbol" aria-label="Prescription required">Rx</span></div></div>'
+    : '<div class="med-card-frame"><div class="med-card-store"><img src="' + logo + '" alt="" class="med-card-store-logo" width="18" height="18"><span title="' + store + '">' + store + '</span></div><div class="med-card-visual">' + photo + '</div></div>';
 
   return (
     '<article class="med-card' + rxClass + expiredClass + featuredOn + '" data-medicine-id="' + id + '" data-search="' + search + '" data-category="' + categoryKey + '" data-status="' + statusKey + '" data-featured="' + (featured ? '1' : '0') + '">' +
