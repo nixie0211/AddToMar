@@ -3736,8 +3736,8 @@ article.med-card--rx:hover .med-card-frame--rx{
   border:1px solid #e4ebed;
   border-radius:15px;
   background:linear-gradient(145deg,#fff,#fdfefe);
-  text-align:left;
-  align-items:stretch;
+  text-align:center;
+  align-items:center;
   box-shadow:0 3px 7px rgba(15,35,50,.07);
   transform:none;
 }
