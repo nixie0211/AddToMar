@@ -215,8 +215,9 @@ function residence_catalog_top_sellers(int $limit = 12): array
           AND m.pharmacy_id IS NOT NULL
           AND m.pharmacy_id <> ""
           AND m.stock_quantity > 0
-          AND o.status NOT IN ("cancelled", "rejected")
+          AND o.status = "delivered"
         GROUP BY m.id
+        HAVING COALESCE(SUM(oi.quantity), 0) > 0
         ORDER BY units_sold DESC, m.name ASC
         LIMIT ' . max(1, $limit)
     );
@@ -224,29 +225,23 @@ function residence_catalog_top_sellers(int $limit = 12): array
     $items = [];
 
     foreach ($rows as $row) {
+        if ((int) ($row['units_sold'] ?? 0) <= 0) {
+            continue;
+        }
+
         $pharmacyId = trim((string) ($row['pharmacy_id'] ?? ''));
         if ($pharmacyId === '' || !isset($directory[$pharmacyId])) {
             continue;
         }
 
-        $items[] = residence_catalog_hydrate_medicine($row, $directory[$pharmacyId]);
-    }
-
-    if ($items !== []) {
-        return $items;
-    }
-
-    $catalog = residence_catalog_medicines();
-    usort($catalog, static function (array $a, array $b): int {
-        $stockCompare = (int) ($b['stock_quantity'] ?? 0) <=> (int) ($a['stock_quantity'] ?? 0);
-        if ($stockCompare !== 0) {
-            return $stockCompare;
+        $medicine = residence_catalog_hydrate_medicine($row, $directory[$pharmacyId]);
+        if (($medicine['status'] ?? '') === 'expired') {
+            continue;
         }
+        $items[] = $medicine;
+    }
 
-        return strcmp((string) ($a['name'] ?? ''), (string) ($b['name'] ?? ''));
-    });
-
-    return array_slice($catalog, 0, $limit);
+    return $items;
 }
 
 function residence_store_slug(string $name): string
