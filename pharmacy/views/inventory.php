@@ -1,5 +1,11 @@
 <!-- ================= INVENTORY VIEW ================= -->
-      <section class="<?= pharmacy_view_class('inventory', $activeView) ?>" id="view-inventory" data-live-region="pharmacy-inventory" data-live-keys="inventory">
+      <?php
+        $storeLogoUrl = trim((string) ($pharmacyLogoUrl ?? ''));
+        if ($storeLogoUrl === '') {
+            $storeLogoUrl = function_exists('app_url') ? app_url('2.png') : '../2.png';
+        }
+      ?>
+      <section class="<?= pharmacy_view_class('inventory', $activeView) ?>" id="view-inventory" data-live-region="pharmacy-inventory" data-live-keys="inventory" data-store-logo="<?= htmlspecialchars($storeLogoUrl, ENT_QUOTES, 'UTF-8') ?>">
         <div class="panel inventory-panel">
           <div class="filters-bar">
             <div class="search-box inventory-search">
@@ -80,7 +86,7 @@
               <?php if ($requiresRx): ?>
               <div class="med-card-frame med-card-frame--rx">
                 <div class="med-card-store med-card-store--rx">
-                  <svg class="med-card-cross" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M12 8v8M8 12h8"/></svg>
+                  <img src="<?= htmlspecialchars($storeLogoUrl, ENT_QUOTES, 'UTF-8') ?>" alt="" class="med-card-store-logo" width="18" height="18">
                   <span><?= htmlspecialchars($storeSlug, ENT_QUOTES, 'UTF-8') ?></span>
                 </div>
 
@@ -98,7 +104,7 @@
               <?php else: ?>
               <div class="med-card-frame">
                 <div class="med-card-store">
-                  <img src="<?= htmlspecialchars(function_exists('app_url') ? app_url('2.png') : '../2.png', ENT_QUOTES, 'UTF-8') ?>" alt="" class="med-card-store-logo" width="18" height="18">
+                  <img src="<?= htmlspecialchars($storeLogoUrl, ENT_QUOTES, 'UTF-8') ?>" alt="" class="med-card-store-logo" width="18" height="18">
                   <span><?= htmlspecialchars($storeSlug, ENT_QUOTES, 'UTF-8') ?></span>
                 </div>
 

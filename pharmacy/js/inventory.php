@@ -17,12 +17,13 @@ function formatInventoryPeso(value){
 }
 
 function inventoryCardContext(){
+  const section = document.getElementById('view-inventory');
   const existing = document.querySelector('#inventory-grid .med-card');
   const store = existing?.querySelector('.med-card-store span, .med-card-store--rx span');
   const logo = existing?.querySelector('.med-card-store-logo');
   return {
     storeSlug: store ? store.textContent.trim() : 'store',
-    logoUrl: logo ? logo.getAttribute('src') : '../2.png',
+    logoUrl: (section && section.dataset.storeLogo) || (logo ? logo.getAttribute('src') : '') || '../2.png',
   };
 }
 
@@ -106,7 +107,7 @@ function buildInventoryCardHtml(card, featured){
     : '<div class="med-card-photo med-card-photo--placeholder" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20 7L12 3 4 7v10l8 4 8-4V7z"/></svg></div>';
 
   const productVisual = requiresRx
-    ? '<div class="med-card-frame med-card-frame--rx"><div class="med-card-store med-card-store--rx"><svg class="med-card-cross" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M12 8v8M8 12h8"/></svg><span>' + store + '</span></div><div class="med-card-rx-visual">' + photo + '<span class="med-card-rx-symbol" aria-label="Prescription required">Rx</span></div></div>'
+    ? '<div class="med-card-frame med-card-frame--rx"><div class="med-card-store med-card-store--rx"><img src="' + logo + '" alt="" class="med-card-store-logo" width="18" height="18"><span>' + store + '</span></div><div class="med-card-rx-visual">' + photo + '<span class="med-card-rx-symbol" aria-label="Prescription required">Rx</span></div></div>'
     : '<div class="med-card-frame"><div class="med-card-store"><img src="' + logo + '" alt="" class="med-card-store-logo" width="18" height="18"><span>' + store + '</span></div><div class="med-card-visual">' + photo + '</div></div>';
 
   return (

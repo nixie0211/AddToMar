@@ -56,7 +56,7 @@ window.PHARMACY_CHART_DATA = <?= json_encode($chartData ?? [], JSON_UNESCAPED_UN
 </script>
 <script src="js/dashboard.php"></script>
 <script src="js/add-medicine.php?v=save-no-reload-1"></script>
-<script src="js/inventory.php?v=save-no-reload-1"></script>
+<script src="js/inventory.php?v=rx-pharmacy-logo-1"></script>
 <script src="js/orders.php?v=status-buttons"></script>
 <script src="js/sales.php"></script>
 <script src="js/analytics.php"></script>
