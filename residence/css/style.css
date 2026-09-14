@@ -3552,7 +3552,7 @@ article.med-card--rx:hover .med-card-frame--rx{
 .product-detail-qty{
   display:flex;
   align-items:center;
-  gap:8px;
+  gap:12px;
   flex-wrap:nowrap;
 }
 
@@ -3569,47 +3569,48 @@ article.med-card--rx:hover .med-card-frame--rx{
 .product-detail-qty .product-detail-qty-ctrl{
   display:inline-flex;
   align-items:center;
-  gap:8px;
+  gap:2px;
   min-width:0;
-  min-height:0;
-  padding:0;
-  border:0;
-  border-radius:0;
-  overflow:visible;
-  background:transparent;
-  box-shadow:none;
+  min-height:36px;
+  padding:3px;
+  border:1.5px solid #cfe4e0;
+  border-radius:999px;
+  overflow:hidden;
+  background:#f4fbf9;
+  box-shadow:0 1px 2px rgba(18,73,62,.06);
 }
 
 .product-detail-qty .product-detail-qty-ctrl button{
-  width:auto;
-  height:auto;
-  min-width:22px;
-  min-height:22px;
+  width:30px;
+  height:30px;
+  min-width:30px;
+  min-height:30px;
   padding:0;
   border:0;
-  border-radius:0;
-  background:transparent;
-  box-shadow:none;
-  color:var(--ink);
+  border-radius:50%;
+  background:#fff;
+  box-shadow:0 1px 2px rgba(18,73,62,.08);
+  color:#0f7668;
   font-size:18px;
   font-weight:700;
   line-height:1;
   transform:none;
-  transition:color .15s ease;
+  cursor:pointer;
+  transition:background .15s ease, color .15s ease, transform .15s ease;
 }
 .product-detail-qty .product-detail-qty-ctrl button:hover{
-  background:transparent;
-  color:var(--green-deep);
-  transform:none;
+  background:#0f7668;
+  color:#fff;
+  transform:scale(1.04);
 }
 .product-detail-qty .product-detail-qty-ctrl button:focus-visible{ outline:2px solid var(--green); outline-offset:2px; }
 
 .product-detail-qty .product-detail-qty-ctrl .qn{
-  width:auto;
-  min-width:1.2em;
-  padding:0;
+  width:36px;
+  min-width:36px;
+  padding:0 2px;
   font-size:15px;
-  font-weight:700;
+  font-weight:800;
   text-align:center;
   color:var(--ink);
 }
