@@ -31,10 +31,10 @@
               </div>
 
               <div class="product-detail-section" id="product-detail-qty-section">
-                <p class="product-detail-label">Quantity</p>
                 <div class="product-detail-qty">
+                  <span class="product-detail-qty-label">Quantity:</span>
                   <div class="qty-ctrl product-detail-qty-ctrl">
-                    <button type="button" onclick="productDetailQtyChange(-1)" aria-label="Decrease quantity">−</button>
+                    <button type="button" onclick="productDetailQtyChange(-1)" aria-label="Decrease quantity">-</button>
                     <span class="qn" id="product-detail-qty">1</span>
                     <button type="button" onclick="productDetailQtyChange(1)" aria-label="Increase quantity">+</button>
                   </div>

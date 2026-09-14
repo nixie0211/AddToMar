@@ -3552,36 +3552,65 @@ article.med-card--rx:hover .med-card-frame--rx{
 .product-detail-qty{
   display:flex;
   align-items:center;
+  gap:8px;
+  flex-wrap:nowrap;
 }
 
-.product-detail-qty-ctrl{
-  min-width:132px;
-  min-height:42px;
-  padding:3px;
-  border:1px solid #d9e5e6;
-  border-radius:999px;
-  background:#f8fbfb;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.9);
-}
-
-.product-detail-qty-ctrl button{
-  width:34px;
-  height:34px;
-  border-radius:50%;
-  background:#fff;
-  color:var(--green-deep);
-  font-size:19px;
-  line-height:1;
-  box-shadow:0 1px 3px rgba(25,65,71,.1);
-  transition:background .15s ease, color .15s ease, transform .15s ease;
-}
-.product-detail-qty-ctrl button:hover{ background:var(--green-deep); color:#fff; transform:scale(1.04); }
-.product-detail-qty-ctrl button:focus-visible{ outline:2px solid var(--green); outline-offset:2px; }
-
-.product-detail-qty-ctrl .qn{
-  width:52px;
+.product-detail-qty-label{
+  margin:0;
+  color:var(--ink);
+  font-family:var(--font-body);
   font-size:15px;
-  font-weight:800;
+  font-weight:700;
+  letter-spacing:0;
+  text-transform:none;
+}
+
+.product-detail-qty .product-detail-qty-ctrl{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  min-width:0;
+  min-height:0;
+  padding:0;
+  border:0;
+  border-radius:0;
+  overflow:visible;
+  background:transparent;
+  box-shadow:none;
+}
+
+.product-detail-qty .product-detail-qty-ctrl button{
+  width:auto;
+  height:auto;
+  min-width:22px;
+  min-height:22px;
+  padding:0;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+  color:var(--ink);
+  font-size:18px;
+  font-weight:700;
+  line-height:1;
+  transform:none;
+  transition:color .15s ease;
+}
+.product-detail-qty .product-detail-qty-ctrl button:hover{
+  background:transparent;
+  color:var(--green-deep);
+  transform:none;
+}
+.product-detail-qty .product-detail-qty-ctrl button:focus-visible{ outline:2px solid var(--green); outline-offset:2px; }
+
+.product-detail-qty .product-detail-qty-ctrl .qn{
+  width:auto;
+  min-width:1.2em;
+  padding:0;
+  font-size:15px;
+  font-weight:700;
+  text-align:center;
   color:var(--ink);
 }
 
