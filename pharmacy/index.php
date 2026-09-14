@@ -30,7 +30,7 @@ require_once dirname(__DIR__) . '/includes/maps.php';
 <head>
 <?php include PHARMACY_ROOT . '/partials/head.php'; ?>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
-<link rel="stylesheet" href="<?= htmlspecialchars(app_url('css/map-service-overlay.css'), ENT_QUOTES, 'UTF-8') ?>?v=2">
+<link rel="stylesheet" href="<?= htmlspecialchars(app_url('css/map-service-overlay.css'), ENT_QUOTES, 'UTF-8') ?>?v=street-map-1">
 <link rel="stylesheet" href="css/base.css?v=unified-mint-outer-canvas">
 <link rel="stylesheet" href="css/orders.css?v=completed-paid-total-2">
 <link rel="stylesheet" href="css/reports.css">
@@ -71,6 +71,7 @@ window.PHARMACY_REGISTER_MAP_CONFIG = <?= json_encode([
   'minZoom' => MAP_MIN_ZOOM,
   'maxZoom' => MAP_MAX_ZOOM,
   'bounds' => maps_bounds(),
+  'fitBounds' => maps_fit_bounds(),
   'serviceOverlay' => maps_service_overlay(),
   'serviceCities' => MAP_SERVICE_CITIES,
   'geocodeUrl' => app_url('ajax/geocode-search.php'),
@@ -97,8 +98,8 @@ window.PHARMACY_REGISTER_MAP_CONFIG = <?= json_encode([
 </script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="<?= htmlspecialchars(app_url('js/map-area-popup.js'), ENT_QUOTES, 'UTF-8') ?>?v=1"></script>
-<script src="<?= htmlspecialchars(app_url('js/map-service-overlay.js'), ENT_QUOTES, 'UTF-8') ?>?v=4"></script>
-<script src="<?= htmlspecialchars(app_url('js/register-pharmacy-map.js'), ENT_QUOTES, 'UTF-8') ?>?v=out-of-area-popup-1"></script>
+<script src="<?= htmlspecialchars(app_url('js/map-service-overlay.js'), ENT_QUOTES, 'UTF-8') ?>?v=street-map-1"></script>
+<script src="<?= htmlspecialchars(app_url('js/register-pharmacy-map.js'), ENT_QUOTES, 'UTF-8') ?>?v=street-map-1"></script>
 <script src="js/settings.php"></script>
 <?php live_sync_render_script('pharmacy'); ?>
 </body>

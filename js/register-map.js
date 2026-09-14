@@ -30,7 +30,6 @@
     let map = null;
     let userMarker = null;
     let userPos = null;
-    let serviceBounds = null;
     let mapClickBound = false;
     let toolbarBound = false;
     let searchTimer = null;
@@ -56,23 +55,43 @@
       return element.innerHTML;
     }
 
-    function getServiceBounds() {
-      if (serviceBounds) return serviceBounds;
-      if (!cfg.bounds) return null;
+    function boxBounds(box) {
+      if (!box) return null;
+      return L.latLngBounds([box.south, box.west], [box.north, box.east]);
+    }
 
-      serviceBounds = L.latLngBounds(
-        [cfg.bounds.south, cfg.bounds.west],
-        [cfg.bounds.north, cfg.bounds.east]
-      );
+    function getViewBounds() {
+      return boxBounds(cfg.bounds);
+    }
 
-      return serviceBounds;
+    function getFitBounds() {
+      if (cfg.fitBounds) return boxBounds(cfg.fitBounds);
+      const ring = (cfg.serviceOverlay && cfg.serviceOverlay.polygon) || [];
+      if (ring.length >= 3) {
+        return L.latLngBounds(ring.map((point) => [Number(point.lat), Number(point.lng)]));
+      }
+      return getViewBounds();
+    }
+
+    function addMapTiles(target) {
+      const streetUrl = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png';
+      if (typeof window.addStreetTileLayer === 'function') {
+        window.addStreetTileLayer(target, cfg);
+        return;
+      }
+      L.tileLayer(streetUrl, {
+        attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+        subdomains: 'abcd',
+        maxZoom: cfg.maxZoom || 19,
+        minZoom: cfg.minZoom || 10,
+      }).addTo(target);
     }
 
     function isInServiceArea(lat, lng) {
       if (typeof window.pointInServiceOverlay === 'function') {
         return window.pointInServiceOverlay(lat, lng, cfg);
       }
-      const bounds = getServiceBounds();
+      const bounds = getFitBounds();
       return bounds ? bounds.contains([lat, lng]) : true;
     }
 
@@ -350,28 +369,25 @@
 
       bindToolbar();
 
-      const bounds = getServiceBounds();
+      const viewBounds = getViewBounds();
+      const fitBounds = getFitBounds();
 
       if (!map) {
         map = L.map(ids.map, {
           zoomControl: true,
-          minZoom: cfg.minZoom || 11,
-          maxZoom: cfg.maxZoom || 18,
-          maxBounds: bounds || undefined,
+          minZoom: cfg.minZoom || 10,
+          maxZoom: cfg.maxZoom || 19,
+          maxBounds: viewBounds || undefined,
           maxBoundsViscosity: 1.0,
         });
 
-        if (bounds) {
-          map.fitBounds(bounds, { padding: [20, 20] });
+        if (fitBounds) {
+          map.fitBounds(fitBounds, { padding: [20, 20] });
         } else {
-          map.setView([cfg.defaultLat || 18.1978, cfg.defaultLng || 120.5937], cfg.defaultZoom || 12);
+          map.setView([cfg.defaultLat || 18.14, cfg.defaultLng || 120.62], cfg.defaultZoom || 12);
         }
 
-        L.tileLayer(cfg.tileUrl || 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-          attribution: cfg.tileAttribution || '&copy; OpenStreetMap contributors',
-          maxZoom: cfg.maxZoom || 18,
-          minZoom: cfg.minZoom || 11,
-        }).addTo(map);
+        addMapTiles(map);
 
         if (typeof window.addServiceAreaOverlay === 'function') {
           window.addServiceAreaOverlay(map, cfg);
@@ -406,7 +422,7 @@
       const searchInput = el(ids.search);
       if (searchInput) searchInput.value = '';
       if (map) {
-        const bounds = getServiceBounds();
+        const bounds = getFitBounds();
         if (bounds) {
           map.fitBounds(bounds, { padding: [20, 20] });
         }

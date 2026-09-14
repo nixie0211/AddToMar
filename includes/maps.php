@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-define('MAP_TILE_URL', 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png');
+define('MAP_TILE_URL', 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png');
 define('MAP_ATTRIBUTION', '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>');
 define('MAP_DEFAULT_LAT', 18.14);
 define('MAP_DEFAULT_LNG', 120.62);
@@ -39,6 +39,21 @@ function maps_service_overlay(): array
 {
     return [
         'polygon' => maps_service_polygon(),
+    ];
+}
+
+function maps_fit_bounds(): array
+{
+    $polygon = maps_service_polygon();
+    $lats = array_column($polygon, 'lat');
+    $lngs = array_column($polygon, 'lng');
+    $pad = 0.02;
+
+    return [
+        'south' => min($lats) - $pad,
+        'west' => min($lngs) - $pad,
+        'north' => max($lats) + $pad,
+        'east' => max($lngs) + $pad,
     ];
 }
 

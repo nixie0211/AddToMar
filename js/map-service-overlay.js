@@ -1,6 +1,19 @@
 (function (global) {
   'use strict';
 
+  var STREET_TILE_URL = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png';
+  var STREET_TILE_ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
+
+  global.addStreetTileLayer = function addStreetTileLayer(map, cfg) {
+    if (!map || !global.L) return;
+    L.tileLayer(STREET_TILE_URL, {
+      attribution: STREET_TILE_ATTR,
+      subdomains: 'abcd',
+      maxZoom: (cfg && cfg.maxZoom) || 19,
+      minZoom: (cfg && cfg.minZoom) || 10,
+    }).addTo(map);
+  };
+
   function overlayConfig(cfg) {
     return (cfg && cfg.serviceOverlay) || {};
   }
