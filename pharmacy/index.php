@@ -35,7 +35,7 @@ require_once dirname(__DIR__) . '/includes/maps.php';
 <link rel="stylesheet" href="css/orders.css?v=completed-paid-total-2">
 <link rel="stylesheet" href="css/reports.css">
 <link rel="stylesheet" href="css/settings.css">
-<link rel="stylesheet" href="css/add-medicine.css?v=4">
+<link rel="stylesheet" href="css/add-medicine.css?v=saving-overlay-1">
 <link rel="stylesheet" href="css/inventory.css?v=featured-heart-1">
 </head>
 <body>
@@ -55,7 +55,7 @@ require_once dirname(__DIR__) . '/includes/maps.php';
 window.PHARMACY_CHART_DATA = <?= json_encode($chartData ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
 </script>
 <script src="js/dashboard.php"></script>
-<script src="js/add-medicine.php?v=saving-1"></script>
+<script src="js/add-medicine.php?v=saving-overlay-1"></script>
 <script src="js/inventory.php?v=featured-heart-1"></script>
 <script src="js/orders.php?v=status-buttons"></script>
 <script src="js/sales.php"></script>

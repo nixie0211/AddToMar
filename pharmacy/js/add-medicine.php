@@ -313,9 +313,12 @@ function initMedicineUpload(){
     }
 
     submitBtn.disabled = true;
-    const submitLabel = document.getElementById('add-medicine-submit-label');
-    const originalLabel = submitLabel?.textContent || 'Save medicine';
-    if (submitLabel) submitLabel.textContent = 'Saving';
+    const savingEl = document.getElementById('add-medicine-saving');
+    function setSaving(on){
+      if (savingEl) savingEl.hidden = !on;
+      document.body.classList.toggle('add-med-saving-open', on);
+    }
+    setSaving(true);
     showAlert('', '');
 
     try {
@@ -333,9 +336,9 @@ function initMedicineUpload(){
       });
       const data = await response.json();
       if(!response.ok || !data.success){
+        setSaving(false);
         showAlert(data.message || 'Could not save this medicine.', 'error');
         submitBtn.disabled = false;
-        if (submitLabel) submitLabel.textContent = originalLabel;
         return;
       }
 
@@ -347,12 +350,19 @@ function initMedicineUpload(){
         window.location.href = url.toString();
       }, 600);
     } catch (err) {
+      setSaving(false);
       showAlert('Could not save this medicine. Try again.', 'error');
       submitBtn.disabled = false;
-      if (submitLabel) submitLabel.textContent = originalLabel;
     }
   });
 }
+
+document.addEventListener('keydown', function(e){
+  const savingEl = document.getElementById('add-medicine-saving');
+  if (!savingEl || savingEl.hidden) return;
+  e.preventDefault();
+  e.stopPropagation();
+}, true);
 
 document.addEventListener('DOMContentLoaded', function(){
   loadMedicineCatalog();

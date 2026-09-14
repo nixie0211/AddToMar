@@ -162,4 +162,11 @@ foreach ($categories as $category) {
             </button>
           </div>
         </form>
+        <div class="add-med-saving" id="add-medicine-saving" hidden>
+          <div class="add-med-saving-backdrop" aria-hidden="true"></div>
+          <div class="add-med-saving-card" role="status" aria-live="assertive" aria-busy="true">
+            <span class="add-med-saving-spinner" aria-hidden="true"></span>
+            <p>Saving</p>
+          </div>
+        </div>
       </section>
