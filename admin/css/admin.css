@@ -2794,24 +2794,6 @@ a {
   color: #344054;
 }
 
-.rx-day-hours-row.is-variable {
-  padding: 4px 8px;
-  margin: 0 -8px;
-  border-radius: 10px;
-  background: #fff8e7;
-}
-
-.rx-day-hours-note {
-  margin-left: auto;
-  padding: 3px 7px;
-  border-radius: 999px;
-  background: #fce8b2;
-  color: #946200;
-  font-size: 0.68rem;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
 .rx-row {
   display: grid;
   grid-template-columns: minmax(140px, 0.7fr) minmax(0, 1.3fr);

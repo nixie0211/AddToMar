@@ -69,11 +69,9 @@ $pharmacyReviewCloseLabel = $pharmacyReviewContext === 'panel' ? 'Close' : 'Back
             $dayOpen = $isOpenDay ? pharmacy_accounts_format_time((string) ($dayHours['open'] ?? $viewPharmacy['open_time'] ?? '')) : '';
             $dayClose = $isOpenDay ? pharmacy_accounts_format_time((string) ($dayHours['close'] ?? $viewPharmacy['close_time'] ?? '')) : '';
           ?>
-          <?php $isVariableDay = $isOpenDay && (($dayOpen !== $openTime) || ($dayClose !== $closeTime)); ?>
-          <div class="rx-day-hours-row<?= $isOpenDay ? ' is-open' : '' ?><?= $isVariableDay ? ' is-variable' : '' ?>" role="listitem">
+          <div class="rx-day-hours-row<?= $isOpenDay ? ' is-open' : '' ?>" role="listitem">
             <span class="rx-day-pill<?= $isOpenDay ? ' is-active' : '' ?>"><?= htmlspecialchars(substr($dayLabel, 0, 3), ENT_QUOTES, 'UTF-8') ?></span>
             <span class="rx-day-hours-time"><?= $isOpenDay ? htmlspecialchars($dayOpen . ' – ' . $dayClose, ENT_QUOTES, 'UTF-8') : 'Closed' ?></span>
-            <?php if ($isVariableDay): ?><span class="rx-day-hours-note">Different hours</span><?php endif; ?>
           </div>
           <?php endforeach; ?>
         </div>
