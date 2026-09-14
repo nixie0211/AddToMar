@@ -2303,7 +2303,7 @@ body:not(:has(.page[data-page="dashboard"].active)) .home-category-bar{ display:
   width:100%;
   max-width:var(--content-max);
   margin:0 auto;
-  padding:0 calc(var(--content-pad-x) + 28px);
+  padding:0 var(--content-pad-x);
 }
 
 .home-carousel{
@@ -2409,22 +2409,27 @@ body:not(:has(.page[data-page="dashboard"].active)) .home-category-bar{ display:
 }
 
 .home-spotlight-carousel{
-  display:flex;
+  display:grid;
+  grid-template-columns:repeat(5, minmax(0, 1fr));
   gap:16px;
-  overflow-x:auto;
-  scroll-behavior:smooth;
-  padding:10px 2px 14px;
-  scrollbar-width:none;
+  overflow:visible;
+  padding:10px 0 14px;
 }
 
 .home-spotlight-carousel::-webkit-scrollbar{
   display:none;
 }
 
+@media (max-width: 1100px){
+  .home-spotlight-carousel{
+    grid-template-columns:repeat(3, minmax(0, 1fr));
+  }
+}
+
 .med-card--spotlight{
-  flex:0 0 270px;
-  width:270px;
-  min-width:270px;
+  flex:none;
+  width:100%;
+  min-width:0;
   padding:10px 10px 14px;
   background:transparent;
   border:none;
@@ -3202,9 +3207,9 @@ body:not(:has(.page[data-page="dashboard"].active)) .home-category-bar{ display:
 
 /* Homepage carousel cards share the resident inventory-card visual. */
 .home-spotlight-carousel .med-card--spotlight{
-  flex:0 0 280px;
-  width:280px;
-  min-width:280px;
+  flex:none;
+  width:100%;
+  min-width:0;
   min-height:470px;
   padding:18px 22px 20px;
   border:1px solid #e4ebed;
@@ -5434,12 +5439,16 @@ body.is-pharmacy-empty.is-pharmacy-profile-page .page[data-page="pharmacy-profil
   .home-spotlight-head{ gap:12px; }
   .home-spotlight-title{ font-size:18px; }
   .med-card--spotlight{
-    flex-basis:230px;
-    width:230px;
-    min-width:230px;
+    flex-basis:auto;
+    width:100%;
+    min-width:0;
   }
   .home-carousel-wrap{
-    padding:0 calc(var(--content-pad-x) + 24px);
+    padding:0 var(--content-pad-x);
+  }
+  .home-spotlight-carousel{
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:12px;
   }
   .home-hero{ padding:18px 0 22px; }
   .home-store-hero-stage{ padding-bottom:120px; }

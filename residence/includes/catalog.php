@@ -174,7 +174,7 @@ function residence_catalog_medicines(): array
     return $catalog;
 }
 
-function residence_catalog_new_products(array $catalog, int $limit = 12): array
+function residence_catalog_new_products(array $catalog, int $limit = 10): array
 {
     $items = array_values(array_filter($catalog, static fn(array $medicine): bool => !empty($medicine['is_new'])));
     usort($items, static function (array $a, array $b): int {
@@ -184,7 +184,7 @@ function residence_catalog_new_products(array $catalog, int $limit = 12): array
     return array_slice($items, 0, $limit);
 }
 
-function residence_catalog_featured_products(array $catalog, int $limit = 12): array
+function residence_catalog_featured_products(array $catalog, int $limit = 10): array
 {
     $items = array_values(array_filter(
         $catalog,
@@ -198,7 +198,7 @@ function residence_catalog_featured_products(array $catalog, int $limit = 12): a
     return array_slice($items, 0, $limit);
 }
 
-function residence_catalog_top_sellers(int $limit = 12): array
+function residence_catalog_top_sellers(int $limit = 10): array
 {
     $directory = residence_pharmacy_directory();
     if ($directory === []) {

@@ -22,16 +22,8 @@ $sectionBadge = $section['badge'] ?? null;
                   };
                 ?></p>
                 <?php else: ?>
-                <div class="home-carousel-wrap" data-carousel-wrap="<?= $sectionId ?>">
-                  <button
-                    type="button"
-                    class="home-carousel-arrow home-carousel-prev"
-                    aria-label="Previous <?= $sectionTitle ?>"
-                  >
-                    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
-                  </button>
-
-                  <div class="home-spotlight-carousel" data-carousel="<?= $sectionId ?>">
+                <div class="home-carousel-wrap">
+                  <div class="home-spotlight-carousel">
                     <?php foreach ($sectionItems as $medicine): ?>
                       <?php
                       $spotlightBadge = $sectionBadge;
@@ -41,14 +33,6 @@ $sectionBadge = $section['badge'] ?? null;
                       ?>
                     <?php endforeach; ?>
                   </div>
-
-                  <button
-                    type="button"
-                    class="home-carousel-arrow home-carousel-next"
-                    aria-label="Next <?= $sectionTitle ?>"
-                  >
-                    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
-                  </button>
                 </div>
                 <?php endif; ?>
               </section>
