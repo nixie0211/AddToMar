@@ -342,8 +342,6 @@ function initMedicineUpload(){
         return;
       }
 
-      const isEdit = !!(document.getElementById('medicine-id')?.value || '');
-      showAlert((isEdit ? 'Medicine updated' : 'Medicine saved') + '. Updating inventory…', 'success');
       const url = new URL(window.location.href);
       url.searchParams.set('view', 'inventory');
       window.location.href = url.toString();
