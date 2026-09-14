@@ -35,6 +35,14 @@ $brand = trim((string) ($_POST['brand'] ?? ''));
 $dosageForm = trim((string) ($_POST['dosage_form'] ?? ''));
 $strength = trim((string) ($_POST['strength'] ?? ''));
 $unit = trim((string) ($_POST['unit'] ?? ''));
+$unitOther = trim((string) ($_POST['unit_other'] ?? ''));
+if (strcasecmp($unit, 'Other') === 0) {
+    $unit = $unitOther;
+}
+$dosageFormOther = trim((string) ($_POST['dosage_form_other'] ?? ''));
+if (strcasecmp($dosageForm, 'Other') === 0) {
+    $dosageForm = $dosageFormOther;
+}
 $category = trim((string) ($_POST['category'] ?? ''));
 $categoryOther = trim((string) ($_POST['category_other'] ?? ''));
 if (strcasecmp($category, 'Other') === 0) {

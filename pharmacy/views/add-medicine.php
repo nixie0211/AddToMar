@@ -89,6 +89,7 @@ foreach ($categories as $category) {
                       <option value="<?= htmlspecialchars($form, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($form, ENT_QUOTES, 'UTF-8') ?></option>
                       <?php endforeach; ?>
                     </select>
+                    <input id="med-dosage-form-other" name="dosage_form_other" type="text" placeholder="Type a specific dosage form" autocomplete="off" hidden>
                   </div>
                   <div class="field">
                     <label for="med-strength">Strength</label>
@@ -102,6 +103,7 @@ foreach ($categories as $category) {
                       <option value="<?= htmlspecialchars($unit, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($unit, ENT_QUOTES, 'UTF-8') ?></option>
                       <?php endforeach; ?>
                     </select>
+                    <input id="med-unit-other" name="unit_other" type="text" placeholder="Type a specific unit" autocomplete="off" hidden>
                   </div>
                   <div class="field">
                     <label for="med-category">Category</label>

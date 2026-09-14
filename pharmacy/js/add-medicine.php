@@ -97,19 +97,65 @@ function resetMedicineForm(){
   if(isActive) isActive.checked = true;
 
   medicineUploadApi?.clearPreview?.();
-  const otherCategory = document.getElementById('med-category-other');
-  if (otherCategory) { otherCategory.value = ''; otherCategory.hidden = true; otherCategory.required = false; }
+  resetOtherSelectField('med-category', 'med-category-other');
+  resetOtherSelectField('med-dosage-form', 'med-dosage-form-other');
+  resetOtherSelectField('med-unit', 'med-unit-other');
   setMedicineFormMode('add');
 }
 
-function syncOtherCategoryField(){
-  const category = document.getElementById('med-category');
-  const other = document.getElementById('med-category-other');
-  if (!category || !other) return;
-  const show = category.value === 'Other';
+function resetOtherSelectField(selectId, otherId){
+  const other = document.getElementById(otherId);
+  if (other) { other.value = ''; other.hidden = true; other.required = false; }
+}
+
+function syncOtherSelectField(selectId, otherId, focusOther){
+  const select = document.getElementById(selectId);
+  const other = document.getElementById(otherId);
+  if (!select || !other) return;
+  const show = select.value === 'Other';
   other.hidden = !show;
   other.required = show;
-  if (show) other.focus(); else other.value = '';
+  if (show) {
+    if (focusOther !== false) other.focus();
+  } else {
+    other.value = '';
+  }
+}
+
+function fillSelectOrOther(selectId, otherId, value){
+  const select = document.getElementById(selectId);
+  const other = document.getElementById(otherId);
+  const next = String(value || '').trim();
+  if (!select) return;
+
+  const known = Array.from(select.options).some(function(option){
+    return option.value === next && option.value !== '' && option.value !== 'Other';
+  });
+
+  if (next !== '' && !known) {
+    select.value = 'Other';
+    if (other) {
+      other.hidden = false;
+      other.required = true;
+      other.value = next;
+    }
+    return;
+  }
+
+  select.value = next;
+  if (other) {
+    other.hidden = true;
+    other.required = false;
+    other.value = '';
+  }
+}
+
+function applyOtherFormValue(formData, fieldName){
+  const selected = String(formData.get(fieldName) || '').trim();
+  const custom = String(formData.get(fieldName + '_other') || '').trim();
+  if (selected.toLowerCase() === 'other') {
+    formData.set(fieldName, custom);
+  }
 }
 
 function formatExpirationDateInput(event){
@@ -153,16 +199,10 @@ function populateMedicineForm(medicine){
   setValue('name', medicine.name);
   setValue('generic_name', medicine.generic_name);
   setValue('brand', medicine.brand);
-  setValue('dosage_form', medicine.dosage_form);
+  fillSelectOrOther('med-dosage-form', 'med-dosage-form-other', medicine.dosage_form);
   setValue('strength', medicine.strength);
-  setValue('unit', medicine.unit);
-  setValue('category', medicine.category);
-  const otherCategory = document.getElementById('med-category-other');
-  if (otherCategory && medicine.category && !Array.from(document.getElementById('med-category').options).some(function(option){ return option.value === medicine.category; })) {
-    otherCategory.value = medicine.category;
-    document.getElementById('med-category').value = 'Other';
-  }
-  syncOtherCategoryField();
+  fillSelectOrOther('med-unit', 'med-unit-other', medicine.unit);
+  fillSelectOrOther('med-category', 'med-category-other', medicine.category);
   setValue('description', medicine.description);
   setValue('ingredients', medicine.ingredients);
   setValue('batch_number', medicine.batch_number);
@@ -360,12 +400,9 @@ function initMedicineUpload(){
 
     try {
       const formData = new FormData(form);
-      const selectedCategory = String(formData.get('category') || '').trim();
-      const customCategory = String(formData.get('category_other') || '').trim();
-      // Store the category the pharmacist entered, never the placeholder value “Other”.
-      if (selectedCategory.toLowerCase() === 'other' && customCategory !== '') {
-        formData.set('category', customCategory);
-      }
+      applyOtherFormValue(formData, 'category');
+      applyOtherFormValue(formData, 'dosage_form');
+      applyOtherFormValue(formData, 'unit');
 
       const response = await fetch(form.action, {
         method: 'POST',
@@ -400,6 +437,8 @@ document.addEventListener('keydown', function(e){
 document.addEventListener('DOMContentLoaded', function(){
   loadMedicineCatalog();
   initMedicineUpload();
-  document.getElementById('med-category')?.addEventListener('change', syncOtherCategoryField);
+  document.getElementById('med-category')?.addEventListener('change', function(){ syncOtherSelectField('med-category', 'med-category-other'); });
+  document.getElementById('med-dosage-form')?.addEventListener('change', function(){ syncOtherSelectField('med-dosage-form', 'med-dosage-form-other'); });
+  document.getElementById('med-unit')?.addEventListener('change', function(){ syncOtherSelectField('med-unit', 'med-unit-other'); });
   document.getElementById('med-expiration')?.addEventListener('input', formatExpirationDateInput);
 });
