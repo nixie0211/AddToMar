@@ -13,7 +13,7 @@ $sectionBadge = $section['badge'] ?? null;
                 </div>
 
                 <?php if ($sectionItems === []): ?>
-                <p class="home-spotlight-empty"><?= $sectionId === 'featured-products' ? 'No featured products yet.' : 'No products available in this section yet.' ?></p>
+                <p class="home-spotlight-empty"><?= $sectionId === 'featured-products' ? 'No featured products yet.' : ($sectionId === 'new-products' ? 'No new products added today.' : 'No products available in this section yet.') ?></p>
                 <?php else: ?>
                 <div class="home-carousel-wrap" data-carousel-wrap="<?= $sectionId ?>">
                   <button

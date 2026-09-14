@@ -954,14 +954,27 @@ function pharmacy_medicine_image_url(array $medicine): ?string
     return function_exists('app_url') ? app_url($path) : $path;
 }
 
-function pharmacy_medicine_is_new(array $medicine, int $days = 14): bool
+function pharmacy_medicine_is_new(array $medicine): bool
 {
-    $created = strtotime((string) ($medicine['created_at'] ?? ''));
-    if ($created === false) {
+    $raw = trim((string) ($medicine['created_at'] ?? ''));
+    if ($raw === '') {
         return false;
     }
 
-    return (time() - $created) <= ($days * 86400);
+    $timezone = function_exists('app_timezone') ? app_timezone() : new DateTimeZone('Asia/Manila');
+    try {
+        $created = new DateTimeImmutable($raw, $timezone);
+    } catch (Exception) {
+        $timestamp = strtotime($raw);
+        if ($timestamp === false) {
+            return false;
+        }
+        $created = (new DateTimeImmutable('@' . $timestamp))->setTimezone($timezone);
+    }
+
+    $today = new DateTimeImmutable('now', $timezone);
+
+    return $created->format('Y-m-d') === $today->format('Y-m-d');
 }
 
 function pharmacy_medicine_requires_prescription(array $medicine): bool

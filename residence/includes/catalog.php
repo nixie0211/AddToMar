@@ -181,24 +181,6 @@ function residence_catalog_new_products(array $catalog, int $limit = 12): array
         return strcmp((string) ($b['created_at'] ?? ''), (string) ($a['created_at'] ?? ''));
     });
 
-    if (count($items) < $limit) {
-        $seen = array_flip(array_column($items, 'id'));
-        $fallback = $catalog;
-        usort($fallback, static function (array $a, array $b): int {
-            return strcmp((string) ($b['created_at'] ?? ''), (string) ($a['created_at'] ?? ''));
-        });
-
-        foreach ($fallback as $medicine) {
-            if (isset($seen[$medicine['id']])) {
-                continue;
-            }
-            $items[] = $medicine;
-            if (count($items) >= $limit) {
-                break;
-            }
-        }
-    }
-
     return array_slice($items, 0, $limit);
 }
 
