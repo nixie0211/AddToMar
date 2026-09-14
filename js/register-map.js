@@ -74,14 +74,14 @@
     }
 
     function addMapTiles(target) {
-      const streetUrl = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png';
+      const streetUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
       if (typeof window.addStreetTileLayer === 'function') {
         window.addStreetTileLayer(target, cfg);
         return;
       }
       L.tileLayer(streetUrl, {
-        attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
-        subdomains: 'abcd',
+        attribution: '&copy; OpenStreetMap contributors',
+        subdomains: 'abc',
         maxZoom: cfg.maxZoom || 19,
         minZoom: cfg.minZoom || 10,
       }).addTo(target);

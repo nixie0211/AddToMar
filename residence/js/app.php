@@ -3215,9 +3215,9 @@ function ensureAddressMap(){
       maxZoom: cfg.maxZoom || 19,
     });
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
-      subdomains: 'abcd',
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors',
+      subdomains: 'abc',
       maxZoom: cfg.maxZoom || 19,
       minZoom: cfg.minZoom || 10,
     }).addTo(addressMapInstance);
@@ -4410,9 +4410,9 @@ function initLocatorMap(){
       maxZoom: cfg.maxZoom || 19,
     });
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
-      subdomains: 'abcd',
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors',
+      subdomains: 'abc',
       maxZoom: cfg.maxZoom || 19,
       minZoom: cfg.minZoom || 10,
     }).addTo(locatorMapInstance);

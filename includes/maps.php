@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-define('MAP_TILE_URL', 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png');
-define('MAP_ATTRIBUTION', '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>');
+define('MAP_TILE_URL', 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
+define('MAP_ATTRIBUTION', '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors');
 define('MAP_DEFAULT_LAT', 18.14);
 define('MAP_DEFAULT_LNG', 120.62);
 define('MAP_DEFAULT_ZOOM', 11);
