@@ -2173,7 +2173,7 @@ body:not(:has(.page[data-page="dashboard"].active)) .home-category-bar{ display:
   width:100%;
   max-width:var(--content-max);
   margin:0 auto;
-  padding:24px var(--content-pad-x) 40px;
+  padding:8px var(--content-pad-x) 40px;
   background:#fff;
   border-top:none;
   overflow:visible;
@@ -2182,14 +2182,19 @@ body:not(:has(.page[data-page="dashboard"].active)) .home-category-bar{ display:
   flex:1;
 }
 
-.home-main:not(.is-store-browse):not(.is-product-open):not(.is-catalog-filtered) .home-browse{
-  padding:0;
-  min-height:0;
-  flex:0 0 auto;
+.home-all-products-head{
+  display:flex;
+  align-items:center;
+  gap:18px;
+  width:100%;
+  margin:0 0 8px;
+  padding:18px 0 6px;
 }
 
-.home-main:not(.is-store-browse):not(.is-product-open):not(.is-catalog-filtered) .med-catalog{
-  display:none;
+.home-main.is-store-browse .home-all-products-head,
+.home-main.is-product-open .home-all-products-head,
+.home-main.is-catalog-filtered .home-all-products-head{
+  display:none !important;
 }
 
 /* A category selection is a focused catalog view: show only the matching products. */

@@ -1,4 +1,9 @@
         <div class="med-catalog" id="med-catalog">
+        <div class="home-all-products-head" id="home-all-products-head">
+          <span class="home-spotlight-line" aria-hidden="true"></span>
+          <h2 class="home-spotlight-title">All Products</h2>
+          <span class="home-spotlight-line" aria-hidden="true"></span>
+        </div>
         <p class="med-search-status" hidden aria-live="polite"></p>
         <div class="med-grid">
           <?php

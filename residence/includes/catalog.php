@@ -153,7 +153,7 @@ function residence_catalog_medicines(): array
           AND pharmacy_id IS NOT NULL
           AND pharmacy_id <> ""
           AND stock_quantity > 0
-        ORDER BY name ASC
+        ORDER BY created_at DESC, name ASC
     ');
     $rows = $stmt->fetchAll();
     $catalog = [];
@@ -170,6 +170,15 @@ function residence_catalog_medicines(): array
         }
         $catalog[] = $medicine;
     }
+
+    usort($catalog, static function (array $a, array $b): int {
+        $byDate = strcmp((string) ($b['created_at'] ?? ''), (string) ($a['created_at'] ?? ''));
+        if ($byDate !== 0) {
+            return $byDate;
+        }
+
+        return strcmp((string) ($a['name'] ?? ''), (string) ($b['name'] ?? ''));
+    });
 
     return $catalog;
 }
