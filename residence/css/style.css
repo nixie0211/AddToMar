@@ -2173,13 +2173,15 @@ body:not(:has(.page[data-page="dashboard"].active)) .home-category-bar{ display:
   width:100%;
   max-width:var(--content-max);
   margin:0 auto;
-  padding:8px var(--content-pad-x) 40px;
+  padding:8px var(--content-pad-x) 56px;
   background:#fff;
   border-top:none;
   overflow:visible;
   min-width:0;
   min-height:0;
-  flex:1;
+  flex:0 0 auto;
+  position:relative;
+  z-index:1;
 }
 
 .home-all-products-head{
@@ -2854,7 +2856,7 @@ body:not(:has(.page[data-page="dashboard"].active)) .home-category-bar{ display:
    ============================================================ */
 .browse-topbar{ display:flex; gap:12px; align-items:center; margin-bottom:18px; flex-wrap:wrap;}
 .browse-topbar .input-wrap{ flex:1; min-width:220px;}
-.med-catalog{ position:relative; }
+.med-catalog{ position:relative; padding-bottom:24px; }
 
 .med-search-status{
   margin:0 0 16px;
@@ -5238,9 +5240,12 @@ body.is-pharmacy-empty.is-pharmacy-profile-page .page[data-page="pharmacy-profil
 /* ============================================================
    FOOTER
    ============================================================ */
-.app-footer{
+.app-footer,
+#app-footer{
   flex-shrink:0;
-  margin-top:auto;
+  position:relative;
+  z-index:4;
+  margin-top:0;
   width:100%;
   background:#f6faf9;
   border-top:1px solid var(--border);

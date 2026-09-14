@@ -3,7 +3,7 @@ $footerLogo = function_exists('app_url') ? app_url('2.png') : '../2.png';
 ?>
             <style>
               /* Footer fallback: self-contained so every residence page stays intact. */
-              #app-footer{display:block;width:100%;margin-top:auto;background:#f6faf9;border-top:1px solid #dce9e7;color:#172d39;font-family:inherit}
+              #app-footer{display:block;width:100%;margin-top:0;position:relative;z-index:4;background:#f6faf9;border-top:1px solid #dce9e7;color:#172d39;font-family:inherit}
               #app-footer .app-footer-inner{width:min(1180px,100%);box-sizing:border-box;margin:0 auto;padding:42px 32px 22px}
               #app-footer .app-footer-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:42px;padding-bottom:28px}
               #app-footer .app-footer-logo{display:inline-flex;align-items:center;gap:10px;color:#102d39;font-size:22px;font-weight:800;text-decoration:none}
