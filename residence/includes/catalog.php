@@ -207,6 +207,22 @@ function residence_catalog_featured_products(array $catalog, int $limit = 10): a
     return array_slice($items, 0, $limit);
 }
 
+function residence_catalog_product_badge(array $medicine, array $topSellerIds = []): ?string
+{
+    if (!empty($medicine['is_new'])) {
+        return 'new';
+    }
+    if (!empty($medicine['is_featured'])) {
+        return 'featured';
+    }
+    $id = (int) ($medicine['id'] ?? 0);
+    if ($id > 0 && isset($topSellerIds[$id])) {
+        return 'top';
+    }
+
+    return null;
+}
+
 function residence_catalog_top_sellers(int $limit = 10): array
 {
     $directory = residence_pharmacy_directory();

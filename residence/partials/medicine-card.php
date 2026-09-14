@@ -1,6 +1,7 @@
 <?php
 $medicine = $medicine ?? [];
 $brandLogo = $brandLogo ?? (function_exists('app_url') ? app_url('2.png') : '../2.png');
+$isTopSeller = $isTopSeller ?? !empty($medicine['is_top_seller']);
 $spotlightBadge = $spotlightBadge ?? null;
 $showAddButton = $showAddButton ?? true;
 $cardClass = trim((string) ($cardClass ?? ''));
@@ -48,6 +49,7 @@ $badgeLabel = match ($spotlightBadge) {
             data-created-at="<?= htmlspecialchars((string) ($medicine['created_at'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
             data-is-new="<?= !empty($medicine['is_new']) ? '1' : '0' ?>"
             data-featured="<?= !empty($medicine['is_featured']) ? '1' : '0' ?>"
+            data-top-seller="<?= !empty($isTopSeller) ? '1' : '0' ?>"
             data-rx="<?= $rxRequired ? '1' : '0' ?>"
             data-distance="999"
             data-desc="<?= htmlspecialchars($description, ENT_QUOTES, 'UTF-8') ?>"

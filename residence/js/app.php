@@ -487,7 +487,7 @@ function pharmacyProfileBadgeForCard(card){
   const featuredIds = new Set((cfg.featuredProductIds || []).map(String));
   if(card.dataset.isNew === '1' || newIds.has(id)) return { type:'new', label:'New' };
   if(card.dataset.featured === '1' || featuredIds.has(id)) return { type:'featured', label:'Featured' };
-  if(topIds.has(id)) return { type:'top', label:'Top Seller' };
+  if(card.dataset.topSeller === '1' || topIds.has(id)) return { type:'top', label:'Top Seller' };
   return null;
 }
 
@@ -2805,6 +2805,7 @@ document.addEventListener('livesync:applied', function(event){
   if(keys.includes('orders') || keys.includes('notifications')) refreshResidenceOrders();
   document.querySelectorAll('[data-carousel-wrap]').forEach(wrap => { wrap._carouselReady = false; });
   if(typeof initProductCarousels === 'function') initProductCarousels();
+  document.querySelectorAll('.med-catalog .med-card').forEach(applySpotlightBadge);
   if(typeof updateStoreBrowseView === 'function' && document.querySelector('.page[data-page="dashboard"].active')){
     updateStoreBrowseView();
   }

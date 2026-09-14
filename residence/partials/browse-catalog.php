@@ -9,13 +9,22 @@
           <?php
           $catalogMedicines = $residenceCatalogMedicines ?? [];
           $brandLogo = function_exists('app_url') ? app_url('2.png') : '../2.png';
+          $topSellerIds = [];
+          foreach ($residenceTopSellers ?? [] as $topSeller) {
+              $topId = (int) ($topSeller['id'] ?? 0);
+              if ($topId > 0) {
+                  $topSellerIds[$topId] = true;
+              }
+          }
 
           foreach ($catalogMedicines as $medicine):
-              $spotlightBadge = null;
+              $spotlightBadge = residence_catalog_product_badge($medicine, $topSellerIds);
+              $isTopSeller = isset($topSellerIds[(int) ($medicine['id'] ?? 0)]);
               $showAddButton = true;
               $cardClass = '';
               include RESIDENCE_ROOT . '/partials/medicine-card.php';
           endforeach;
+          unset($spotlightBadge, $isTopSeller, $showAddButton, $cardClass);
           ?>
           </div>
 
