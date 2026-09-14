@@ -5,6 +5,11 @@ declare(strict_types=1);
 require_once dirname(__DIR__, 2) . '/includes/auth.php';
 require_portal_auth('pharmacy');
 require_once dirname(__DIR__) . '/config.php';
+
+if (!defined('PHARMACY_SKIP_MIGRATIONS')) {
+    define('PHARMACY_SKIP_MIGRATIONS', true);
+}
+
 require_once dirname(__DIR__) . '/includes/database.php';
 require_once dirname(__DIR__) . '/includes/pharmacy-context.php';
 require_once dirname(__DIR__) . '/includes/repository.php';
@@ -69,7 +74,8 @@ if (is_array($file) && (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_E
     }
 
     $tmpName = (string) ($file['tmp_name'] ?? '');
-    $mime = (string) mime_content_type($tmpName);
+    $info = @getimagesize($tmpName);
+    $mime = is_array($info) ? (string) ($info['mime'] ?? '') : '';
     $allowed = [
         'image/jpeg' => 'jpg',
         'image/png' => 'png',
@@ -109,6 +115,25 @@ if (is_array($file) && (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_E
     ];
 }
 
+$fields = [
+    'name' => $name,
+    'generic_name' => $genericName,
+    'brand' => $brand,
+    'dosage_form' => $dosageForm,
+    'strength' => $strength,
+    'unit' => $unit,
+    'category' => $category,
+    'description' => $description,
+    'ingredients' => $ingredients,
+    'batch_number' => $batchNumber,
+    'expiration_date' => $expiration,
+    'stock_quantity' => $stockQuantity,
+    'unit_price' => $unitPrice,
+    'selling_price' => $sellingPrice,
+    'prescription_required' => isset($_POST['prescription_required']) ? 1 : 0,
+    'is_active' => isset($_POST['is_active']) ? 1 : 0,
+];
+
 try {
     $pdo = pharmacy_db();
     $pharmacyId = pharmacy_current_id();
@@ -118,30 +143,22 @@ try {
         exit;
     }
 
+    $imageUrl = null;
     if ($medicineId > 0) {
-        $existing = pharmacy_get_medicine_by_id($medicineId);
-        if (!$existing || !pharmacy_medicine_owned($existing)) {
-            http_response_code(404);
-            echo json_encode(['success' => false, 'message' => 'Medicine not found.']);
-            exit;
-        }
-
-        $finalImagePath = $existing['image_path'] ?? null;
         if ($imageUpload !== null) {
             pharmacy_medicine_store_image($medicineId, $imageUpload['filename'], $imageUpload['mime'], $imageUpload['content']);
-            $finalImagePath = 'medicine-image.php?id=' . $medicineId;
+            $imagePath = 'medicine-image.php?id=' . $medicineId;
+            $imageUrl = pharmacy_saved_medicine_image_url($medicineId);
         }
 
-        $stmt = $pdo->prepare('
+        $sql = '
             UPDATE medicines SET
                 pharmacy_id = COALESCE(NULLIF(pharmacy_id, ""), ?),
                 name = ?, generic_name = ?, brand = ?, dosage_form = ?, strength = ?, unit = ?, category = ?, dosage = ?,
                 description = ?, ingredients = ?, batch_number = ?, expiration_date = ?, stock_quantity = ?,
-                unit_price = ?, selling_price = ?, prescription_required = ?, is_active = ?, image_path = ?
-            WHERE id = ? AND ' . pharmacy_scope_sql() . '
-        ');
-
-        $stmt->execute([
+                unit_price = ?, selling_price = ?, prescription_required = ?, is_active = ?
+        ';
+        $params = [
             $pharmacyId,
             $name,
             $genericName,
@@ -158,17 +175,34 @@ try {
             $stockQuantity,
             $unitPrice,
             $sellingPrice,
-            isset($_POST['prescription_required']) ? 1 : 0,
-            isset($_POST['is_active']) ? 1 : 0,
-            $finalImagePath,
-            $medicineId,
-        ]);
+            $fields['prescription_required'],
+            $fields['is_active'],
+        ];
+        if ($imagePath !== null) {
+            $sql .= ', image_path = ?';
+            $params[] = $imagePath;
+        }
+        $sql .= ' WHERE id = ? AND ' . pharmacy_scope_sql();
+        $params[] = $medicineId;
 
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+        if ($stmt->rowCount() === 0) {
+            $exists = $pdo->prepare('SELECT id FROM medicines WHERE id = ? AND ' . pharmacy_scope_sql() . ' LIMIT 1');
+            $exists->execute([$medicineId]);
+            if (!$exists->fetchColumn()) {
+                http_response_code(404);
+                echo json_encode(['success' => false, 'message' => 'Medicine not found.']);
+                exit;
+            }
+        }
+
+        $payload = pharmacy_medicine_save_client_payload($medicineId, $fields, $imageUrl, false);
         echo json_encode([
             'success' => true,
             'message' => 'Medicine updated successfully',
             'medicine_id' => $medicineId,
-        ]);
+        ] + $payload);
         exit;
     }
 
@@ -207,13 +241,15 @@ try {
         pharmacy_medicine_store_image($medicineId, $imageUpload['filename'], $imageUpload['mime'], $imageUpload['content']);
         $pdo->prepare('UPDATE medicines SET image_path = ? WHERE id = ? AND ' . pharmacy_scope_sql())
             ->execute(['medicine-image.php?id=' . $medicineId, $medicineId]);
+        $imageUrl = pharmacy_saved_medicine_image_url($medicineId);
     }
 
+    $payload = pharmacy_medicine_save_client_payload($medicineId, $fields, $imageUrl, true);
     echo json_encode([
         'success' => true,
         'message' => 'Medicine saved successfully',
         'medicine_id' => $medicineId,
-    ]);
+    ] + $payload);
 } catch (Throwable $e) {
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Could not save this medicine.']);

@@ -18,7 +18,9 @@ function pharmacy_db(): PDO
 
     $pdo = addtomar_mysql_connect(PHARMACY_DB_HOST, PHARMACY_DB_NAME, PHARMACY_DB_USER, PHARMACY_DB_PASS, PHARMACY_DB_CHARSET);
 
-    pharmacy_run_migrations($pdo);
+    if (!defined('PHARMACY_SKIP_MIGRATIONS') || !PHARMACY_SKIP_MIGRATIONS) {
+        pharmacy_run_migrations($pdo);
+    }
 
     return $pdo;
 }

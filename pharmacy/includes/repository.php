@@ -186,7 +186,57 @@ function pharmacy_medicine_editor_payload(array $medicine): array
         'selling_price' => (float) ($medicine['selling_price'] ?? 0),
         'prescription_required' => !empty($medicine['prescription_required']),
         'is_active' => !empty($medicine['is_active']),
-        'image_url' => pharmacy_medicine_image_url($medicine),
+        'image_url' => array_key_exists('image_url', $medicine)
+            ? ($medicine['image_url'] !== null && $medicine['image_url'] !== '' ? (string) $medicine['image_url'] : null)
+            : pharmacy_medicine_image_url($medicine),
+    ];
+}
+
+function pharmacy_saved_medicine_image_url(int $id): string
+{
+    $base = function_exists('app_url')
+        ? app_url('medicine-image.php?id=' . $id)
+        : ('../medicine-image.php?id=' . $id);
+    $sep = str_contains($base, '?') ? '&' : '?';
+    return $base . $sep . 'v=' . time();
+}
+
+function pharmacy_medicine_save_client_payload(int $id, array $fields, ?string $imageUrl, bool $createdNow): array
+{
+    $row = $fields;
+    $row['id'] = $id;
+    $row['image_url'] = $imageUrl;
+    $row['minimum_stock'] = (int) ($row['minimum_stock'] ?? 0);
+    $row['status'] = pharmacy_medicine_status($row);
+    $statusKey = (string) $row['status'];
+    $status = pharmacy_status_map()[$statusKey] ?? pharmacy_status_map()['ok'];
+    $expiration = trim((string) ($row['expiration_date'] ?? ''));
+
+    return [
+        'medicine' => pharmacy_medicine_editor_payload($row),
+        'card' => [
+            'id' => $id,
+            'name' => (string) ($row['name'] ?? ''),
+            'category' => (string) ($row['category'] ?? ''),
+            'status' => $statusKey,
+            'status_class' => (string) ($status['c'] ?? 'badge-green'),
+            'status_label' => (string) ($status['t'] ?? 'In Stock'),
+            'stock' => (int) ($row['stock_quantity'] ?? 0),
+            'unit_price' => (float) ($row['unit_price'] ?? 0),
+            'selling_price' => (float) ($row['selling_price'] ?? 0),
+            'price_label' => pharmacy_medicine_card_price($row),
+            'expiration_display' => $expiration === '' ? '—' : pharmacy_expiration_display($expiration),
+            'batch_number' => trim((string) ($row['batch_number'] ?? '')) !== '' ? (string) $row['batch_number'] : '—',
+            'image_url' => $imageUrl,
+            'is_new' => $createdNow,
+            'requires_rx' => !empty($row['prescription_required']),
+            'search' => strtolower(trim(implode(' ', array_filter([
+                (string) ($row['name'] ?? ''),
+                (string) ($row['generic_name'] ?? ''),
+                (string) ($row['brand'] ?? ''),
+                (string) ($row['category'] ?? ''),
+            ])))),
+        ],
     ];
 }
 
@@ -869,6 +919,21 @@ function pharmacy_medicine_db_image_ids(bool $refresh = false): array
 function pharmacy_medicine_compress_image(string $content, string $mime): ?array
 {
     if ($content === '' || !function_exists('imagecreatefromstring')) {
+        return null;
+    }
+
+    $size = strlen($content);
+    $info = @getimagesizefromstring($content);
+    $width = is_array($info) ? (int) ($info[0] ?? 0) : 0;
+    $height = is_array($info) ? (int) ($info[1] ?? 0) : 0;
+    if (
+        $mime === 'image/jpeg'
+        && $size <= 350000
+        && $width > 0
+        && $height > 0
+        && $width <= 1200
+        && $height <= 1200
+    ) {
         return null;
     }
 

@@ -26,6 +26,43 @@ function loadMedicineCatalog(){
   }
 }
 
+function writeMedicineCatalogItem(item){
+  if(!item || !item.id) return;
+  window.pharmacyMedicineCatalog = window.pharmacyMedicineCatalog || {};
+  const existing = window.pharmacyMedicineCatalog[item.id] || {};
+  if(!item.image_url && existing.image_url) item.image_url = existing.image_url;
+  window.pharmacyMedicineCatalog[item.id] = Object.assign({}, existing, item);
+
+  let dataEl = document.getElementById('inventory-medicines-data');
+  if(!dataEl){
+    const section = document.getElementById('view-inventory');
+    if(!section) return;
+    dataEl = document.createElement('script');
+    dataEl.type = 'application/json';
+    dataEl.id = 'inventory-medicines-data';
+    section.appendChild(dataEl);
+  }
+  dataEl.textContent = JSON.stringify(Object.values(window.pharmacyMedicineCatalog));
+}
+
+function finishMedicineSave(data){
+  const medicine = data && data.medicine ? data.medicine : null;
+  const card = data && data.card ? Object.assign({}, data.card) : null;
+  if(medicine){
+    writeMedicineCatalogItem(medicine);
+    if(card && !card.image_url && medicine.image_url) card.image_url = medicine.image_url;
+  }
+  const applied = card && typeof applyInventoryMedicineCard === 'function' && applyInventoryMedicineCard(card);
+  if(!applied){
+    const url = new URL(window.location.href);
+    url.searchParams.set('view', 'inventory');
+    window.location.href = url.toString();
+    return;
+  }
+  resetMedicineForm();
+  if(typeof showView === 'function') showView('inventory', null, { replaceUrl: true });
+}
+
 function setMedicineFormMode(mode, medicineName){
   const head = document.querySelector('[data-topbar-head="add-medicine"]');
   const submitLabel = document.getElementById('add-medicine-submit-label');
@@ -342,9 +379,9 @@ function initMedicineUpload(){
         return;
       }
 
-      const url = new URL(window.location.href);
-      url.searchParams.set('view', 'inventory');
-      window.location.href = url.toString();
+      finishMedicineSave(data);
+      setSaving(false);
+      submitBtn.disabled = false;
     } catch (err) {
       setSaving(false);
       showAlert('Could not save this medicine. Try again.', 'error');
