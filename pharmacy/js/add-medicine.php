@@ -313,6 +313,9 @@ function initMedicineUpload(){
     }
 
     submitBtn.disabled = true;
+    const submitLabel = document.getElementById('add-medicine-submit-label');
+    const originalLabel = submitLabel?.textContent || 'Save medicine';
+    if (submitLabel) submitLabel.textContent = 'Saving';
     showAlert('', '');
 
     try {
@@ -332,6 +335,7 @@ function initMedicineUpload(){
       if(!response.ok || !data.success){
         showAlert(data.message || 'Could not save this medicine.', 'error');
         submitBtn.disabled = false;
+        if (submitLabel) submitLabel.textContent = originalLabel;
         return;
       }
 
@@ -345,6 +349,7 @@ function initMedicineUpload(){
     } catch (err) {
       showAlert('Could not save this medicine. Try again.', 'error');
       submitBtn.disabled = false;
+      if (submitLabel) submitLabel.textContent = originalLabel;
     }
   });
 }
