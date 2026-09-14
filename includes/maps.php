@@ -2,19 +2,19 @@
 
 declare(strict_types=1);
 
-define('MAP_TILE_URL', 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
-define('MAP_ATTRIBUTION', 'Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community');
-define('MAP_DEFAULT_LAT', 18.1978);
-define('MAP_DEFAULT_LNG', 120.5937);
-define('MAP_DEFAULT_ZOOM', 12);
-define('MAP_MIN_ZOOM', 11);
+define('MAP_TILE_URL', 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png');
+define('MAP_ATTRIBUTION', '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>');
+define('MAP_DEFAULT_LAT', 18.14);
+define('MAP_DEFAULT_LNG', 120.62);
+define('MAP_DEFAULT_ZOOM', 11);
+define('MAP_MIN_ZOOM', 10);
 define('MAP_MAX_ZOOM', 19);
 
-/** Inland view box around Laoag City, San Nicolas, and Batac City */
-define('MAP_BOUNDS_SOUTH', 18.02);
-define('MAP_BOUNDS_WEST', 120.52);
-define('MAP_BOUNDS_NORTH', 18.23);
-define('MAP_BOUNDS_EAST', 120.64);
+/** Wider view box so nearby towns stay visible around the yellow service outline */
+define('MAP_BOUNDS_SOUTH', 17.98);
+define('MAP_BOUNDS_WEST', 120.46);
+define('MAP_BOUNDS_NORTH', 18.32);
+define('MAP_BOUNDS_EAST', 120.82);
 
 define('MAP_SERVICE_CITIES', 'Laoag City, San Nicolas, and Batac City');
 
@@ -44,16 +44,11 @@ function maps_service_overlay(): array
 
 function maps_bounds(): array
 {
-    $polygon = maps_service_polygon();
-    $lats = array_column($polygon, 'lat');
-    $lngs = array_column($polygon, 'lng');
-    $pad = 0.02;
-
     return [
-        'south' => min($lats) - $pad,
-        'west' => min($lngs) - $pad,
-        'north' => max($lats) + $pad,
-        'east' => max($lngs) + $pad,
+        'south' => MAP_BOUNDS_SOUTH,
+        'west' => MAP_BOUNDS_WEST,
+        'north' => MAP_BOUNDS_NORTH,
+        'east' => MAP_BOUNDS_EAST,
     ];
 }
 
