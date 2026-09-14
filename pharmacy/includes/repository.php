@@ -140,7 +140,7 @@ function pharmacy_order_status_map(): array
 
 function pharmacy_get_medicines(): array
 {
-    $rows = pharmacy_db()->query('SELECT * FROM medicines WHERE ' . pharmacy_scope_sql() . ' ORDER BY name ASC')->fetchAll();
+    $rows = pharmacy_db()->query('SELECT * FROM medicines WHERE ' . pharmacy_scope_sql() . ' ORDER BY created_at DESC, id DESC')->fetchAll();
     foreach ($rows as &$row) {
         $row['status'] = pharmacy_medicine_status($row);
     }
