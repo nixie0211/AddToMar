@@ -992,9 +992,11 @@ function renderCheckoutPage(){
   const emailInput = document.getElementById('payment-payer-email');
   const nameInput = document.getElementById('payment-payer-name');
   const phoneInput = document.getElementById('payment-payer-number');
+  const addressInput = document.getElementById('payment-payer-address');
   if(emailInput && !emailInput.value && profile.email) emailInput.value = profile.email;
   if(nameInput && !nameInput.value && profile.full_name) nameInput.value = profile.full_name;
   if(phoneInput && !phoneInput.value && profile.contact_number) phoneInput.value = profile.contact_number;
+  if(addressInput && !addressInput.value && profile.address) addressInput.value = profile.address;
 
   // Pickup availability is coordinated directly with the pharmacy.
 }
@@ -1422,20 +1424,59 @@ function setCheckoutPayBusy(paying){
   if(hiddenBtn) hiddenBtn.disabled = checkoutPaying || !!window.paymongoPaid;
 }
 
+function checkoutPaymentDetails(){
+  return {
+    name: document.getElementById('payment-payer-name')?.value.trim() || '',
+    phone: document.getElementById('payment-payer-number')?.value.trim() || '',
+    address: document.getElementById('payment-payer-address')?.value.trim() || '',
+    email: document.getElementById('payment-payer-email')?.value.trim() || '',
+  };
+}
+
+function markCheckoutPaymentField(id, invalid){
+  document.getElementById(id)?.classList.toggle('is-invalid', !!invalid);
+}
+
+function validateCheckoutPaymentDetails(){
+  const details = checkoutPaymentDetails();
+  const emailOk = /@gmail\.com$/i.test(details.email);
+  markCheckoutPaymentField('payment-payer-name', !details.name);
+  markCheckoutPaymentField('payment-payer-number', !details.phone);
+  markCheckoutPaymentField('payment-payer-address', !details.address);
+  markCheckoutPaymentField('payment-payer-email', !details.email || !emailOk);
+  if(!details.name){
+    toast('Enter your full name.');
+    document.getElementById('payment-payer-name')?.focus();
+    return null;
+  }
+  if(!details.phone){
+    toast('Enter your contact number.');
+    document.getElementById('payment-payer-number')?.focus();
+    return null;
+  }
+  if(!details.address){
+    toast('Enter your address.');
+    document.getElementById('payment-payer-address')?.focus();
+    return null;
+  }
+  if(!details.email){
+    toast('Enter your email for the receipt.');
+    document.getElementById('payment-payer-email')?.focus();
+    return null;
+  }
+  if(!emailOk){
+    toast('Enter your Gmail address so the receipt can be sent to your account.');
+    document.getElementById('payment-payer-email')?.focus();
+    return null;
+  }
+  return details;
+}
+
 async function startPayMongoPayment(){
   if(window.paymongoPaid || checkoutPaying) return;
-  const emailInput=document.getElementById('payment-payer-email');
-  const profile=window.RESIDENCE_CONFIG?.profile||{};
-  if(emailInput && !emailInput.value && profile.email) emailInput.value=profile.email;
-  if(document.getElementById('payment-payer-name') && !document.getElementById('payment-payer-name').value && profile.full_name){
-    document.getElementById('payment-payer-name').value=profile.full_name;
-  }
-  if(document.getElementById('payment-payer-number') && !document.getElementById('payment-payer-number').value && profile.contact_number){
-    document.getElementById('payment-payer-number').value=profile.contact_number;
-  }
+  const details = validateCheckoutPaymentDetails();
+  if(!details) return;
 
-  const email=(emailInput?.value.trim()||profile.email||'');
-  if(!/@gmail\.com$/i.test(email)){ toast('Enter your Gmail address so the receipt can be sent to your account.'); return; }
   const checkoutItems=cartCheckoutItems();
   if(checkoutItems.length===0){ toast('Check the items you want to check out.'); return; }
   if(missingPrescriptionItems().length){
@@ -1449,9 +1490,10 @@ async function startPayMongoPayment(){
   const form=new FormData();
   form.append('amount', String(amount));
   form.append('method', 'card');
-  form.append('email', email);
-  form.append('name', document.getElementById('payment-payer-name')?.value||'');
-  form.append('phone', document.getElementById('payment-payer-number')?.value||'');
+  form.append('email', details.email);
+  form.append('name', details.name);
+  form.append('phone', details.phone);
+  form.append('address', details.address);
   form.append('pharmacy_id', checkoutPharmacyId());
   form.append('pickup_date', document.getElementById('checkout-pickup-date')?.value || new Date().toISOString().slice(0,10));
   form.append('pickup_time', '');
@@ -1633,6 +1675,7 @@ function syncCheckoutConfirmButton(){
 
 function startGCashFromCard(){
   if(window.paymongoPaid || checkoutPaying) return;
+  if(!validateCheckoutPaymentDetails()) return;
   closePayMongoAuthModal();
   setCheckoutPaymentStatus('pending');
   startPayMongoPayment();
@@ -1752,6 +1795,8 @@ async function placeOrder(){
     toast('Authorize payment first. Confirm order is available after Payment status is Paid.');
     return;
   }
+  const details = validateCheckoutPaymentDetails();
+  if(!details) return;
 
   try{
     const lastOrder = JSON.parse(sessionStorage.getItem('residence_last_order') || 'null');
@@ -1785,9 +1830,10 @@ async function placeOrder(){
   form.append('pickup_date', pickupDate);
   form.append('pickup_time', '');
   form.append('payment_method', document.querySelector('input[name="payment_method"]:checked')?.value || 'gcash');
-  form.append('payment_payer_name', document.getElementById('payment-payer-name')?.value || '');
-  form.append('payment_payer_number', document.getElementById('payment-payer-number')?.value || '');
-  form.append('payment_receipt_email', document.getElementById('payment-payer-email')?.value || '');
+  form.append('payment_payer_name', details.name);
+  form.append('payment_payer_number', details.phone);
+  form.append('payment_payer_address', details.address);
+  form.append('payment_receipt_email', details.email);
   form.append('items', JSON.stringify(checkoutItemPayload()));
   if(paymentProof?.files?.length) form.append('payment_proof', paymentProof.files[0]);
   appendCheckoutPrescriptions(form);
@@ -1836,6 +1882,13 @@ async function placeOrder(){
   }
 }
 
+document.addEventListener('input', (event) => {
+  const target = event.target;
+  if(!(target instanceof HTMLInputElement)) return;
+  if(['payment-payer-name','payment-payer-number','payment-payer-address','payment-payer-email'].includes(target.id)){
+    target.classList.remove('is-invalid');
+  }
+});
 document.addEventListener('change', (event) => {
   const target = event.target;
   if(!(target instanceof HTMLInputElement)) return;

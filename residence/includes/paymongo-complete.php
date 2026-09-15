@@ -70,6 +70,9 @@ function residence_finalize_paymongo_payment(?string $intentId = null): array
         if (!empty($pending['phone'])) {
             $profile['contact_number'] = $pending['phone'];
         }
+        if (!empty($pending['address'])) {
+            $profile['address'] = $pending['address'];
+        }
 
         $placed = residence_place_checkout_groups(
             $profile,

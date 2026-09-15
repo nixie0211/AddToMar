@@ -6480,6 +6480,14 @@ body.is-pharmacy-empty.is-pharmacy-profile-page .page[data-page="pharmacy-profil
   font-weight:700 !important;
   text-transform:none !important;
 }
+#checkout-payment-card .pd-fields span::after{
+  content:' *';
+  color:#c13d47;
+}
+#checkout-payment-card .pd-fields input.is-invalid{
+  border-color:#c13d47 !important;
+  box-shadow:0 0 0 3px rgba(193,61,71,.12) !important;
+}
 #checkout-payment-card .pd-fields input{
   padding:12px 14px !important;
   border:1px solid #d7e4e0 !important;

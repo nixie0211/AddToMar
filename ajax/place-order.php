@@ -18,6 +18,16 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $pharmacyId = trim((string) ($_POST['pharmacy_id'] ?? ''));
 $itemsRaw = (string) ($_POST['items'] ?? '');
 $items = json_decode($itemsRaw, true);
+$payerName = trim((string) ($_POST['payment_payer_name'] ?? ''));
+$payerPhone = trim((string) ($_POST['payment_payer_number'] ?? ''));
+$payerAddress = trim((string) ($_POST['payment_payer_address'] ?? ''));
+$payerEmail = trim((string) ($_POST['payment_receipt_email'] ?? ''));
+
+if ($payerName === '' || $payerPhone === '' || $payerAddress === '' || $payerEmail === '') {
+    http_response_code(422);
+    echo json_encode(['ok' => false, 'error' => 'Full name, contact number, address, and email are required.']);
+    exit;
+}
 
 if (!is_array($items) || $items === []) {
     http_response_code(422);
@@ -39,8 +49,13 @@ if (isset($_FILES['payment_proof']) && is_array($_FILES['payment_proof'])) {
 }
 
 $groups = residence_group_checkout_items($items, $pharmacyId);
+$profile = residence_session_profile();
+$profile['full_name'] = $payerName;
+$profile['contact_number'] = $payerPhone;
+$profile['address'] = $payerAddress;
+$profile['email'] = $payerEmail;
 $result = residence_place_checkout_groups(
-    residence_session_profile(),
+    $profile,
     $groups,
     [
         'pickup_date' => (string) ($_POST['pickup_date'] ?? ''),

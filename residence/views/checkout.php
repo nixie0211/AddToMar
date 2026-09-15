@@ -31,10 +31,10 @@
               <button type="button" class="paymongo-wallet-btn" hidden onclick="startPayMongoPayment()">Pay with GCash</button>
 
               <div class="pd-fields payment-details-grid payment-card-fields">
-                <label class="full-field"><span>Full name</span><input type="text" id="payment-payer-name" placeholder="Your full name" value="<?= htmlspecialchars((string) ($residenceProfile['full_name'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"></label>
-                <label class="pd-contact"><span>Contact number</span><input type="tel" id="payment-payer-number" placeholder="09XXXXXXXXX" value="<?= htmlspecialchars((string) ($residenceProfile['contact_number'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"></label>
-                <label class="pd-address"><span>Address</span><input type="text" id="payment-payer-address" placeholder="Complete address" value="<?= htmlspecialchars((string) ($residenceProfile['address'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"></label>
-                <label class="full-field"><span>Email for receipt</span><input type="email" id="payment-payer-email" placeholder="you@gmail.com" value="<?= htmlspecialchars((string) ($residenceProfile['email'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"></label>
+                <label class="full-field"><span>Full name</span><input type="text" id="payment-payer-name" placeholder="Your full name" required aria-required="true" autocomplete="name" value="<?= htmlspecialchars((string) ($residenceProfile['full_name'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"></label>
+                <label class="pd-contact"><span>Contact number</span><input type="tel" id="payment-payer-number" placeholder="09XXXXXXXXX" required aria-required="true" autocomplete="tel" value="<?= htmlspecialchars((string) ($residenceProfile['contact_number'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"></label>
+                <label class="pd-address"><span>Address</span><input type="text" id="payment-payer-address" placeholder="Complete address" required aria-required="true" autocomplete="street-address" value="<?= htmlspecialchars((string) ($residenceProfile['address'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"></label>
+                <label class="full-field"><span>Email for receipt</span><input type="email" id="payment-payer-email" placeholder="you@gmail.com" required aria-required="true" autocomplete="email" value="<?= htmlspecialchars((string) ($residenceProfile['email'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"></label>
               </div>
 
               <button type="button" class="pd-pay-btn" id="checkout-gcash-pay" onclick="startGCashFromCard()">Pay</button>

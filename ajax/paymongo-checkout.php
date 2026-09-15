@@ -26,8 +26,9 @@ $amount = max(0, (float) ($_POST['amount'] ?? 0));
 $paymongoMin = 20.00;
 $amount = round(max($amount, $paymongoMin), 2);
 $email = residence_receipt_gmail((string) ($_POST['email'] ?? ''));
-$name = trim((string) ($_POST['name'] ?? 'Test Customer'));
+$name = trim((string) ($_POST['name'] ?? ''));
 $phone = trim((string) ($_POST['phone'] ?? ''));
+$address = trim((string) ($_POST['address'] ?? ''));
 $pharmacyId = trim((string) ($_POST['pharmacy_id'] ?? ''));
 $pickupDate = trim((string) ($_POST['pickup_date'] ?? date('Y-m-d')));
 $pickupTime = trim((string) ($_POST['pickup_time'] ?? 'Any available time'));
@@ -35,6 +36,18 @@ $items = json_decode((string) ($_POST['items'] ?? '[]'), true);
 
 if ($email === '' || !residence_is_gmail($email)) {
     paymongo_checkout_respond(['ok' => false, 'error' => 'Enter the Gmail address for your account so we can send the receipt.']);
+}
+
+if ($name === '') {
+    paymongo_checkout_respond(['ok' => false, 'error' => 'Enter your full name.']);
+}
+
+if ($phone === '') {
+    paymongo_checkout_respond(['ok' => false, 'error' => 'Enter your contact number.']);
+}
+
+if ($address === '') {
+    paymongo_checkout_respond(['ok' => false, 'error' => 'Enter your address.']);
 }
 
 if (!is_array($items) || $items === []) {
@@ -69,7 +82,7 @@ try {
             'attributes' => [
                 'amount' => $centavos,
                 'currency' => 'PHP',
-                'description' => 'AddToMar down payment (50%)',
+                'description' => 'AddToMar down payment (60%)',
                 'statement_descriptor' => 'AddToMar',
                 'payment_method_allowed' => ['card'],
                 'payment_method_options' => [
@@ -99,9 +112,9 @@ try {
                     'cvc' => '123',
                 ],
                 'billing' => array_filter([
-                    'name' => $name !== '' ? $name : 'Test Customer',
+                    'name' => $name,
                     'email' => $email,
-                    'phone' => $phone !== '' ? $phone : null,
+                    'phone' => $phone,
                 ]),
             ],
         ],
@@ -129,6 +142,7 @@ try {
         'email' => $email,
         'name' => $name,
         'phone' => $phone,
+        'address' => $address,
         'pharmacy_id' => $pharmacyId,
         'pickup_date' => $pickupDate !== '' ? $pickupDate : date('Y-m-d'),
         'pickup_time' => $pickupTime !== '' ? $pickupTime : 'Any available time',
