@@ -6394,16 +6394,24 @@ body.is-pharmacy-empty.is-pharmacy-profile-page .page[data-page="pharmacy-profil
   cursor:pointer;
 }
 #checkout-payment-card .pd-gcash-logo{
-  width:36px;
-  height:36px;
-  min-width:36px;
+  width:40px;
+  height:40px;
+  min-width:40px;
   display:grid;
   place-items:center;
+  overflow:hidden;
   border-radius:10px;
-  background:#0072ce;
+  background:transparent;
   color:#fff;
-  font-size:16px;
+  font-size:0;
   font-weight:800;
+}
+#checkout-payment-card .pd-gcash-logo img{
+  width:148%;
+  height:148%;
+  max-width:none;
+  object-fit:contain;
+  display:block;
 }
 #checkout-payment-card .pd-gcash-copy,
 #checkout-payment-card .pd-confirmed > div{flex:1;min-width:0;}

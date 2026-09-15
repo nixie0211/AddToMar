@@ -1,4 +1,5 @@
       <!-- ========================= CHECKOUT ========================= -->
+      <?php $gcashLogoUrl = htmlspecialchars(function_exists('app_url') ? app_url('gcash.png') : '../gcash.png', ENT_QUOTES, 'UTF-8'); ?>
       <section class="page" data-page="checkout" data-live-region="residence-checkout" data-live-keys="catalog,cart" data-live-skip="1">
         <div class="checkout-page" id="checkout-page-root">
           <div class="checkout-layout">
@@ -42,7 +43,7 @@
               </header>
 
               <button type="button" class="pd-gcash" data-method="gcash" onclick="startGCashFromCard()">
-                <span class="pd-gcash-logo">G</span>
+                <span class="pd-gcash-logo" aria-hidden="true"><img src="<?= $gcashLogoUrl ?>" alt=""></span>
                 <span class="pd-gcash-copy">
                   <b>Pay with GCash</b>
                   <small>Payment will be confirmed instantly via PayMongo.</small>
@@ -71,7 +72,7 @@
               <span id="checkout-down-payment" hidden>₱0.00</span>
 
               <div class="pd-status" id="checkout-payment-status-box">
-                <span class="pd-gcash-logo" aria-hidden="true">G</span>
+                <span class="pd-gcash-logo" aria-hidden="true"><img src="<?= $gcashLogoUrl ?>" alt=""></span>
                 <div>
                   <small>Payment status</small>
                   <b id="checkout-payment-status-copy">Waiting for GCash</b>
