@@ -103,6 +103,7 @@ window.RESIDENCE_CONFIG = <?= json_encode([
   'marketplacePharmacies' => $residenceMarketplacePharmacies,
   'placeOrderUrl' => app_url('ajax/place-order.php'),
   'cartUrl' => app_url('ajax/resident-cart.php'),
+  'paymongoCheckoutUrl' => app_url('ajax/paymongo-checkout.php'),
   'paymongoCompleteUrl' => app_url('ajax/paymongo-complete.php'),
   'pendingPaymentIntent' => (string) ($_GET['payment_intent_id'] ?? ''),
   'saveAddressUrl' => app_url('ajax/save-address.php'),
@@ -144,7 +145,7 @@ window.nearbyPharmacies = window.RESIDENCE_CONFIG.pharmacies || [];
   'featuredProductIds' => array_values(array_map(static fn(array $item): int => (int) ($item['id'] ?? 0), $residenceFeaturedProducts)),
   'topSellerIds' => array_values(array_map(static fn(array $item): int => (int) ($item['id'] ?? 0), $residenceTopSellers)),
 ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>
-<script src="<?= residence_asset('js/app.php') ?>?v=payment-fields-required-1"></script>
+<script src="<?= residence_asset('js/app.php') ?>?v=paymongo-checkout-url-1"></script>
 <?php live_sync_render_script('residence'); ?>
 <script>
 window.openProductPreview = window.openProductPreview || function(card) {

@@ -1500,7 +1500,14 @@ async function startPayMongoPayment(){
   form.append('items', JSON.stringify(checkoutItemPayload()));
   appendCheckoutPrescriptions(form);
   try{
-    const r=await fetch('/AddToMar/ajax/paymongo-checkout.php',{method:'POST',body:form,credentials:'same-origin'});
+    const cfg = window.RESIDENCE_CONFIG || {};
+    const checkoutUrl = cfg.paymongoCheckoutUrl || '';
+    if(!checkoutUrl){
+      toast('Payment is not configured. Refresh the page and try again.');
+      setCheckoutPayBusy(false);
+      return;
+    }
+    const r=await fetch(checkoutUrl,{method:'POST',body:form,credentials:'same-origin'});
     const text=await r.text();
     let d={};
     try{
@@ -1632,7 +1639,12 @@ async function completePayMongoPayment(intentId, fromPoll){
   const id = intentId || paymongoIntentId;
   if(!id) return;
   const cfg = window.RESIDENCE_CONFIG || {};
-  const url = (cfg.paymongoCompleteUrl || '/AddToMar/ajax/paymongo-complete.php') + '?payment_intent_id=' + encodeURIComponent(id);
+  const url = (cfg.paymongoCompleteUrl || '') + '?payment_intent_id=' + encodeURIComponent(id);
+  if(!cfg.paymongoCompleteUrl){
+    toast('Payment confirmation is not configured. Refresh the page and try again.');
+    paymongoCompleting = false;
+    return;
+  }
   paymongoCompleting = true;
   try{
     const r = await fetch(url, { credentials: 'same-origin' });
