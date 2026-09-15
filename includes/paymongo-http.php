@@ -5,12 +5,27 @@ declare(strict_types=1);
 require_once __DIR__ . '/env.php';
 require_once dirname(__DIR__) . '/AddToMar1/AddToMar/config/paymongo.php';
 
+function paymongo_secret_key(): string
+{
+    $key = defined('PAYMONGO_SECRET_KEY') ? (string) PAYMONGO_SECRET_KEY : '';
+    if ($key === '' && function_exists('addtomar_env')) {
+        $key = addtomar_env('PAYMONGO_SECRET_KEY');
+    }
+
+    return trim($key);
+}
+
 function paymongo_http(string $method, string $endpoint, ?array $body = null): array
 {
+    $secret = paymongo_secret_key();
+    if ($secret === '') {
+        return ['ok' => false, 'error' => 'PayMongo is missing an API key. Set PAYMONGO_SECRET_KEY on the server.'];
+    }
+
     $ch = curl_init('https://api.paymongo.com/v1/' . ltrim($endpoint, '/'));
     $opts = [
         CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_USERPWD => PAYMONGO_SECRET_KEY . ':',
+        CURLOPT_USERPWD => $secret . ':',
         CURLOPT_HTTPHEADER => ['Content-Type: application/json', 'Accept: application/json'],
         CURLOPT_TIMEOUT => 30,
         CURLOPT_CUSTOMREQUEST => strtoupper($method),
