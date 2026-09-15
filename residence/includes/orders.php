@@ -22,7 +22,12 @@ function residence_prescription_url(string $path): string
 
 function residence_vat_rate(): float
 {
-    return 0.12;
+    return 0.15;
+}
+
+function residence_down_payment_rate(): float
+{
+    return 0.6;
 }
 
 function residence_apply_vat(float $subtotal): array
@@ -537,7 +542,7 @@ function residence_place_order(array $profile, string $pharmacyId, array $items,
 
         $priced = residence_apply_vat($total);
         $total = $priced['total'];
-        $downPayment = round($total * 0.5, 2);
+        $downPayment = round($total * residence_down_payment_rate(), 2);
         $customerId = residence_upsert_customer($pdo, $profile, $pharmacyId);
         $orderNumber = residence_generate_order_number($pdo);
         $notes = 'Pickup date: ' . $pickupDate;
@@ -750,7 +755,9 @@ function residence_present_order(array $order, array $directory = []): array
         'status_class' => $meta['class'],
         'status_label' => $meta['label'],
         'total_amount' => (float) ($order['total_amount'] ?? 0),
-        'down_payment' => round((float) ($order['total_amount'] ?? 0) * 0.5, 2),
+        'down_payment' => ((float) ($order['down_payment'] ?? 0) > 0)
+            ? round((float) $order['down_payment'], 2)
+            : round((float) ($order['total_amount'] ?? 0) * residence_down_payment_rate(), 2),
         'payment_method' => (string) ($order['payment_method'] ?? 'gcash'),
         'created_at' => (string) ($order['created_at'] ?? ''),
         'updated_at' => (string) ($order['updated_at'] ?? ''),

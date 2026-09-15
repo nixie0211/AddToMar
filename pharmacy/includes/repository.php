@@ -858,7 +858,7 @@ function pharmacy_order_requires_prescription(array $order, array $items = []): 
     return false;
 }
 
-function pharmacy_order_down_payment(array $order, float $defaultPercent = 50): float
+function pharmacy_order_down_payment(array $order, float $defaultPercent = 60): float
 {
     $total = max(0, (float) ($order['total_amount'] ?? 0));
     $down = (float) ($order['down_payment'] ?? 0);
@@ -874,14 +874,14 @@ function pharmacy_order_down_payment(array $order, float $defaultPercent = 50): 
     return round($total * ($defaultPercent / 100), 2);
 }
 
-function pharmacy_order_balance_on_pickup(array $order, float $defaultPercent = 50): float
+function pharmacy_order_balance_on_pickup(array $order, float $defaultPercent = 60): float
 {
     $total = max(0, (float) ($order['total_amount'] ?? 0));
 
     return max(0, round($total - pharmacy_order_down_payment($order, $defaultPercent), 2));
 }
 
-function pharmacy_order_down_payment_percent(array $order, float $defaultPercent = 50): int
+function pharmacy_order_down_payment_percent(array $order, float $defaultPercent = 60): int
 {
     $total = max(0, (float) ($order['total_amount'] ?? 0));
     if ($total <= 0) {

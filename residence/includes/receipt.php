@@ -33,7 +33,7 @@ function residence_receipt_html(array $order, array $payment = []): string
     }
     $vatAmount = (float) ($order['vat'] ?? 0);
     if ($vatAmount <= 0) {
-        $priced = function_exists('residence_apply_vat') ? residence_apply_vat($itemSubtotal) : ['subtotal' => $itemSubtotal, 'vat' => round($itemSubtotal * 0.12, 2), 'total' => round($itemSubtotal * 1.12, 2)];
+        $priced = function_exists('residence_apply_vat') ? residence_apply_vat($itemSubtotal) : ['subtotal' => $itemSubtotal, 'vat' => round($itemSubtotal * 0.15, 2), 'total' => round($itemSubtotal * 1.15, 2)];
         $itemSubtotal = $priced['subtotal'];
         $vatAmount = $priced['vat'];
     }
@@ -45,7 +45,7 @@ function residence_receipt_html(array $order, array $payment = []): string
           <h1 style="margin:8px 0 0;font-size:22px">Payment confirmed</h1>
         </div>
         <div style="padding:24px">
-          <p style="margin:0 0 16px;color:#4d6a60">Official receipt for your 50% down payment. Remaining balance is due at pickup.</p>
+          <p style="margin:0 0 16px;color:#4d6a60">Official receipt for your 60% down payment. Remaining balance is due at pickup.</p>
           <table style="width:100%;border-collapse:collapse;font-size:14px">
             <tr><td style="padding:6px 0;color:#4d6a60">Receipt / Order</td><td style="text-align:right;font-weight:700">' . $orderNumber . '</td></tr>
             <tr><td style="padding:6px 0;color:#4d6a60">Customer</td><td style="text-align:right">' . $customer . '</td></tr>
@@ -59,9 +59,9 @@ function residence_receipt_html(array $order, array $payment = []): string
           <hr style="border:none;border-top:1px solid #edf1f0;margin:18px 0">
           <table style="width:100%;border-collapse:collapse;font-size:14px">
             <tr><td>Subtotal</td><td style="text-align:right">' . residence_format_money($itemSubtotal) . '</td></tr>
-            <tr><td>VAT (12%)</td><td style="text-align:right">' . residence_format_money($vatAmount) . '</td></tr>
+            <tr><td>VAT (15%)</td><td style="text-align:right">' . residence_format_money($vatAmount) . '</td></tr>
             <tr><td>Order total</td><td style="text-align:right">' . $total . '</td></tr>
-            <tr><td style="padding-top:8px;font-weight:800;color:#1f6f4a">Amount paid now (50%)</td><td style="text-align:right;padding-top:8px;font-weight:800;color:#1f6f4a">' . $down . '</td></tr>
+            <tr><td style="padding-top:8px;font-weight:800;color:#1f6f4a">Amount paid now (60%)</td><td style="text-align:right;padding-top:8px;font-weight:800;color:#1f6f4a">' . $down . '</td></tr>
             <tr><td>Balance due on pickup</td><td style="text-align:right">' . $balance . '</td></tr>
           </table>
           <p style="margin:18px 0 0;font-size:12px;color:#6b8178">PayMongo payment ID: ' . $paymentId . '<br>Payment Intent: ' . $intentId . '</p>

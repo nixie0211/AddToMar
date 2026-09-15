@@ -235,7 +235,7 @@ $overviewPickupProofKind = $overviewPickupProofExt === 'pdf' ? 'pdf' : ($overvie
                 <span class="mono"><?= pharmacy_format_money($isCompletedOverview ? $overviewTotalAmount : $overviewDownPayment) ?></span>
               </div>
               <div class="order-payment-row order-payment-row--due">
-                <span>Remaining Balance (50%)</span>
+                <span>Remaining Balance (<?= $isCompletedOverview ? 0 : max(0, 100 - (int) $overviewDownPaymentPercent) ?>%)</span>
                 <span class="mono"><?= pharmacy_format_money($isCompletedOverview ? 0 : $overviewBalanceDue) ?></span>
               </div>
               <p class="order-payment-note"><?= $isCompletedOverview ? '✓ All payments have been settled. Your order is fully paid.' : 'Customer pays the remaining balance when collecting this order at the pharmacy.' ?></p>

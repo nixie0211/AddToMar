@@ -331,7 +331,8 @@ function formatMoney(amount){
   return '₱' + Number(amount || 0).toFixed(2);
 }
 
-const CHECKOUT_VAT_RATE = 0.12;
+const CHECKOUT_VAT_RATE = 0.15;
+const CHECKOUT_DOWN_RATE = 0.6;
 
 function roundMoney(amount){
   return Math.round((Number(amount) || 0) * 100) / 100;
@@ -341,7 +342,7 @@ function checkoutPriceTotals(subtotal){
   const items = roundMoney(subtotal);
   const vat = roundMoney(items * CHECKOUT_VAT_RATE);
   const total = roundMoney(items + vat);
-  const downPayment = roundMoney(total * 0.5);
+  const downPayment = roundMoney(total * CHECKOUT_DOWN_RATE);
   return {
     subtotal: items,
     vat,
@@ -976,7 +977,7 @@ function renderCheckoutPage(){
   const payLaterEl = document.getElementById('checkout-pay-later');
   if(payNowEl) payNowEl.textContent = formatMoney(totals.downPayment);
   if(payLaterEl) payLaterEl.textContent = formatMoney(totals.remaining);
-  if(balanceNote) balanceNote.textContent = `Remaining 50% will be paid upon pick up.`;
+  if(balanceNote) balanceNote.textContent = `Remaining 40% will be paid upon pick up.`;
 
   syncCheckoutConfirmButton();
 
@@ -2448,7 +2449,7 @@ function presentResidenceOrder(order){
     status_class: order.status_class || meta.className,
     status_label: order.status_label || meta.label,
     total_amount: Number(order.total_amount ?? order.total ?? 0),
-    down_payment: roundMoney(Number(order.total_amount ?? order.total ?? 0) * 0.5),
+    down_payment: roundMoney(Number(order.down_payment) > 0 ? order.down_payment : Number(order.total_amount ?? order.total ?? 0) * CHECKOUT_DOWN_RATE),
     payment_method: order.payment_method || 'gcash',
     created_at: order.created_at || '',
     date_label: order.date_label || (Number.isNaN(created.getTime()) ? '' : created.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' })),
@@ -2771,7 +2772,7 @@ function renderOrderDetail(id){
   }
 
   const data = presentResidenceOrder(order);
-  const paidOnline = roundMoney(data.total_amount * 0.5);
+  const paidOnline = roundMoney(Number(data.down_payment) > 0 ? data.down_payment : data.total_amount * CHECKOUT_DOWN_RATE);
   const remaining = roundMoney(data.total_amount - paidOnline);
   const fullyPaid = data.balance_paid || ['picked_up','pickedup','delivered','completed'].includes(String(data.status).toLowerCase());
   const peso = (n) => formatMoney(n);
@@ -2882,7 +2883,7 @@ function renderOrderDetail(id){
         <section class="od-confirmed ${confirmed ? '' : 'is-pending'}" hidden>
           <div>
             <h3>${confirmed ? 'Downpayment Confirmed' : 'Awaiting Downpayment'}</h3>
-            <div class="od-gcash-line"><span class="od-gcash">G</span><b>GCash • ${peso(data.down_payment || data.total_amount * 0.5)}</b></div>
+            <div class="od-gcash-line"><span class="od-gcash">G</span><b>GCash • ${peso(data.down_payment || data.total_amount * CHECKOUT_DOWN_RATE)}</b></div>
             <p>${confirmed ? 'Payment confirmed via PayMongo' : 'Complete your GCash payment to confirm this order.'}</p>
             ${confirmed ? `<small>${odIcon('clock')} ${escHtml(data.date_label)} • ${escHtml(data.time_label)}</small>` : ''}
           </div>
@@ -2891,9 +2892,9 @@ function renderOrderDetail(id){
           <h3><span class="od-icon">${odIcon('receipt')}</span><span>Payment Summary<small>Payment details and transaction breakdown</small></span></h3>
           <div class="od-payment-summary-card"><div class="od-payment-summary-method"><span class="od-gcash">G</span><b>GCash<br>${peso(data.down_payment)}</b></div><div class="od-payment-summary-info"><small>${confirmed ? 'Payment confirmed via PayMongo' : 'Payment pending'}</small>${confirmed ? `<small>${escHtml(data.date_label)} â€¢ ${escHtml(data.time_label)}</small>` : ''}</div><span class="od-paid-badge">✓ Paid</span></div>
           <div class="od-sum"><span>Total Amount</span><b>${peso(data.total_amount)}</b></div>
-          <div class="od-sum"><span>${fullyPaid ? 'Paid (100%)' : 'Paid (50%)'}<small>50% · paid via GCash</small></span><b class="is-paid">${peso(fullyPaid ? data.total_amount : data.down_payment)}</b></div>
+          <div class="od-sum"><span>${fullyPaid ? 'Paid (100%)' : 'Paid (60%)'}<small>60% · paid via GCash</small></span><b class="is-paid">${peso(fullyPaid ? data.total_amount : data.down_payment)}</b></div>
           <div class="od-sum od-sum-balance">
-            <span>Remaining Balance (50%)${fullyPaid ? '<small class="od-balance-status">Paid in full</small>' : '<small class="od-balance-status">Pay at pickup</small>'}</span>
+            <span>Remaining Balance (40%)${fullyPaid ? '<small class="od-balance-status">Paid in full</small>' : '<small class="od-balance-status">Pay at pickup</small>'}</span>
             <b>${peso(fullyPaid ? 0 : remaining)}</b>
           </div>
           <div class="od-reserve">${odIcon(fullyPaid ? 'check' : 'shield')} <span>${fullyPaid ? 'All payments have been settled. Your order is fully paid.' : 'Your order is reserved. No further payment is needed online.'}</span></div>

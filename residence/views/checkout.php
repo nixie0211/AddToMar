@@ -8,7 +8,7 @@
               <div id="checkout-summary-lines"></div>
               <div class="checkout-price-breakdown">
                 <div><span>Subtotal</span><b id="checkout-subtotal">₱0.00</b></div>
-                <div><span>VAT (12%)</span><b id="checkout-vat">₱0.00</b></div>
+                <div><span>VAT (15%)</span><b id="checkout-vat">₱0.00</b></div>
               </div>
               <div class="summary-row total"><span>Total amount</span><span id="checkout-total">₱0.00</span></div>
             </div>
@@ -62,7 +62,7 @@
                 </span>
                 <div>
                   <b>Remaining Balance</b>
-                  <small id="checkout-balance-note">Remaining 50% will be paid upon pick up.</small>
+                  <small id="checkout-balance-note">Remaining 40% will be paid upon pick up.</small>
                 </div>
                 <strong id="checkout-pay-later">₱0.00</strong>
               </div>
