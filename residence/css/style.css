@@ -4590,16 +4590,20 @@ article.med-card--rx:hover .med-card-frame--rx{
 [data-page="checkout"] .checkout-page{max-width:1120px;margin:0 auto;display:flex;flex-direction:column;min-height:100%;}
 [data-page="checkout"] .checkout-layout{grid-template-columns:minmax(300px,1fr) minmax(390px,.94fr);gap:20px;align-items:stretch;}
 [data-page="checkout"] .checkout-summary-card{grid-column:1;grid-row:1;}
-[data-page="checkout"] .checkout-prescription-card{grid-column:1;grid-row:2;}
-[data-page="checkout"] .checkout-payment-card{grid-column:2;grid-row:1 / span 2;}
+[data-page="checkout"] .checkout-payment-card{grid-column:2;grid-row:1;}
 [data-page="checkout"] .checkout-payment-card{height:100%;}
 [data-page="checkout"] .checkout-box.checkout-card{min-height:0;padding:22px 20px;border:1px solid var(--border);border-radius:12px;background:var(--white);box-shadow:var(--shadow-sm);}
 [data-page="checkout"] h3,[data-page="checkout"] h4,[data-page="checkout"] .checkout-summary-title{color:var(--ink);}
 [data-page="checkout"] .checkout-summary-title{font-size:18px;margin-bottom:8px;}
 [data-page="checkout"] .checkout-summary-title svg{stroke:#e8eaf4;width:20px;height:20px;}
 [data-page="checkout"] .checkout-summary-title svg{stroke:#000;}
-[data-page="checkout"] .checkout-summary-item{padding:14px 10px;border:1px solid var(--border);border-radius:8px;margin:10px 0;background:#f8fafb;}
+[data-page="checkout"] .checkout-summary-item{position:relative;align-items:flex-start;padding:14px 10px;border:1px solid var(--border);border-radius:8px;margin:10px 0;background:#f8fafb;}
 [data-page="checkout"] .checkout-summary-item img{width:42px;height:42px;border:0;background:#fff;}
+[data-page="checkout"] .checkout-item-rx{display:flex;align-items:center;gap:4px;flex:0 0 auto;margin-left:8px;}
+[data-page="checkout"] .checkout-item-rx-btn{display:inline-flex;align-items:center;margin:0;padding:5px 9px;border-radius:6px;background:var(--green-deep);color:#fff;font-size:10px;font-weight:700;letter-spacing:.01em;cursor:pointer;white-space:nowrap;line-height:1.2;}
+[data-page="checkout"] .checkout-item-rx-btn.is-done{background:#dff4ed;color:var(--green-deep);}
+[data-page="checkout"] .checkout-item-rx-clear{width:22px;height:22px;padding:0;border:0;border-radius:50%;background:#e8eeec;color:#5c6b67;font-size:14px;line-height:1;cursor:pointer;}
+[data-page="checkout"] .checkout-item-rx-clear[hidden]{display:none !important;}
 [data-page="checkout"] .checkout-summary-item-copy strong,[data-page="checkout"] .checkout-summary-item-copy b{color:var(--ink);font-size:12px;}
 [data-page="checkout"] .checkout-summary-item-copy span{color:var(--ink-soft);font-size:11px;}
 [data-page="checkout"] .checkout-summary-item-copy b{display:flex;justify-content:space-between;align-items:center;text-align:left;gap:8px;}
@@ -4693,7 +4697,7 @@ article.med-card--rx:hover .med-card-frame--rx{
 .order-receipt-qr img{width:88px;height:88px;padding:5px;border:1px solid var(--border);border-radius:7px;background:#fff;}
 [data-page="checkout"] .payment-details-grid input::placeholder{color:#64748b;opacity:1;}
 [data-page="checkout"] #checkout-payment-status{background:#292f52;color:#b9c2e6;}
-@media(max-width:760px){[data-page="checkout"] .checkout-layout{grid-template-columns:1fr;}[data-page="checkout"] .checkout-summary-card,[data-page="checkout"] .checkout-prescription-card,[data-page="checkout"] .checkout-payment-card{grid-column:1;grid-row:auto;}[data-page="checkout"]{padding:18px 12px 20px;}[data-page="checkout"] .checkout-privacy-note{margin-top:16px;padding:14px 4px 0;}}
+@media(max-width:760px){[data-page="checkout"] .checkout-layout{grid-template-columns:1fr;}[data-page="checkout"] .checkout-summary-card,[data-page="checkout"] .checkout-payment-card{grid-column:1;grid-row:auto;}[data-page="checkout"]{padding:18px 12px 20px;}[data-page="checkout"] .checkout-privacy-note{margin-top:16px;padding:14px 4px 0;}[data-page="checkout"] .checkout-summary-item.has-rx{flex-wrap:wrap;padding-top:36px;}[data-page="checkout"] .checkout-item-rx{position:absolute;top:8px;right:8px;margin:0;}}
 @media (max-width:1100px){
   .checkout-layout{ grid-template-columns:1fr; }
   .checkout-box{ min-height:0; }

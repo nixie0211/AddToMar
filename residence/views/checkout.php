@@ -13,20 +13,6 @@
               <div class="summary-row total"><span>Total amount</span><span id="checkout-total">₱0.00</span></div>
             </div>
 
-            <div class="checkout-box card card-pad checkout-card checkout-prescription-card" id="checkout-prescription-section">
-              <header class="rx-upload-head">
-                <span class="rx-upload-head-icon" aria-hidden="true">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h8l4 4v14H7z"/><path d="M15 3v5h5M9 13h6M9 17h6"/></svg>
-                </span>
-                <div>
-                  <h4>Upload Prescription <span class="badge rx-required">Required</span></h4>
-                  <p class="hint checkout-prescription-note" id="checkout-prescription-note">Upload a clear prescription photo or PDF for each medicine that requires Rx.</p>
-                </div>
-              </header>
-              <div id="checkout-prescription-needed"></div>
-              <p class="hint" id="checkout-prescription-skip" hidden>No prescription is required for the items in this order.</p>
-            </div>
-
             <div class="checkout-box card card-pad checkout-card checkout-payment-card" id="checkout-payment-card">
               <header class="pd-head">
                 <span class="pd-head-icon" aria-hidden="true">

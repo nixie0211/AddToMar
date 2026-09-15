@@ -908,7 +908,6 @@ function renderCheckoutPage(){
   const totalEl = document.querySelector('.checkout-summary-card #checkout-total');
   const downEl = document.getElementById('checkout-down-payment');
   const balanceNote = document.getElementById('checkout-balance-note');
-  const rxSection = document.getElementById('checkout-prescription-section');
   const placeBtn = document.getElementById('checkout-place-order-btn');
   const dateInput = document.getElementById('checkout-pickup-date');
 
@@ -943,12 +942,28 @@ function renderCheckoutPage(){
   }
 
   const totals = checkoutPriceTotals(cartSubtotal());
-  summaryLines.innerHTML = checkoutItems.map(item => `
-    <div class="checkout-summary-item">
+  summaryLines.innerHTML = checkoutItems.map(item => {
+    const needsRx = !!item.rxRequired && item.pharmacyId && item.medicineId;
+    const itemKey = escapeHtml(checkoutRxItemKey(item));
+    const pharmacyId = escapeHtml(item.pharmacyId || '');
+    const medicineId = escapeHtml(String(item.medicineId || ''));
+    return `
+    <div class="checkout-summary-item${needsRx ? ' has-rx' : ''}">
       <img src="${item.image || fallbackImage}" alt="" onerror="this.onerror=null;this.src='${fallbackImage}'">
       <div class="checkout-summary-item-copy"><strong>${item.name}</strong><span>${item.pharmacyName || checkoutPharmacyName()}</span><b><em>${formatMoney(item.price)} × ${item.quantity}</em><strong>${formatMoney(item.price * item.quantity)}</strong></b></div>
+      ${needsRx ? `
+        <div class="checkout-item-rx">
+          <label class="checkout-item-rx-btn">
+            <input type="file" class="checkout-prescription-file" data-item-key="${itemKey}" data-pharmacy-id="${pharmacyId}" data-medicine-id="${medicineId}" accept="image/jpeg,image/png,application/pdf" hidden>
+            <span class="checkout-item-rx-text">Upload prescription</span>
+          </label>
+          <button type="button" class="checkout-item-rx-clear" hidden onclick="clearPrescriptionUpload(this)" aria-label="Remove prescription">×</button>
+        </div>
+      ` : ''}
     </div>
-  `).join('');
+  `;
+  }).join('');
+  restoreCheckoutPrescriptions();
   if(totalEl) totalEl.textContent = formatMoney(totals.total);
   const subtotalEl = document.getElementById('checkout-subtotal');
   const vatEl = document.getElementById('checkout-vat');
@@ -963,27 +978,6 @@ function renderCheckoutPage(){
   if(payLaterEl) payLaterEl.textContent = formatMoney(totals.remaining);
   if(balanceNote) balanceNote.textContent = `Remaining 50% will be paid upon pick up.`;
 
-  const pharmacy = getMarketplacePharmacy(checkoutPharmacyId());
-  const logo = pharmacy?.logo_url || 'https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=100&h=100&fit=crop';
-
-  if(rxSection){
-    const needed = cartRequiresPrescription();
-    const needBlock = document.getElementById('checkout-prescription-needed');
-    const skipBlock = document.getElementById('checkout-prescription-skip');
-    const noteEl = document.getElementById('checkout-prescription-note');
-    const rxItems = checkoutRxItems();
-    rxSection.hidden = !needed;
-    if(needBlock) needBlock.hidden = !needed;
-    if(skipBlock) skipBlock.hidden = needed;
-    const badge = rxSection.querySelector('h4 .badge');
-    if(badge) badge.hidden = !needed;
-    if(noteEl){
-      noteEl.textContent = rxItems.length > 1
-        ? `Upload ${rxItems.length} prescriptions — one for each medicine that requires Rx.`
-        : 'Upload a clear prescription photo or PDF before confirming your order.';
-    }
-    if(needed) renderPrescriptionUploads(rxItems);
-  }
   syncCheckoutConfirmButton();
 
   if(dateInput && !dateInput.value){
@@ -1064,14 +1058,26 @@ function formatPrescriptionSize(bytes){
   return (size / (1024 * 1024)).toFixed(1) + ' MB';
 }
 
-function syncPrescriptionUploadUI(dropzone, file){
-  if(!dropzone) return;
-  const chip = dropzone.querySelector('.rx-file-chip');
-  const nameEl = dropzone.querySelector('.rx-file-name');
-  const sizeEl = dropzone.querySelector('.rx-file-size');
+function prescriptionUploadRoot(el){
+  return el?.closest?.('.checkout-summary-item') || el?.closest?.('.rx-dropzone') || el || null;
+}
+
+function syncPrescriptionUploadUI(root, file){
+  const item = prescriptionUploadRoot(root);
+  if(!item) return;
+  const dropzone = item.classList?.contains('rx-dropzone') ? item : item.querySelector?.('.rx-dropzone');
+  const text = item.querySelector('.checkout-item-rx-text');
+  const clear = item.querySelector('.checkout-item-rx-clear');
+  const btn = item.querySelector('.checkout-item-rx-btn');
+  const chip = dropzone?.querySelector('.rx-file-chip');
+  const nameEl = dropzone?.querySelector('.rx-file-name');
+  const sizeEl = dropzone?.querySelector('.rx-file-size');
   const hasFile = !!file;
+  if(text) text.textContent = hasFile ? 'Uploaded' : 'Upload prescription';
+  if(btn) btn.classList.toggle('is-done', hasFile);
+  if(clear) clear.hidden = !hasFile;
   if(chip) chip.hidden = !hasFile;
-  dropzone.classList.toggle('has-file', hasFile);
+  dropzone?.classList.toggle('has-file', hasFile);
   if(hasFile){
     if(nameEl) nameEl.textContent = file.name;
     if(sizeEl) sizeEl.textContent = formatPrescriptionSize(file.size);
@@ -1088,7 +1094,7 @@ function applyPrescriptionFile(input, file){
     toast('Prescription must be 5MB or smaller.');
     input.value = '';
     if(itemKey) delete prescriptionFilesByItem[itemKey];
-    syncPrescriptionUploadUI(input.closest('.rx-dropzone'), null);
+    syncPrescriptionUploadUI(prescriptionUploadRoot(input), null);
     return;
   }
   if(file){
@@ -1100,111 +1106,21 @@ function applyPrescriptionFile(input, file){
     input.value = '';
     if(itemKey) delete prescriptionFilesByItem[itemKey];
   }
-  syncPrescriptionUploadUI(input.closest('.rx-dropzone'), file || null);
+  syncPrescriptionUploadUI(prescriptionUploadRoot(input), file || null);
 }
 
-function renderPrescriptionUploads(items){
-  const needBlock = document.getElementById('checkout-prescription-needed');
-  if(!needBlock) return;
-  const list = items || [];
-  const ids = list.map(item => checkoutRxItemKey(item)).join('|');
-  if(needBlock.dataset.rxGroups === ids && needBlock.querySelector('.rx-store-upload')){
-    list.forEach(item => {
-      const key = checkoutRxItemKey(item);
-      const input = prescriptionInputForItem(key);
-      const stored = prescriptionFilesByItem[key];
-      if(input && stored && !input.files?.length) applyPrescriptionFile(input, stored);
-      else if(input) syncPrescriptionUploadUI(input.closest('.rx-dropzone'), stored || input.files?.[0] || null);
-    });
-    bindPrescriptionUpload();
-    return;
-  }
-  needBlock.dataset.rxGroups = ids;
-  needBlock.innerHTML = list.map(item => {
-    const pharmacyId = escapeHtml(item.pharmacyId || '');
-    const medicineId = escapeHtml(String(item.medicineId || ''));
-    const itemKey = escapeHtml(checkoutRxItemKey(item));
-    const pharmacyName = escapeHtml(item.pharmacyName || item.pharmacyLabel || cartShopName(item));
-    const medicineName = escapeHtml(item.name || 'Medicine');
-    return `
-      <section class="rx-store-upload">
-        <div class="rx-store-upload-head">
-          <strong>${medicineName}</strong>
-          <span>${pharmacyName} · Rx required</span>
-        </div>
-        <div class="rx-dropzone">
-          <div class="rx-dropzone-main">
-            <span class="rx-dropzone-icon" aria-hidden="true">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="m21 15-4.5-4.5L9 18"/></svg>
-            </span>
-            <div class="rx-dropzone-copy">
-              <strong>Upload prescription</strong>
-              <span>JPG, PNG or PDF (Max 5MB)</span>
-            </div>
-            <label class="rx-choose-btn">
-              <input type="file" class="checkout-prescription-file" data-item-key="${itemKey}" data-pharmacy-id="${pharmacyId}" data-medicine-id="${medicineId}" accept="image/jpeg,image/png,application/pdf" hidden>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V6"/><path d="m8 10 4-4 4 4"/><path d="M4 18h16"/></svg>
-              Choose file
-            </label>
-          </div>
-          <div class="rx-file-chip" hidden>
-            <span class="rx-file-chip-icon" aria-hidden="true">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="m21 15-4.5-4.5L9 18"/></svg>
-            </span>
-            <div>
-              <b class="rx-file-name">prescription.jpg</b>
-              <small class="rx-file-size">0 MB</small>
-            </div>
-            <button type="button" class="prescription-upload-remove" onclick="clearPrescriptionUpload(this)" aria-label="Remove prescription">×</button>
-          </div>
-        </div>
-      </section>`;
-  }).join('');
-  list.forEach(item => {
+function restoreCheckoutPrescriptions(){
+  checkoutRxItems().forEach(item => {
     const key = checkoutRxItemKey(item);
-    const stored = prescriptionFilesByItem[key];
     const input = prescriptionInputForItem(key);
-    if(input && stored) applyPrescriptionFile(input, stored);
+    const stored = prescriptionFilesByItem[key];
+    if(input && stored && !input.files?.length) applyPrescriptionFile(input, stored);
+    else if(input) syncPrescriptionUploadUI(prescriptionUploadRoot(input), stored || input.files?.[0] || null);
   });
-  bindPrescriptionUpload();
-}
-
-function bindPrescriptionUpload(){
-  const needBlock = document.getElementById('checkout-prescription-needed');
-  if(!needBlock || needBlock.dataset.bound === '1') return;
-  needBlock.dataset.bound = '1';
-  needBlock.addEventListener('change', (event) => {
-    const input = event.target;
-    if(!(input instanceof HTMLInputElement) || !input.classList.contains('checkout-prescription-file')) return;
-    activePrescriptionItemKey = input.dataset.itemKey || '';
-    applyPrescriptionFile(input, input.files?.[0] || null);
-  });
-  needBlock.addEventListener('dragenter', handlePrescriptionDrag);
-  needBlock.addEventListener('dragover', handlePrescriptionDrag);
-  needBlock.addEventListener('dragleave', handlePrescriptionDrag);
-  needBlock.addEventListener('drop', handlePrescriptionDrag);
-}
-
-function handlePrescriptionDrag(event){
-  const dropzone = event.target.closest?.('.rx-dropzone');
-  if(!dropzone || !document.getElementById('checkout-prescription-needed')?.contains(dropzone)) return;
-  event.preventDefault();
-  if(event.type === 'dragenter' || event.type === 'dragover'){
-    dropzone.classList.add('is-dragover');
-    return;
-  }
-  dropzone.classList.remove('is-dragover');
-  if(event.type !== 'drop') return;
-  const input = dropzone.querySelector('.checkout-prescription-file');
-  const file = event.dataTransfer?.files?.[0];
-  if(!input || !file) return;
-  activePrescriptionItemKey = input.dataset.itemKey || '';
-  applyPrescriptionFile(input, file);
 }
 
 function clearPrescriptionUpload(trigger){
-  const dropzone = trigger?.closest?.('.rx-dropzone') || document.querySelector('#checkout-prescription-needed .rx-dropzone');
-  const input = dropzone?.querySelector('.checkout-prescription-file');
+  const input = prescriptionUploadRoot(trigger)?.querySelector('.checkout-prescription-file');
   applyPrescriptionFile(input, null);
 }
 
