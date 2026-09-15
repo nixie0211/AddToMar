@@ -42,16 +42,6 @@
                 </span>
               </header>
 
-              <button type="button" class="pd-gcash" data-method="gcash" onclick="startGCashFromCard()">
-                <span class="pd-gcash-logo" aria-hidden="true"><img src="<?= $gcashLogoUrl ?>" alt=""></span>
-                <span class="pd-gcash-copy">
-                  <b>Pay with GCash</b>
-                  <small>Payment will be confirmed instantly via PayMongo.</small>
-                </span>
-                <span class="pd-gcash-check" aria-hidden="true">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
-                </span>
-              </button>
               <button type="button" class="paymongo-wallet-btn" hidden onclick="startPayMongoPayment()">Pay with GCash</button>
 
               <div class="pd-fields payment-details-grid payment-card-fields">
