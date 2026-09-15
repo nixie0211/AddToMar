@@ -8,7 +8,9 @@
             </div>
             <div class="filter-chip-row">
               <button type="button" class="chip active" data-locator-filter="all">All</button>
-              <button type="button" class="chip" data-locator-filter="nearest">Nearest</button>
+              <button type="button" class="chip" data-locator-filter="laoag">Laoag City</button>
+              <button type="button" class="chip" data-locator-filter="san-nicolas">San Nicolas</button>
+              <button type="button" class="chip" data-locator-filter="batac">Batac City</button>
             </div>
 
             <div id="locator-pharmacy-list">
@@ -27,12 +29,14 @@
                 $displayName = trim((string) ($pharmacy['name'] ?? 'Pharmacy') . (!empty($pharmacy['branch']) ? ' — ' . $pharmacy['branch'] : ''));
                 $distance = $pharmacy['distance_km'] ?? null;
                 $showDistance = $distance !== null && (float) $distance < 900;
+                $locatorCity = residence_pharmacy_locator_city_key($pharmacy);
               ?>
               <div
                 class="card pharm-card"
                 data-pharmacy-id="<?= htmlspecialchars($pharmacy['id'], ENT_QUOTES, 'UTF-8') ?>"
                 data-pharmacy-label="<?= htmlspecialchars((string) ($pharmacy['label'] ?? $displayName), ENT_QUOTES, 'UTF-8') ?>"
                 data-pharmacy-name="<?= htmlspecialchars($displayName, ENT_QUOTES, 'UTF-8') ?>"
+                data-city="<?= htmlspecialchars($locatorCity, ENT_QUOTES, 'UTF-8') ?>"
                 data-logo-url="<?= htmlspecialchars(residence_pharmacy_logo_src($pharmacy), ENT_QUOTES, 'UTF-8') ?>"
                 data-distance="<?= htmlspecialchars((string) ($pharmacy['distance_km'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
                 data-is-open="<?= !empty($pharmacy['is_open']) ? '1' : '0' ?>"

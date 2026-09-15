@@ -4327,14 +4327,10 @@ function filterLocatorPharmacies(){
   const cards = Array.from(document.querySelectorAll('.pharm-card[data-pharmacy-id]'));
   const visibleIds = new Set();
 
-  const matchingCards = cards.filter(card => !query || card.textContent.toLowerCase().includes(query));
-  const nearestCard = matchingCards
-    .filter(card => String(card.dataset.distance || '').trim() !== '' && Number.isFinite(Number(card.dataset.distance)) && Number(card.dataset.distance) < 900)
-    .sort((a, b) => Number(a.dataset.distance) - Number(b.dataset.distance))[0] || matchingCards[0] || null;
-
   cards.forEach(card => {
     const matchesSearch = !query || card.textContent.toLowerCase().includes(query);
-    const matchesMode = locatorFilterMode !== 'nearest' || card === nearestCard;
+    const city = String(card.dataset.city || '');
+    const matchesMode = locatorFilterMode === 'all' || city === locatorFilterMode;
     const matches = matchesSearch && matchesMode;
     card.hidden = !matches;
     if(matches) visibleIds.add(String(card.dataset.pharmacyId));

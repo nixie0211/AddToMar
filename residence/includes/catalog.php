@@ -24,6 +24,29 @@ function residence_pharmacy_branch_from_address(string $address): string
     return $address !== '' ? $address : 'Ilocos Norte';
 }
 
+function residence_pharmacy_locator_city_key(array $pharmacy): string
+{
+    $blob = strtolower(trim(implode(' ', array_filter([
+        (string) ($pharmacy['city'] ?? ''),
+        (string) ($pharmacy['branch'] ?? ''),
+        (string) ($pharmacy['address'] ?? ''),
+        (string) ($pharmacy['label'] ?? ''),
+        (string) ($pharmacy['name'] ?? ''),
+    ]))));
+
+    if (str_contains($blob, 'laoag')) {
+        return 'laoag';
+    }
+    if (str_contains($blob, 'san nicolas')) {
+        return 'san-nicolas';
+    }
+    if (str_contains($blob, 'batac')) {
+        return 'batac';
+    }
+
+    return '';
+}
+
 function residence_pharmacy_initials(string $name): string
 {
     $parts = preg_split('/\s+/', trim($name)) ?: [];
