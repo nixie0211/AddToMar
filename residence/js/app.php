@@ -2921,15 +2921,6 @@ function orderTimelineHtml(status, stamp){
 }
 
 function bindGroupedOrderDetail(root){
-  root.querySelectorAll('[data-mo-tab]').forEach(button => {
-    button.addEventListener('click', () => {
-      const tab = button.dataset.moTab;
-      root.querySelectorAll('[data-mo-tab]').forEach(item => item.classList.toggle('is-active', item === button));
-      root.querySelectorAll('[data-mo-panel]').forEach(panel => {
-        panel.hidden = panel.dataset.moPanel !== tab;
-      });
-    });
-  });
   root.querySelectorAll('[data-mo-track]').forEach(button => {
     button.addEventListener('click', () => {
       const card = button.closest('.mo-store-card');
@@ -3025,17 +3016,10 @@ function renderOrderDetail(id){
       </div>
     </div>
     ${storeCount > 1 ? `<p class="mo-parent-note">You purchased items from multiple pharmacies in one checkout. Each store will process and deliver your items separately.</p>` : ''}
-    <div class="mo-order-tabs">
-      <button type="button" class="is-active" data-mo-tab="summary">Order Summary</button>
-      <button type="button" data-mo-tab="timeline">Timeline</button>
-    </div>
     <div class="od-layout">
       <main class="od-main">
-        <div data-mo-panel="summary">${storeCards}</div>
-        <div data-mo-panel="timeline" hidden>
-          <section class="od-timeline">${timelineHtml}</section>
-          <p class="mo-parent-note">Overall status follows the slowest pharmacy in this checkout: Order placed, Processing, Confirmed, Preparing, Ready for pick up, then Completed.</p>
-        </div>
+        <section class="od-timeline">${timelineHtml}</section>
+        <div class="mo-store-list">${storeCards}</div>
       </main>
       <aside class="od-aside">
         <section class="od-card od-summary">

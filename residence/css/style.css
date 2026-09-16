@@ -6956,18 +6956,8 @@ body.is-pharmacy-empty.is-pharmacy-profile-page .page[data-page="pharmacy-profil
   font-size:13px;
   line-height:1.45;
 }
-.mo-order-tabs{display:flex;gap:10px;margin:0 0 16px;}
-.mo-order-tabs button{
-  border:0;
-  border-bottom:2px solid transparent;
-  padding:10px 14px;
-  background:transparent;
-  color:#6c8090;
-  font-size:13px;
-  font-weight:800;
-  cursor:pointer;
-}
-.mo-order-tabs button.is-active{border-color:#07836d;color:#087d68;background:#e4f8f1;border-radius:10px 10px 0 0;}
+.mo-store-list{margin-top:16px;}
+.od-main > .od-timeline{margin-bottom:4px;}
 .mo-store-card{
   margin:0 0 14px;
   padding:16px 18px 14px;
