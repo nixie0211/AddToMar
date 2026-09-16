@@ -292,6 +292,12 @@ function applyOrdersPayload(payload, status) {
   pharmacyOrdersState.counts = Object.assign({}, pharmacyOrdersState.counts, payload.counts || {});
   pharmacyOrdersState.total = Number(payload.total || 0);
   pharmacyOrdersState.orders = Array.isArray(payload.orders) ? payload.orders : [];
+  pharmacyOrdersState.details = {};
+  pharmacyOrdersState.orders.forEach(function (row) {
+    if (row && row.detail && row.id) {
+      pharmacyOrdersState.details[row.id] = row.detail;
+    }
+  });
 }
 
 function renderPharmacyOrders() {
@@ -562,6 +568,11 @@ function openOrderFromLink(href, options, fromEl) {
   pharmacyOrdersState.selectedId = parsed.orderId;
   syncOrdersHistory(parsed.nextUrl, options);
   markActiveOrderRow(parsed.orderId);
+  const cached = pharmacyOrdersState.details[parsed.orderId];
+  if (cached) {
+    renderOrderDrawerDetail(cached);
+    return;
+  }
   showOrderDrawerPlaceholder(parsed.orderId, fromEl);
   loadOrderDrawer(parsed.orderId, parsed.status, { fallbackUrl: parsed.nextUrl });
 }
@@ -1003,6 +1014,11 @@ function initPharmacyOrderUi() {
 document.addEventListener('DOMContentLoaded', function () {
   hydratePharmacyOrders();
   initPharmacyOrderUi();
+  const selectedId = parseInt(new URLSearchParams(window.location.search).get('order_id') || '0', 10);
+  if (selectedId > 0 && pharmacyOrdersState.details[selectedId]) {
+    pharmacyOrdersState.selectedId = selectedId;
+    renderOrderDrawerDetail(pharmacyOrdersState.details[selectedId]);
+  }
 });
 document.addEventListener('livesync:applied', function () {
   const view = document.getElementById('view-orders');

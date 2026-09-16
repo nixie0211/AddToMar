@@ -682,6 +682,7 @@ function pharmacy_order_list_row(array $order, array $items, int $index): array
         'time_label' => date('g:i a', $createdAt),
         'amount_label' => pharmacy_format_money((float) ($order['total_amount'] ?? 0)),
         'cancellation_reason' => $reason,
+        'detail' => pharmacy_order_detail_from_row($order, $items),
     ];
 }
 
@@ -710,19 +711,13 @@ function pharmacy_orders_list_payload(string $status = 'pending'): array
     $orders = $status === 'all'
         ? pharmacy_get_orders(300)
         : pharmacy_get_orders(300, $status);
-    $itemsCache = pharmacy_order_table_items_map(array_map(static fn(array $order): int => (int) ($order['id'] ?? 0), $orders));
+    $itemsCache = pharmacy_get_order_items_map(array_map(static fn(array $order): int => (int) ($order['id'] ?? 0), $orders));
 
     return pharmacy_orders_list_payload_from($orders, $itemsCache, $counts, $status);
 }
 
-function pharmacy_order_detail_payload(int $orderId): ?array
+function pharmacy_order_detail_from_row(array $order, array $items): array
 {
-    $order = pharmacy_get_order_by_id($orderId);
-    if ($order === null) {
-        return null;
-    }
-
-    $items = pharmacy_get_order_items($orderId);
     $status = (string) ($order['status'] ?? 'pending');
     $meta = pharmacy_order_status_map()[$status] ?? ['c' => 'badge-gray', 't' => ucfirst($status)];
     $customer = trim((string) ($order['customer_name'] ?? 'Customer'));
@@ -783,6 +778,16 @@ function pharmacy_order_detail_payload(int $orderId): ?array
             ? 'pdf'
             : ($pickupUrl ? 'img' : 'empty'),
     ];
+}
+
+function pharmacy_order_detail_payload(int $orderId): ?array
+{
+    $order = pharmacy_get_order_by_id($orderId);
+    if ($order === null) {
+        return null;
+    }
+
+    return pharmacy_order_detail_from_row($order, pharmacy_get_order_items($orderId));
 }
 
 function pharmacy_active_view(array $allowedViews): string

@@ -32,7 +32,7 @@ if ($pharmacyOrdersDrawerOnly) {
         ? pharmacy_get_orders(300)
         : pharmacy_get_orders(300, $activeStatus);
     $orderIds = array_map(static fn(array $order): int => (int) ($order['id'] ?? 0), $filteredOrders);
-    $orderItemsCache = pharmacy_order_table_items_map($orderIds);
+    $orderItemsCache = pharmacy_get_order_items_map($orderIds);
 
     if (!$pharmacyOrdersListOnly && $selectedOrderId > 0) {
         foreach ($filteredOrders as $order) {
