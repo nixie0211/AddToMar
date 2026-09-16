@@ -24,9 +24,12 @@ if ($selectedOrderId > 0) {
             break;
         }
     }
-}
-if ($panelOrder === null) {
-    $panelOrder = $filteredOrders[0] ?? null;
+    if ($panelOrder === null) {
+        $fetched = pharmacy_get_order_by_id($selectedOrderId);
+        if (is_array($fetched)) {
+            $panelOrder = $fetched;
+        }
+    }
 }
 
 $panelOrderId = (int) ($panelOrder['id'] ?? 0);
@@ -88,7 +91,7 @@ $overviewPickupProofExt = strtolower(pathinfo($overviewPickupProofPath, PATHINFO
 $overviewPickupProofKind = $overviewPickupProofExt === 'pdf' ? 'pdf' : ($overviewPickupProofUrl ? 'img' : 'empty');
 ?>
       <section class="<?= pharmacy_view_class('orders', $activeView) ?>" id="view-orders" data-live-region="pharmacy-orders" data-live-keys="orders">
-        <div class="grid-2 orders-layout">
+        <div class="orders-layout">
           <div class="orders-main">
             <div class="orders-stats">
               <div class="orders-stat">
@@ -185,10 +188,17 @@ $overviewPickupProofKind = $overviewPickupProofExt === 'pdf' ? 'pdf' : ($overvie
             </div>
           </div>
 
-          <div class="panel order-overview">
+          <div class="order-drawer" id="order-drawer"<?= $hasPanelOrder ? '' : ' hidden' ?>>
+            <button type="button" class="order-drawer-backdrop" id="order-drawer-close" data-orders-close aria-label="Close order details"></button>
+            <aside class="panel order-overview" role="dialog" aria-modal="true" aria-labelledby="order-drawer-title">
             <div class="panel-head">
-              <h3>Order #<?= htmlspecialchars($overviewOrderNumber, ENT_QUOTES, 'UTF-8') ?></h3>
+              <div>
+                <h3 id="order-drawer-title">Order #<?= htmlspecialchars($overviewOrderNumber, ENT_QUOTES, 'UTF-8') ?></h3>
+              </div>
               <span class="badge <?= htmlspecialchars($overviewBadge['c'], ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($overviewBadge['t'], ENT_QUOTES, 'UTF-8') ?></span>
+              <a class="order-drawer-close-btn" id="order-drawer-close-btn" href="<?= htmlspecialchars(pharmacy_orders_url($activeStatus), ENT_QUOTES, 'UTF-8') ?>" aria-label="Close">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </a>
             </div>
 
             <?php if (!$hasPanelOrder): ?>
@@ -359,6 +369,7 @@ $overviewPickupProofKind = $overviewPickupProofExt === 'pdf' ? 'pdf' : ($overvie
             </div>
 
             <?php endif; ?>
+            </aside>
           </div>
         </div>
 

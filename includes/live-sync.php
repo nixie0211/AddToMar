@@ -301,5 +301,5 @@ function live_sync_render_script(?string $portal = null): void
 {
     $config = live_sync_client_config($portal);
     echo '<script>window.LIVE_SYNC=' . json_encode($config, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . ';</script>' . "\n";
-    echo '<script src="' . htmlspecialchars(app_url('js/live-sync.js'), ENT_QUOTES, 'UTF-8') . '?v=live-sync-4" defer></script>' . "\n";
+    echo '<script src="' . htmlspecialchars(app_url('js/live-sync.js'), ENT_QUOTES, 'UTF-8') . '?v=live-sync-5" defer></script>' . "\n";
 }

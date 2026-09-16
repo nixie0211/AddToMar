@@ -24,6 +24,7 @@
       '#prescription-viewer:not([hidden])',
       '#pickup-proof-modal:not([hidden])',
       '#cancel-order-modal:not([hidden])',
+      '#order-drawer:not([hidden])',
       '#residence-cancel-order-modal:not([hidden])',
       '.resident-report-floating-panel:not([hidden])'
     ].join(',');

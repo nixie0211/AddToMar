@@ -319,12 +319,16 @@ function initPharmacyOrderUi() {
   const view = document.getElementById('view-orders');
   if (!view || view.dataset.orderUiBound === '1') return;
   view.dataset.orderUiBound = '1';
-  document.querySelectorAll('#view-orders .tabs a.tab-btn, #view-orders a.order-card').forEach(function (link) {
+  document.querySelectorAll('#view-orders .tabs a.tab-btn, #view-orders a.orders-table-link, #view-orders a.order-drawer-close-btn').forEach(function (link) {
     link.addEventListener('click', function (event) {
       event.preventDefault();
       event.stopPropagation();
       navigateOrdersLink(link);
     });
+  });
+  document.getElementById('order-drawer-close')?.addEventListener('click', function () {
+    const close = document.getElementById('order-drawer-close-btn');
+    if (close) navigateOrdersLink(close);
   });
 
   document.querySelectorAll('.view-prescription-trigger').forEach(function (trigger) {
@@ -424,7 +428,14 @@ function initPharmacyOrderUi() {
       closePickupProofModal();
       return;
     }
-    closePrescriptionViewer();
+    if (document.getElementById('prescription-viewer')?.hidden === false) {
+      closePrescriptionViewer();
+      return;
+    }
+    const drawerClose = document.getElementById('order-drawer-close-btn');
+    if (document.getElementById('order-drawer')?.hidden === false && drawerClose) {
+      navigateOrdersLink(drawerClose);
+    }
     });
   }
 
