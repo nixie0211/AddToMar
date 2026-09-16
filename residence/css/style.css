@@ -7118,6 +7118,7 @@ body.is-pharmacy-empty.is-pharmacy-profile-page .page[data-page="pharmacy-profil
 .mo-parent-badge strong.processing{background:#fff6e5;color:#c47b12;}
 .mo-parent-badge strong.ready{background:#e7f6ef;color:#087c66;}
 .mo-parent-badge strong.completed{background:#e7f6ef;color:#087c66;}
+.mo-parent-badge strong.cancelled{background:#fdecee;color:#c13d47;}
 .mo-parent-badge small{color:#6b8290;font-size:11px;}
 .mo-parent-note{
   margin:0 0 16px;
@@ -7162,6 +7163,7 @@ body.is-pharmacy-empty.is-pharmacy-profile-page .page[data-page="pharmacy-profil
 }
 .mo-store-status.ready,.mo-store-status.completed,.mo-store-status.picked-up{background:#e7f6ef;color:#087c66;}
 .mo-store-status.confirmed{background:#e8f1ff;color:#2457d6;}
+.mo-store-status.cancelled{background:#fdecee;color:#c13d47;}
 .mo-store-items{display:grid;gap:10px;margin:14px 0 10px;}
 .mo-store-item{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:10px;align-items:center;}
 .mo-store-item img{width:44px;height:44px;object-fit:contain;border:1px solid #edf3f1;border-radius:8px;background:#f8fbfa;}
@@ -7184,15 +7186,15 @@ body.is-pharmacy-empty.is-pharmacy-profile-page .page[data-page="pharmacy-profil
   margin-top:8px;
   min-height:auto;
   padding:8px 14px;
-  border:1px solid #f1c4c4;
+  border:0;
   border-radius:999px;
-  background:#fff5f5;
-  color:#c13d47;
-  box-shadow:none;
+  background:#fdecee !important;
+  color:#c13d47 !important;
+  box-shadow:none !important;
   font-size:12.5px;
   font-weight:700;
 }
-.od-cancel-btn:hover{ background:#fdecee; color:#ad2633; box-shadow:none; }
+.od-cancel-btn:hover{ background:#f8d4d7 !important; color:#ad2633 !important; box-shadow:none !important; }
 .mo-cancel-reason{
   margin:0 0 16px;
   padding:12px 14px;
