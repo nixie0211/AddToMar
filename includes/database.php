@@ -224,6 +224,7 @@ function caps_run_migrations(PDO $pdo): void
     }
 
     caps_clear_sample_reports($pdo);
+    caps_remove_seeded_admin_gmail($pdo);
     caps_ensure_admin_account($pdo);
     caps_seed_tgp_inventory();
 }
@@ -263,6 +264,43 @@ function caps_clear_sample_reports(PDO $pdo): void
 
     $insert = $pdo->prepare('INSERT INTO app_meta (meta_key, meta_value) VALUES (?, ?)');
     $insert->execute(['clear_sample_reports_v1', date('c')]);
+}
+
+function caps_remove_seeded_admin_gmail(PDO $pdo): void
+{
+    $seededEmail = 'addtomar@gmail.com';
+
+    try {
+        $pdo->exec('
+            CREATE TABLE IF NOT EXISTS app_meta (
+                meta_key VARCHAR(64) NOT NULL PRIMARY KEY,
+                meta_value VARCHAR(255) NOT NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ');
+        $deleteUser = $pdo->prepare('DELETE FROM users WHERE LOWER(TRIM(email)) = ?');
+        $deleteUser->execute([$seededEmail]);
+
+        foreach (['user_addresses', 'cart', 'resident_notifications'] as $table) {
+            if (!caps_table_exists($pdo, $table)) {
+                continue;
+            }
+            $deleteRelated = $pdo->prepare('DELETE FROM ' . $table . ' WHERE LOWER(TRIM(user_email)) = ?');
+            $deleteRelated->execute([$seededEmail]);
+        }
+
+        $pdo->prepare('DELETE FROM app_meta WHERE meta_key = ? AND LOWER(TRIM(meta_value)) = ?')
+            ->execute(['admin_email', $seededEmail]);
+        $pdo->prepare('INSERT INTO app_meta (meta_key, meta_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE meta_value = VALUES(meta_value)')
+            ->execute(['remove_seeded_addtomar_admin_v1', date('c')]);
+
+        $remaining = $pdo->query(
+            "SELECT email FROM users WHERE role = 'admin' ORDER BY updated_at DESC, id ASC LIMIT 1"
+        )->fetchColumn();
+        if (is_string($remaining) && $remaining !== '') {
+            caps_store_admin_email($pdo, $remaining);
+        }
+    } catch (Throwable) {
+    }
 }
 
 function caps_table_exists(PDO $pdo, string $table): bool
@@ -375,8 +413,15 @@ function caps_ensure_admin_account(PDO $pdo): void
     $envEmail = addtomar_admin_email();
     $email = $storedEmail !== '' ? $storedEmail : $envEmail;
 
+    $meta->execute(['remove_seeded_addtomar_admin_v1']);
+    $removedSeededAdmin = trim((string) $meta->fetchColumn()) !== '';
+    if ($removedSeededAdmin && $storedEmail === 'addtomar@gmail.com') {
+        $storedEmail = '';
+        $email = '';
+    }
+
     $existing = null;
-    if ($storedEmail !== '') {
+    if ($storedEmail !== '' && $storedEmail !== 'addtomar@gmail.com') {
         $stmt = $pdo->prepare('SELECT id, email, password_hash, role FROM users WHERE email = ? LIMIT 1');
         $stmt->execute([$storedEmail]);
         $existing = $stmt->fetch() ?: null;
@@ -395,6 +440,9 @@ function caps_ensure_admin_account(PDO $pdo): void
     }
 
     if (!$existing) {
+        if ($email === '' || ($removedSeededAdmin && $email === 'addtomar@gmail.com')) {
+            return;
+        }
         $password = addtomar_admin_bootstrap_password();
         $passwordHash = password_hash($password, PASSWORD_DEFAULT);
         $insert = $pdo->prepare(
@@ -416,8 +464,13 @@ function caps_ensure_admin_account(PDO $pdo): void
         return;
     }
 
+    $keepEmail = strtolower(trim((string) ($existing['email'] ?? $email)));
+    if ($removedSeededAdmin && $keepEmail === 'addtomar@gmail.com') {
+        return;
+    }
+
     $pdo->prepare("UPDATE users SET role = 'admin', password_set = 1 WHERE id = ?")->execute([(int) $existing['id']]);
-    caps_store_admin_email($pdo, (string) ($existing['email'] ?? $email));
+    caps_store_admin_email($pdo, $keepEmail !== '' ? $keepEmail : (string) ($existing['email'] ?? ''));
 
     $meta->execute(['admin_login_restore_v1']);
     $restored = (string) $meta->fetchColumn();
