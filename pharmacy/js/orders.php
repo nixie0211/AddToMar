@@ -278,6 +278,7 @@ let pharmacyOrdersState = {
   orders: [],
   selectedId: 0,
   details: {},
+  tabs: {},
 };
 
 function ordersHref(status, orderId) {
@@ -286,13 +287,42 @@ function ordersHref(status, orderId) {
   return href;
 }
 
+function rememberOrdersTab(status, orders) {
+  pharmacyOrdersState.tabs[status] = { orders: (orders || []).slice() };
+}
+
+function showCachedOrdersTab(status) {
+  const cached = pharmacyOrdersState.tabs[status];
+  if (!cached) return false;
+  pharmacyOrdersState.status = status;
+  pharmacyOrdersState.orders = cached.orders.slice();
+  pharmacyOrdersState.selectedId = 0;
+  renderPharmacyOrders();
+  return true;
+}
+
+function upsertCachedTabOrder(tabStatus, order) {
+  const tab = pharmacyOrdersState.tabs[tabStatus];
+  if (!tab || !order) return;
+  const orderId = Number(order.id || 0);
+  const index = tab.orders.findIndex(function (row) { return Number(row.id) === orderId; });
+  const belongs = tabStatus === 'all' || order.status === tabStatus;
+  if (!belongs) {
+    if (index >= 0) tab.orders.splice(index, 1);
+    return;
+  }
+  if (index >= 0) tab.orders[index] = order;
+  else tab.orders.unshift(order);
+}
+
 function applyOrdersPayload(payload, status) {
   if (!payload || payload.success === false) return;
-  pharmacyOrdersState.status = payload.status || status || pharmacyOrdersState.status;
+  const nextStatus = payload.status || status || pharmacyOrdersState.status;
+  pharmacyOrdersState.status = nextStatus;
   pharmacyOrdersState.counts = Object.assign({}, pharmacyOrdersState.counts, payload.counts || {});
   pharmacyOrdersState.total = Number(payload.total || 0);
   pharmacyOrdersState.orders = Array.isArray(payload.orders) ? payload.orders : [];
-  pharmacyOrdersState.details = {};
+  rememberOrdersTab(nextStatus, pharmacyOrdersState.orders);
   pharmacyOrdersState.orders.forEach(function (row) {
     if (row && row.detail && row.id) {
       pharmacyOrdersState.details[row.id] = row.detail;
@@ -374,13 +404,30 @@ function applyOrderStatusLocally(orderId, nextStatus, extra) {
     if (extra.cancellation_reason) {
       order.cancellation_reason = extra.cancellation_reason;
     }
+    if (order.detail) {
+      order.detail.status = nextStatus;
+      order.detail.status_label = order.status_label;
+      order.detail.is_pending = nextStatus === 'pending';
+      order.detail.is_ready = nextStatus === 'ready';
+      order.detail.is_completed = nextStatus === 'delivered';
+      order.detail.is_cancelled = nextStatus === 'cancelled';
+      order.detail.next_status = nextStatus === 'pending' ? 'confirmed' : (nextStatus === 'confirmed' ? 'preparing' : (nextStatus === 'preparing' ? 'ready' : null));
+      order.detail.next_label = (ORDER_STATUS_MAP[order.detail.next_status] || {}).t || '';
+      if (extra.cancellation_reason) order.detail.cancellation_reason = extra.cancellation_reason;
+      pharmacyOrdersState.details[orderId] = order.detail;
+    }
   }
-  if (pharmacyOrdersState.status !== 'all' && pharmacyOrdersState.status !== nextStatus) {
+  Object.keys(pharmacyOrdersState.tabs).forEach(function (tabStatus) {
+    upsertCachedTabOrder(tabStatus, order);
+  });
+  const currentTab = pharmacyOrdersState.tabs[pharmacyOrdersState.status];
+  if (currentTab) {
+    pharmacyOrdersState.orders = currentTab.orders.slice();
+  } else if (pharmacyOrdersState.status !== 'all' && pharmacyOrdersState.status !== nextStatus) {
     pharmacyOrdersState.orders = (pharmacyOrdersState.orders || []).filter(function (row) {
       return Number(row.id) !== Number(orderId);
     });
   }
-  delete pharmacyOrdersState.details[orderId];
 }
 
 function hydratePharmacyOrders() {
@@ -649,16 +696,68 @@ async function loadOrdersView(href, options) {
 function switchOrdersTab(href, options) {
   options = options || {};
   const parsed = parseOrdersHref(href);
-  const navGen = ++ordersNavGen;
   drawerRequestId += 1;
   if (drawerAbort) drawerAbort.abort();
   closeOrderDrawer(parsed.nextUrl, { skipHistory: true });
   syncOrdersHistory(parsed.nextUrl, options);
-  pharmacyOrdersState.status = parsed.status;
   pharmacyOrdersState.selectedId = 0;
   setActiveOrdersTab(parsed.status);
+  if (showCachedOrdersTab(parsed.status)) {
+    return;
+  }
+  pharmacyOrdersState.status = parsed.status;
   showOrdersTableLoading();
-  loadOrdersView(parsed.nextUrl, { skipHistory: true, navGen: navGen });
+  loadOrdersView(parsed.nextUrl, { skipHistory: true, navGen: ++ordersNavGen });
+}
+
+async function refreshCachedOrderTabs() {
+  const statuses = Object.keys(pharmacyOrdersState.tabs);
+  if (statuses.indexOf(pharmacyOrdersState.status) === -1) {
+    statuses.push(pharmacyOrdersState.status);
+  }
+  const current = pharmacyOrdersState.status;
+  const selectedId = pharmacyOrdersState.selectedId;
+  try {
+    const payloads = await Promise.all(statuses.map(function (status) {
+      return fetch('api/orders-list.php?status=' + encodeURIComponent(status), {
+        credentials: 'same-origin',
+        cache: 'no-store',
+        headers: { Accept: 'application/json' },
+      }).then(function (response) {
+        if (!response.ok) throw new Error('load');
+        return response.json();
+      });
+    }));
+    payloads.forEach(function (payload) {
+      if (!payload || payload.success === false) return;
+      const status = payload.status;
+      pharmacyOrdersState.counts = Object.assign({}, pharmacyOrdersState.counts, payload.counts || {});
+      pharmacyOrdersState.total = Number(payload.total || pharmacyOrdersState.total);
+      rememberOrdersTab(status, payload.orders || []);
+      (payload.orders || []).forEach(function (row) {
+        if (row && row.detail && row.id) {
+          pharmacyOrdersState.details[row.id] = row.detail;
+        }
+      });
+    });
+    if (pharmacyOrdersState.tabs[current]) {
+      pharmacyOrdersState.status = current;
+      pharmacyOrdersState.orders = pharmacyOrdersState.tabs[current].orders.slice();
+    }
+    pharmacyOrdersState.selectedId = selectedId;
+    renderPharmacyOrders();
+    const drawer = document.getElementById('order-drawer');
+    if (drawer && drawer.hidden === false && selectedId > 0) {
+      const stillThere = (pharmacyOrdersState.orders || []).some(function (row) {
+        return Number(row.id) === Number(selectedId);
+      });
+      if (stillThere && pharmacyOrdersState.details[selectedId]) {
+        renderOrderDrawerDetail(pharmacyOrdersState.details[selectedId]);
+      } else if (!stillThere) {
+        closeOrderDrawer(ordersHref(current), { replace: true });
+      }
+    }
+  } catch (error) {}
 }
 
 function stayOnOrdersTable() {
@@ -1030,9 +1129,7 @@ document.addEventListener('livesync:change', function (event) {
   if (keys.indexOf('orders') === -1) return;
   const view = document.getElementById('view-orders');
   if (!view || !view.classList.contains('active')) return;
-  const drawer = document.getElementById('order-drawer');
-  if (drawer && drawer.hidden === false) return;
-  loadOrdersView(ordersHref(currentOrdersStatus()), { skipHistory: true, navGen: ++ordersNavGen });
+  refreshCachedOrderTabs();
 });
 window.addEventListener('popstate', function () {
   const params = new URLSearchParams(window.location.search);
