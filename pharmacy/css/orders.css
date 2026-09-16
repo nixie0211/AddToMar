@@ -314,6 +314,8 @@
   width:100%;
   height:100%;
   object-fit:cover;
+  position:relative;
+  z-index:1;
 }
 .order-med-row .med-thumb--photo,
 .order-med-row .med-thumb--rx.med-thumb--photo{

@@ -485,7 +485,7 @@ function pharmacy_get_orders(int $limit = 50, ?string $status = null): array
 function pharmacy_get_order_items(int $orderId): array
 {
     $stmt = pharmacy_db()->prepare('
-        SELECT oi.*, m.image_path
+        SELECT oi.*, m.image_path, m.id AS catalog_medicine_id
         FROM order_items oi
         LEFT JOIN medicines m ON m.id = oi.medicine_id
         WHERE oi.order_id = ?
@@ -494,7 +494,11 @@ function pharmacy_get_order_items(int $orderId): array
     $stmt->execute([$orderId]);
     $items = $stmt->fetchAll();
     foreach ($items as &$item) {
-        $item['image_url'] = pharmacy_medicine_image_url($item) ?? '';
+        $item['image_url'] = pharmacy_medicine_image_url([
+            'id' => (int) ($item['catalog_medicine_id'] ?? $item['medicine_id'] ?? 0),
+            'medicine_id' => (int) ($item['catalog_medicine_id'] ?? $item['medicine_id'] ?? 0),
+            'image_path' => (string) ($item['image_path'] ?? ''),
+        ]) ?? '';
     }
     unset($item);
 
@@ -1035,8 +1039,14 @@ function pharmacy_medicine_get_image(int $medicineId): ?array
 
 function pharmacy_medicine_image_url(array $medicine): ?string
 {
-    $id = (int) ($medicine['id'] ?? $medicine['medicine_id'] ?? 0);
+    $id = (int) ($medicine['medicine_id'] ?? 0);
+    if ($id < 1) {
+        $id = (int) ($medicine['id'] ?? 0);
+    }
     $path = trim((string) ($medicine['image_path'] ?? ''));
+    if (preg_match('/medicine-image\.php\?(?:.*&)?id=(\d+)/i', $path, $matches)) {
+        $id = (int) $matches[1];
+    }
     $hasDb = $id > 0 && (
         str_contains($path, 'medicine-image.php')
         || isset(pharmacy_medicine_db_image_ids()[$id])
