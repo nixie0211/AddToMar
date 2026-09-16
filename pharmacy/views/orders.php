@@ -7,10 +7,7 @@ if (!in_array($activeStatus, $allowedStatuses, true)) {
 }
 
 $selectedOrderId = isset($_GET['order_id']) ? (int) $_GET['order_id'] : 0;
-$filteredOrders = array_values(array_filter(
-    $orders ?? [],
-    static fn(array $order): bool => ($order['status'] ?? '') === $activeStatus
-));
+$filteredOrders = pharmacy_get_orders(300, $activeStatus);
 
 $orderItemsCache = [];
 foreach ($filteredOrders as $order) {

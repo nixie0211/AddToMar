@@ -461,19 +461,24 @@ function pharmacy_notify_resident_order(array $order, string $status, string $ex
     resident_notification_add($email, $copy[0], $copy[1], 'order', '', $orderNumber);
 }
 
-function pharmacy_get_orders(int $limit = 50): array
+function pharmacy_get_orders(int $limit = 50, ?string $status = null): array
 {
-    $stmt = pharmacy_db()->prepare('
+    $sql = '
         SELECT o.*, c.name AS customer_name, c.phone AS customer_phone, c.address AS customer_address,
                (SELECT COUNT(*) FROM order_items oi WHERE oi.order_id = o.id) AS item_count
         FROM orders o
         LEFT JOIN customers c ON c.id = o.customer_id
         WHERE ' . pharmacy_scope_sql('o') . '
-        ORDER BY o.created_at DESC
-        LIMIT ?
-    ');
-    $stmt->bindValue(1, $limit, PDO::PARAM_INT);
-    $stmt->execute();
+    ';
+    $params = [];
+    if ($status !== null && $status !== '') {
+        $sql .= ' AND o.status = ?';
+        $params[] = $status;
+    }
+    $sql .= ' ORDER BY o.updated_at DESC, o.created_at DESC, o.id DESC LIMIT ' . max(1, $limit);
+
+    $stmt = pharmacy_db()->prepare($sql);
+    $stmt->execute($params);
     return $stmt->fetchAll();
 }
 
