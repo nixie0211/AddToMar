@@ -32,7 +32,7 @@ require_once dirname(__DIR__) . '/includes/maps.php';
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 <link rel="stylesheet" href="<?= htmlspecialchars(app_url('css/map-service-overlay.css'), ENT_QUOTES, 'UTF-8') ?>?v=street-map-2">
 <link rel="stylesheet" href="css/base.css?v=unified-mint-outer-canvas">
-<link rel="stylesheet" href="css/orders.css?v=rx-link-blue-1">
+<link rel="stylesheet" href="css/orders.css?v=rx-see-prescription-blue-1">
 <link rel="stylesheet" href="css/reports.css">
 <link rel="stylesheet" href="css/settings.css?v=profile-avatar-mint">
 <link rel="stylesheet" href="css/add-medicine.css?v=saving-overlay-1">
@@ -57,7 +57,7 @@ window.PHARMACY_CHART_DATA = <?= json_encode($chartData ?? [], JSON_UNESCAPED_UN
 <script src="js/dashboard.php"></script>
 <script src="js/add-medicine.php?v=other-dosage-unit-1"></script>
 <script src="js/inventory.php?v=new-badge-7d"></script>
-<script src="js/orders.php?v=orders-rx-access-1"></script>
+<script src="js/orders.php?v=orders-rx-see-prescription-1"></script>
 <script src="js/sales.php"></script>
 <script src="js/analytics.php"></script>
 <script src="js/reports.php"></script>

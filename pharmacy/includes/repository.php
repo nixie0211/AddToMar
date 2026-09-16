@@ -737,7 +737,7 @@ function pharmacy_order_detail_from_row(array $order, array $items): array
             'quantity' => $qty,
             'image_url' => trim((string) ($item['image_url'] ?? '')),
             'prescription_required' => !empty($item['prescription_required']),
-            'prescription_url' => pharmacy_item_prescription_url($item, $order),
+            'prescription_url' => pharmacy_item_prescription_url($item, $order) ?: '',
             'note' => trim((string) ($item['item_note'] ?? '')),
             'line_total_label' => pharmacy_format_money((float) ($item['unit_price'] ?? 0) * $qty),
         ];
@@ -769,6 +769,7 @@ function pharmacy_order_detail_from_row(array $order, array $items): array
         'is_completed' => $isCompleted,
         'is_cancelled' => $status === 'cancelled',
         'can_view_prescription' => pharmacy_order_allows_prescription_view($status),
+        'prescription_url' => pharmacy_prescription_url($order) ?: '',
         'next_status' => $next,
         'next_label' => $next !== null ? (string) (pharmacy_order_status_map()[$next]['t'] ?? ucfirst($next)) : '',
         'cancellation_reason' => trim((string) ($order['cancellation_reason'] ?? '')),
@@ -1049,17 +1050,17 @@ function pharmacy_store_slug(string $name): string
 
 function pharmacy_upload_url(string $path): ?string
 {
-    $path = trim($path);
+    $path = str_replace('\\', '/', trim($path));
     if ($path === '') {
         return null;
     }
-
-    $absolute = dirname(__DIR__, 2) . '/' . ltrim($path, '/');
-    if (!is_file($absolute)) {
-        return null;
+    if (preg_match('#^https?://#i', $path)) {
+        return $path;
     }
 
-    return function_exists('app_url') ? app_url($path) : $path;
+    $relative = ltrim($path, '/');
+
+    return function_exists('app_url') ? app_url($relative) : '/' . $relative;
 }
 
 function pharmacy_order_allows_prescription_view($orderOrStatus): bool

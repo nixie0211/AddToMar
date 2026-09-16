@@ -449,9 +449,10 @@ function renderOrderDrawerDetail(detail) {
   const closeHref = ordersHref(status);
   const canViewRx = detail.can_view_prescription !== false && !detail.is_completed && !detail.is_cancelled;
   const itemsHtml = (detail.items || []).map(function (item) {
+    const rxUrl = String(item.prescription_url || detail.prescription_url || '').trim();
     const rx = item.prescription_required
-      ? (canViewRx && item.prescription_url
-        ? ' · <button type="button" class="order-prescription-inline view-prescription-trigger" data-prescription-url="' + escapeHtml(item.prescription_url) + '">Rx required&nbsp; see prescription ›</button>'
+      ? (canViewRx && rxUrl
+        ? ' · <button type="button" class="order-prescription-inline view-prescription-trigger" data-prescription-url="' + escapeHtml(rxUrl) + '">Rx required · see prescription ›</button>'
         : ' · Rx required')
       : '';
     const note = item.note ? '<div class="t2 order-item-note">Note: ' + escapeHtml(item.note) + '</div>' : '';
