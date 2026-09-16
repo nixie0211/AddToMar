@@ -8,6 +8,107 @@ require_once __DIR__ . '/pharmacy-accounts.php';
 require_once __DIR__ . '/pharmacy-reports.php';
 require_once __DIR__ . '/admin-notifications.php';
 
+function admin_update_credentials(string $currentEmail, array $input): array
+{
+    $currentEmail = customers_normalize_email($currentEmail);
+    $newEmail = customers_normalize_email((string) ($input['email'] ?? ''));
+    $password = (string) ($input['password'] ?? '');
+    $passwordConfirm = (string) ($input['password_confirm'] ?? '');
+
+    if ($newEmail === '' || !filter_var($newEmail, FILTER_VALIDATE_EMAIL)) {
+        return ['ok' => false, 'error' => 'Enter a valid email address.'];
+    }
+
+    if ($password !== '' || $passwordConfirm !== '') {
+        if (strlen($password) < 8) {
+            return ['ok' => false, 'error' => 'Password must be at least 8 characters.'];
+        }
+        if ($password !== $passwordConfirm) {
+            return ['ok' => false, 'error' => 'Passwords do not match.'];
+        }
+    }
+
+    try {
+        $pdo = caps_db();
+        $account = null;
+        if ($currentEmail !== '') {
+            $stmt = $pdo->prepare(
+                'SELECT id, email, full_name, role FROM users WHERE email = ? LIMIT 1'
+            );
+            $stmt->execute([$currentEmail]);
+            $account = $stmt->fetch() ?: null;
+        }
+        if (!$account || !customers_is_admin($account)) {
+            $account = $pdo->query(
+                "SELECT id, email, full_name, role FROM users WHERE role = 'admin' ORDER BY id ASC LIMIT 1"
+            )->fetch() ?: null;
+        }
+        if (!$account) {
+            return ['ok' => false, 'error' => 'Admin account was not found.'];
+        }
+
+        $accountId = (int) ($account['id'] ?? 0);
+        $accountEmail = customers_normalize_email((string) ($account['email'] ?? $currentEmail));
+        if ($accountId <= 0) {
+            return ['ok' => false, 'error' => 'Admin account was not found.'];
+        }
+
+        if ($newEmail !== $accountEmail) {
+            $taken = $pdo->prepare('SELECT id FROM users WHERE email = ? AND id <> ? LIMIT 1');
+            $taken->execute([$newEmail, $accountId]);
+            if ($taken->fetch()) {
+                return ['ok' => false, 'error' => 'That email is already in use.'];
+            }
+        } elseif ($password === '') {
+            caps_store_admin_email($pdo, $accountEmail);
+            $customer = customers_find_by_email($accountEmail);
+
+            return ['ok' => true, 'customer' => $customer];
+        }
+
+        if ($password !== '') {
+            $hash = password_hash($password, PASSWORD_DEFAULT);
+            if ($hash === false) {
+                return ['ok' => false, 'error' => 'Could not update your password. Please try again.'];
+            }
+            $update = $pdo->prepare(
+                'UPDATE users SET email = ?, password_hash = ?, password_set = 1, role = \'admin\' WHERE id = ?'
+            );
+            $update->execute([$newEmail, $hash, $accountId]);
+        } else {
+            $update = $pdo->prepare(
+                'UPDATE users SET email = ?, role = \'admin\', password_set = 1 WHERE id = ?'
+            );
+            $update->execute([$newEmail, $accountId]);
+        }
+
+        if ($newEmail !== $accountEmail) {
+            try {
+                $addrStmt = $pdo->prepare('UPDATE user_addresses SET user_email = ? WHERE user_email = ?');
+                $addrStmt->execute([$newEmail, $accountEmail]);
+            } catch (Throwable) {
+            }
+        }
+
+        caps_store_admin_email($pdo, $newEmail);
+    } catch (PDOException $e) {
+        if ((int) ($e->errorInfo[1] ?? 0) === 1062) {
+            return ['ok' => false, 'error' => 'That email is already in use.'];
+        }
+
+        return ['ok' => false, 'error' => 'Could not save your profile. Please try again.'];
+    } catch (Throwable) {
+        return ['ok' => false, 'error' => 'Could not save your profile. Please try again.'];
+    }
+
+    $updated = customers_find_by_email($newEmail);
+    if (!$updated) {
+        return ['ok' => false, 'error' => 'Profile was updated but could not be loaded. Please sign in again.'];
+    }
+
+    return ['ok' => true, 'customer' => $updated];
+}
+
 function admin_dashboard_stats(): array
 {
     $stats = [

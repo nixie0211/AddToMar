@@ -94,7 +94,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'mark_
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'update_admin_credentials') {
-    $result = customers_update_credentials($adminEmail, [
+    $result = admin_update_credentials($adminEmail, [
         'email' => $_POST['email'] ?? '',
         'password' => $_POST['password'] ?? '',
         'password_confirm' => $_POST['password_confirm'] ?? '',
@@ -108,6 +108,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'updat
         $updated = $result['customer'] ?? [];
         $_SESSION['user_email'] = (string) ($updated['email'] ?? $adminEmail);
         $_SESSION['user_name'] = (string) ($updated['full_name'] ?? $adminName);
+        $_SESSION['user_role'] = 'admin';
         $adminEmail = (string) $_SESSION['user_email'];
         $adminName = (string) $_SESSION['user_name'];
         $adminInitials = admin_initials($adminName);

@@ -91,7 +91,20 @@ function addtomar_public_origin(): string
 
 function addtomar_admin_email(): string
 {
+    $stored = strtolower(trim((string) ($GLOBALS['addtomar_admin_email'] ?? '')));
+    if ($stored !== '' && filter_var($stored, FILTER_VALIDATE_EMAIL)) {
+        return $stored;
+    }
+
     return strtolower(trim(addtomar_env('ADMIN_EMAIL', 'addtomar@gmail.com')));
+}
+
+function addtomar_remember_admin_email(string $email): void
+{
+    $email = strtolower(trim($email));
+    if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $GLOBALS['addtomar_admin_email'] = $email;
+    }
 }
 
 function addtomar_admin_bootstrap_password(): string

@@ -335,17 +335,68 @@ function caps_reset_admin_operational_data(PDO $pdo): void
     }
 }
 
+function caps_store_admin_email(PDO $pdo, string $email): void
+{
+    $email = strtolower(trim($email));
+    if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        return;
+    }
+
+    addtomar_remember_admin_email($email);
+
+    try {
+        $pdo->exec('
+            CREATE TABLE IF NOT EXISTS app_meta (
+                meta_key VARCHAR(64) NOT NULL PRIMARY KEY,
+                meta_value VARCHAR(255) NOT NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ');
+        $stmt = $pdo->prepare(
+            'INSERT INTO app_meta (meta_key, meta_value) VALUES (?, ?)
+             ON DUPLICATE KEY UPDATE meta_value = VALUES(meta_value)'
+        );
+        $stmt->execute(['admin_email', $email]);
+    } catch (Throwable) {
+    }
+}
+
 function caps_ensure_admin_account(PDO $pdo): void
 {
-    $email = addtomar_admin_email();
-    $password = addtomar_admin_bootstrap_password();
-    $passwordHash = password_hash($password, PASSWORD_DEFAULT);
+    $pdo->exec('
+        CREATE TABLE IF NOT EXISTS app_meta (
+            meta_key VARCHAR(64) NOT NULL PRIMARY KEY,
+            meta_value VARCHAR(255) NOT NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    ');
 
-    $stmt = $pdo->prepare('SELECT id, password_hash, role FROM users WHERE email = ? LIMIT 1');
-    $stmt->execute([$email]);
-    $existing = $stmt->fetch();
+    $meta = $pdo->prepare('SELECT meta_value FROM app_meta WHERE meta_key = ? LIMIT 1');
+    $meta->execute(['admin_email']);
+    $storedEmail = strtolower(trim((string) $meta->fetchColumn()));
+    $envEmail = addtomar_admin_email();
+    $email = $storedEmail !== '' ? $storedEmail : $envEmail;
+
+    $existing = null;
+    if ($storedEmail !== '') {
+        $stmt = $pdo->prepare('SELECT id, email, password_hash, role FROM users WHERE email = ? LIMIT 1');
+        $stmt->execute([$storedEmail]);
+        $existing = $stmt->fetch() ?: null;
+    }
 
     if (!$existing) {
+        $existing = $pdo->query(
+            "SELECT id, email, password_hash, role FROM users WHERE role = 'admin' ORDER BY updated_at DESC, id ASC LIMIT 1"
+        )->fetch() ?: null;
+    }
+
+    if (!$existing && $email !== '') {
+        $stmt = $pdo->prepare('SELECT id, email, password_hash, role FROM users WHERE email = ? LIMIT 1');
+        $stmt->execute([$email]);
+        $existing = $stmt->fetch() ?: null;
+    }
+
+    if (!$existing) {
+        $password = addtomar_admin_bootstrap_password();
+        $passwordHash = password_hash($password, PASSWORD_DEFAULT);
         $insert = $pdo->prepare(
             'INSERT INTO users (email, full_name, contact_number, address, latitude, longitude, password_hash, role, password_set)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)'
@@ -360,31 +411,24 @@ function caps_ensure_admin_account(PDO $pdo): void
             $passwordHash,
             'admin',
         ]);
+        caps_store_admin_email($pdo, $email);
 
         return;
     }
 
-    $pdo->prepare("UPDATE users SET role = 'admin', password_set = 1 WHERE email = ?")->execute([$email]);
+    $pdo->prepare("UPDATE users SET role = 'admin', password_set = 1 WHERE id = ?")->execute([(int) $existing['id']]);
+    caps_store_admin_email($pdo, (string) ($existing['email'] ?? $email));
 
-    $hash = (string) ($existing['password_hash'] ?? '');
-    $needsPassword = $hash === '' || !password_verify($password, $hash);
-
-    $pdo->exec('
-        CREATE TABLE IF NOT EXISTS app_meta (
-            meta_key VARCHAR(64) NOT NULL PRIMARY KEY,
-            meta_value VARCHAR(255) NOT NULL
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-    ');
-    $meta = $pdo->prepare('SELECT meta_value FROM app_meta WHERE meta_key = ? LIMIT 1');
     $meta->execute(['admin_login_restore_v1']);
     $restored = (string) $meta->fetchColumn();
-
-    if ($needsPassword || $restored === '') {
-        $pdo->prepare('UPDATE users SET password_hash = ?, password_set = 1, role = \'admin\' WHERE email = ?')
-            ->execute([$passwordHash, $email]);
-        if ($restored === '') {
-            $pdo->prepare('INSERT IGNORE INTO app_meta (meta_key, meta_value) VALUES (?, ?)')
-                ->execute(['admin_login_restore_v1', date('c')]);
-        }
+    if ($restored !== '') {
+        return;
     }
+
+    $password = addtomar_admin_bootstrap_password();
+    $passwordHash = password_hash($password, PASSWORD_DEFAULT);
+    $pdo->prepare('UPDATE users SET password_hash = ?, password_set = 1, role = \'admin\' WHERE id = ?')
+        ->execute([$passwordHash, (int) $existing['id']]);
+    $pdo->prepare('INSERT IGNORE INTO app_meta (meta_key, meta_value) VALUES (?, ?)')
+        ->execute(['admin_login_restore_v1', date('c')]);
 }
