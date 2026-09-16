@@ -453,6 +453,14 @@ function switchOrdersTab(href, options) {
   loadOrdersView(parsed.nextUrl, { skipHistory: true, navGen: navGen });
 }
 
+function stayOnOrdersTable() {
+  const status = currentOrdersStatus();
+  const href = 'index.php?view=orders&status=' + encodeURIComponent(status);
+  const navGen = ++ordersNavGen;
+  closeOrderDrawer(href, { replace: true });
+  loadOrdersView(href, { skipHistory: true, navGen: navGen });
+}
+
 function navigateOrdersLink(link) {
   const href = link.getAttribute('href');
   if (!href) return;
@@ -498,8 +506,7 @@ async function submitOrderStatusAdvance(button) {
       return;
     }
 
-    const status = result.status || nextStatus;
-    openOrderFromLink('index.php?view=orders&status=' + encodeURIComponent(status) + '&order_id=' + orderId, { replace: true });
+    stayOnOrdersTable();
   } catch (error) {
     window.alert('Could not update order status. Please try again.');
     button.disabled = false;
@@ -525,7 +532,7 @@ async function completeOrder(orderId) {
     throw new Error(result.message || 'Could not complete this order.');
   }
 
-  openOrderFromLink('index.php?view=orders&status=delivered&order_id=' + orderId, { replace: true });
+  stayOnOrdersTable();
 }
 
 async function uploadPickupProof(orderId, file) {
@@ -593,7 +600,7 @@ async function handleCancelOrderSubmit(cancelOrderSubmitBtn) {
     }
 
     closeCancelOrderModal();
-    openOrderFromLink('index.php?view=orders&status=cancelled&order_id=' + orderId, { replace: true });
+    stayOnOrdersTable();
   } catch (error) {
     setCancelOrderError('Could not cancel order. Please try again.');
     cancelOrderSubmitBtn.disabled = false;
