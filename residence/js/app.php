@@ -3076,13 +3076,13 @@ function setResidenceCancelOrderError(message){
 
 function toggleResidenceCancelOtherReason(){
   const select = document.getElementById('residence-cancel-reason-select');
+  const otherField = document.getElementById('residence-cancel-reason-other-field');
   const otherInput = document.getElementById('residence-cancel-reason-other-input');
   const isOther = (select?.value || '') === 'Other';
+  if(otherField) otherField.hidden = !isOther;
   if(otherInput){
     otherInput.required = isOther;
-    otherInput.placeholder = isOther
-      ? 'Type the specific reason for cancelling this order...'
-      : 'Add more detail (optional)';
+    if(!isOther) otherInput.value = '';
   }
 }
 

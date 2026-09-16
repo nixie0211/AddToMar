@@ -7297,6 +7297,7 @@ body.is-pharmacy-empty.is-pharmacy-profile-page .page[data-page="pharmacy-profil
   font-size:13px;
   font-weight:700;
 }
+#residence-cancel-reason-other-field[hidden]{ display:none !important; }
 .residence-cancel-order-body select,
 .residence-cancel-order-body textarea{
   width:100%;

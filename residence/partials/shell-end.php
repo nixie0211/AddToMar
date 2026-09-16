@@ -187,9 +187,9 @@
           <option value="Other">Other</option>
         </select>
       </label>
-      <label id="residence-cancel-reason-other-field" for="residence-cancel-reason-other-input">
+      <label id="residence-cancel-reason-other-field" hidden for="residence-cancel-reason-other-input">
         <span>Specify reason</span>
-        <textarea id="residence-cancel-reason-other-input" rows="4" maxlength="500" placeholder="Add more detail, or type a specific reason..."></textarea>
+        <textarea id="residence-cancel-reason-other-input" rows="4" maxlength="500" placeholder="Type the specific reason for cancelling this order..."></textarea>
       </label>
       <p class="residence-cancel-order-error" id="residence-cancel-order-error" hidden role="alert"></p>
     </div>
