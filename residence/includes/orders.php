@@ -25,6 +25,21 @@ function residence_vat_rate(): float
     return 0.15;
 }
 
+function residence_item_note(array $item): string
+{
+    $note = trim((string) ($item['item_note'] ?? $item['note'] ?? $item['additional_note'] ?? ''));
+    if ($note === '') {
+        return '';
+    }
+
+    $note = preg_replace("/[ \t]+\n/", "\n", str_replace(["\r\n", "\r"], "\n", $note)) ?? $note;
+    if (function_exists('mb_substr')) {
+        return trim(mb_substr($note, 0, 500));
+    }
+
+    return trim(substr($note, 0, 500));
+}
+
 function residence_down_payment_rate(): float
 {
     return 0.6;
@@ -515,6 +530,7 @@ function residence_place_order(array $profile, string $pharmacyId, array $items,
                 'unit_price' => $unitPrice,
                 'prescription_required' => !empty($medicine['prescription_required']),
                 'prescription_path' => null,
+                'item_note' => residence_item_note($item),
                 'pharmacy_id' => $pharmacyId,
                 'pharmacy_name' => (string) ($directory[$pharmacyId]['name'] ?? 'Pharmacy'),
             ];
@@ -629,13 +645,21 @@ function residence_place_order(array $profile, string $pharmacyId, array $items,
 
         $orderId = (int) $pdo->lastInsertId();
 
+        if (function_exists('pharmacy_ensure_column')) {
+            try {
+                pharmacy_ensure_column($pdo, 'order_items', 'item_note', 'TEXT NULL');
+            } catch (Throwable) {
+            }
+        }
+
         $itemStmt = $pdo->prepare('
-            INSERT INTO order_items (order_id, medicine_id, medicine_name, quantity, unit_price, prescription_required, prescription_path)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO order_items (order_id, medicine_id, medicine_name, quantity, unit_price, prescription_required, prescription_path, item_note)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         ');
+        $itemStmtWithNote = true;
 
         foreach ($lineItems as $line) {
-            $itemStmt->execute([
+            $itemValues = [
                 $orderId,
                 $line['medicine_id'],
                 $line['medicine_name'],
@@ -643,7 +667,24 @@ function residence_place_order(array $profile, string $pharmacyId, array $items,
                 $line['unit_price'],
                 $line['prescription_required'] ? 1 : 0,
                 $line['prescription_path'] ?: null,
-            ]);
+            ];
+            if ($itemStmtWithNote) {
+                try {
+                    $itemStmt->execute([...$itemValues, ($line['item_note'] ?? '') !== '' ? $line['item_note'] : null]);
+                } catch (Throwable $itemInsertError) {
+                    if (!str_contains($itemInsertError->getMessage(), 'item_note')) {
+                        throw $itemInsertError;
+                    }
+                    $itemStmtWithNote = false;
+                    $itemStmt = $pdo->prepare('
+                        INSERT INTO order_items (order_id, medicine_id, medicine_name, quantity, unit_price, prescription_required, prescription_path)
+                        VALUES (?, ?, ?, ?, ?, ?, ?)
+                    ');
+                    $itemStmt->execute($itemValues);
+                }
+            } else {
+                $itemStmt->execute($itemValues);
+            }
 
             $stockStmt = $pdo->prepare('
                 UPDATE medicines
@@ -792,6 +833,7 @@ function residence_present_order(array $order, array $directory = []): array
             'prescription_required' => !empty($item['prescription_required']),
             'prescription_path' => trim((string) ($item['prescription_path'] ?? '')),
             'prescription_url' => residence_prescription_url((string) ($item['prescription_path'] ?? '')),
+            'item_note' => residence_item_note($item),
             'image' => (string) ($item['image'] ?? $item['image_url'] ?? ''),
             'pharmacy_id' => $pharmacyId,
             'pharmacy_name' => (string) ($order['pharmacy_name'] ?? $order['settings_pharmacy_name'] ?? $pharmacy['name'] ?? 'Pharmacy'),

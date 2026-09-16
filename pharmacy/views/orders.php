@@ -221,6 +221,7 @@ $overviewPickupProofKind = $overviewPickupProofExt === 'pdf' ? 'pdf' : ($overvie
             $itemRequiresRx = !empty($item['prescription_required']);
             $itemImage = trim((string) ($item['image_url'] ?? ''));
             $itemPrescriptionUrl = pharmacy_item_prescription_url($item, $overviewOrder);
+            $itemNote = trim((string) ($item['item_note'] ?? ''));
             ?>
             <div class="list-row order-list-row order-med-row">
               <div class="med-thumb<?= $itemRequiresRx ? ' med-thumb--rx' : '' ?><?= $itemImage !== '' ? ' med-thumb--photo' : '' ?>">
@@ -236,6 +237,9 @@ $overviewPickupProofKind = $overviewPickupProofExt === 'pdf' ? 'pdf' : ($overvie
                 </div>
                 <div class="t2 order-med-pharmacy"><?= htmlspecialchars((string) ($overviewOrder['pharmacy_name'] ?? 'Pharmacy'), ENT_QUOTES, 'UTF-8') ?></div>
                 <div class="t2">Qty <?= (int) ($item['quantity'] ?? 1) ?><?php if ($itemRequiresRx && $itemPrescriptionUrl): ?> · <button type="button" class="order-prescription-inline view-prescription-trigger" data-prescription-url="<?= htmlspecialchars($itemPrescriptionUrl, ENT_QUOTES, 'UTF-8') ?>">Rx required&nbsp; see prescription ›</button><?php elseif ($itemRequiresRx): ?> · Rx required<?php endif; ?></div>
+                <?php if ($itemNote !== ''): ?>
+                <div class="t2 order-item-note">Note: <?= htmlspecialchars($itemNote, ENT_QUOTES, 'UTF-8') ?></div>
+                <?php endif; ?>
               </div>
               <div class="list-meta mono"><?= pharmacy_format_money((float) ($item['unit_price'] ?? 0) * (int) ($item['quantity'] ?? 1)) ?></div>
             </div>

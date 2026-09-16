@@ -248,13 +248,22 @@ function emptyCart(){
 }
 
 function applyCartPayload(payload){
+  const previousNotes = {};
+  (cart.items || []).forEach(item => {
+    const key = checkoutRxItemKey(item);
+    const note = String(item.note || '').trim();
+    if(key && note) previousNotes[key] = note;
+  });
   const items = Array.isArray(payload?.items) ? payload.items.filter(item => Number(item.medicineId) > 0) : [];
   const first = items[0] || {};
   cart = {
     pharmacyId: payload?.pharmacyId || first.pharmacyId || '',
     pharmacyName: payload?.pharmacyName || first.pharmacyName || '',
     pharmacyLabel: payload?.pharmacyLabel || first.pharmacyLabel || '',
-    items,
+    items: items.map(item => ({
+      ...item,
+      note: String(item.note || previousNotes[checkoutRxItemKey(item)] || ''),
+    })),
   };
   syncCartCount();
 }
@@ -687,11 +696,37 @@ function appendCheckoutPrescriptions(form){
 }
 
 function checkoutItemPayload(){
+  captureCheckoutItemNotes();
   return cartCheckoutItems().map(item => ({
     medicine_id: item.medicineId,
     pharmacy_id: item.pharmacyId,
     quantity: item.quantity,
+    note: checkoutItemNoteValue(item),
   }));
+}
+
+function checkoutItemNoteValue(item){
+  const key = checkoutRxItemKey(item);
+  const field = document.querySelector(checkoutItemNoteSelector(key));
+  if(field) return String(field.value || '').trim().slice(0, 500);
+  return String(item.note || '').trim().slice(0, 500);
+}
+
+function checkoutItemNoteSelector(key){
+  const safe = (window.CSS && typeof CSS.escape === 'function') ? CSS.escape(String(key || '')) : String(key || '').replace(/["\\]/g, '');
+  return `.checkout-item-note[data-item-key="${safe}"]`;
+}
+
+function rememberCheckoutItemNote(field){
+  const key = String(field?.dataset?.itemKey || '');
+  const note = String(field?.value || '').slice(0, 500);
+  (cart.items || []).forEach(item => {
+    if(checkoutRxItemKey(item) === key) item.note = note;
+  });
+}
+
+function captureCheckoutItemNotes(){
+  document.querySelectorAll('.checkout-item-note').forEach(field => rememberCheckoutItemNote(field));
 }
 
 function proceedToCheckout(){
@@ -923,6 +958,7 @@ function renderCheckoutPage(){
 
   const checkoutItems = cartCheckoutItems();
   const checkoutSignature = cartItemsSignature(checkoutItems);
+  captureCheckoutItemNotes();
   if(summaryLines.dataset.checkoutSignature === checkoutSignature && checkoutItems.length > 0){
     return;
   }
@@ -961,6 +997,10 @@ function renderCheckoutPage(){
           <button type="button" class="checkout-item-rx-clear" hidden onclick="clearPrescriptionUpload(this)" aria-label="Remove prescription">×</button>
         </div>
       ` : ''}
+      <label class="checkout-item-note-wrap">
+        <span>Additional note (optional)</span>
+        <textarea class="checkout-item-note" data-item-key="${itemKey}" maxlength="500" rows="2" placeholder="e.g. no generic substitute, extra packaging">${escapeHtml(item.note || '')}</textarea>
+      </label>
     </div>
   `;
   }).join('');
@@ -1909,6 +1949,10 @@ async function placeOrder(){
 
 document.addEventListener('input', (event) => {
   const target = event.target;
+  if(target instanceof HTMLTextAreaElement && target.classList.contains('checkout-item-note')){
+    rememberCheckoutItemNote(target);
+    return;
+  }
   if(!(target instanceof HTMLInputElement)) return;
   if(['payment-payer-name','payment-payer-number','payment-payer-address','payment-payer-email'].includes(target.id)){
     target.classList.remove('is-invalid');
@@ -2518,6 +2562,7 @@ function presentResidenceOrder(order, options = {}){
       line_total: unitPrice * quantity,
       prescription_required: !!item.prescription_required,
       prescription_url: String(item.prescription_url || ''),
+      item_note: String(item.item_note || item.note || '').trim(),
       image: item.image || item.image_url || '',
       pharmacy_id: String(item.pharmacy_id || order.pharmacy_id || ''),
       pharmacy_name: item.pharmacy_name || item.pharmacyName || order.pharmacy_name || '',
@@ -2977,6 +3022,7 @@ function renderOrderDetail(id){
         <div>
           <b>${escapeHtml(item.name)}</b>
           <small>Qty: ${item.quantity}</small>
+          ${item.item_note ? `<small class="mo-item-note">Note: ${escapeHtml(item.item_note)}</small>` : ''}
         </div>
         <strong>${peso(item.line_total)}</strong>
       </div>

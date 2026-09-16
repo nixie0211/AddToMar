@@ -4598,8 +4598,12 @@ article.med-card--rx:hover .med-card-frame--rx{
 [data-page="checkout"] .checkout-summary-title{font-size:18px;margin-bottom:8px;}
 [data-page="checkout"] .checkout-summary-title svg{stroke:#e8eaf4;width:20px;height:20px;}
 [data-page="checkout"] .checkout-summary-title svg{stroke:#000;}
-[data-page="checkout"] .checkout-summary-item{position:relative;align-items:center;gap:14px;min-height:108px;padding:18px 16px;border:1px solid var(--border);border-radius:12px;margin:12px 0;background:#f8fafb;}
+[data-page="checkout"] .checkout-summary-item{position:relative;align-items:flex-start;flex-wrap:wrap;gap:14px;min-height:108px;padding:18px 16px;border:1px solid var(--border);border-radius:12px;margin:12px 0;background:#f8fafb;}
 [data-page="checkout"] .checkout-summary-item img{width:72px;height:72px;border:0;background:#fff;}
+[data-page="checkout"] .checkout-item-note-wrap{flex:1 0 100%;display:grid;gap:6px;margin-top:2px;}
+[data-page="checkout"] .checkout-item-note-wrap span{color:var(--ink-soft);font-size:11px;font-weight:600;}
+[data-page="checkout"] .checkout-item-note{width:100%;min-height:64px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--ink);font:inherit;font-size:13px;line-height:1.4;resize:vertical;}
+[data-page="checkout"] .checkout-item-note::placeholder{color:#8992ad;}
 [data-page="checkout"] .checkout-item-rx{position:absolute;top:14px;right:14px;display:flex;align-items:center;gap:4px;margin:0;z-index:1;}
 [data-page="checkout"] .checkout-item-rx-btn{display:inline-flex;align-items:center;margin:0;padding:6px 10px;border-radius:7px;background:var(--green-deep);color:#fff;font-size:11px;font-weight:700;letter-spacing:.01em;cursor:pointer;white-space:nowrap;line-height:1.2;}
 [data-page="checkout"] .checkout-item-rx-btn.is-done{background:#dff4ed;color:var(--green-deep);}
@@ -7169,6 +7173,7 @@ body.is-pharmacy-empty.is-pharmacy-profile-page .page[data-page="pharmacy-profil
 .mo-store-item img{width:44px;height:44px;object-fit:contain;border:1px solid #edf3f1;border-radius:8px;background:#f8fbfa;}
 .mo-store-item b{display:block;color:#163948;font-size:13px;}
 .mo-store-item small{color:#6b8290;font-size:12px;}
+.mo-item-note{display:block;margin-top:4px;color:#3d5a52;font-size:12px;line-height:1.4;white-space:pre-wrap;}
 .mo-store-foot{display:flex;justify-content:space-between;padding-top:10px;border-top:1px dashed #e2eeea;color:#526779;font-size:13px;}
 .mo-store-track{display:none;margin-top:12px;}
 .mo-store-card.is-open .mo-store-track{display:block;}

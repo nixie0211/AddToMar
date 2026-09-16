@@ -342,6 +342,13 @@
   gap:8px;
   flex-wrap:wrap;
 }
+.order-item-note{
+  margin-top:4px;
+  color:#3d5a52;
+  font-size:12px;
+  line-height:1.45;
+  white-space:pre-wrap;
+}
 .order-med-rx-pill{
   display:inline-flex;
   align-items:center;

@@ -135,6 +135,7 @@ function pharmacy_run_migrations(PDO $pdo): void
     pharmacy_ensure_column($pdo, 'orders', 'paymongo_intent_id', 'VARCHAR(80) NULL AFTER notes');
     pharmacy_ensure_column($pdo, 'orders', 'checkout_group_id', 'VARCHAR(50) NULL AFTER paymongo_intent_id');
     pharmacy_ensure_column($pdo, 'order_items', 'prescription_path', 'VARCHAR(255) NULL AFTER prescription_required');
+    pharmacy_ensure_column($pdo, 'order_items', 'item_note', 'TEXT NULL AFTER prescription_path');
 
     $pdo->exec(<<<'SQL'
         CREATE TABLE IF NOT EXISTS customers (
@@ -186,6 +187,7 @@ function pharmacy_run_migrations(PDO $pdo): void
             unit_price DECIMAL(10,2) NOT NULL DEFAULT 0,
             prescription_required TINYINT(1) NOT NULL DEFAULT 0,
             prescription_path VARCHAR(255) NULL,
+            item_note TEXT NULL,
             CONSTRAINT fk_order_items_order FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
             CONSTRAINT fk_order_items_medicine FOREIGN KEY (medicine_id) REFERENCES medicines(id) ON DELETE SET NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
@@ -199,6 +201,7 @@ function pharmacy_run_migrations(PDO $pdo): void
     pharmacy_ensure_column($pdo, 'orders', 'paymongo_intent_id', 'VARCHAR(80) NULL AFTER notes');
     pharmacy_ensure_column($pdo, 'orders', 'checkout_group_id', 'VARCHAR(50) NULL AFTER paymongo_intent_id');
     pharmacy_ensure_column($pdo, 'order_items', 'prescription_path', 'VARCHAR(255) NULL AFTER prescription_required');
+    pharmacy_ensure_column($pdo, 'order_items', 'item_note', 'TEXT NULL AFTER prescription_path');
 
     pharmacy_ensure_column($pdo, 'medicines', 'pharmacy_id', 'VARCHAR(32) NULL AFTER id');
     pharmacy_ensure_column($pdo, 'medicines', 'is_featured', 'TINYINT(1) NOT NULL DEFAULT 0 AFTER is_active');
