@@ -411,6 +411,10 @@ function applyOrderStatusLocally(orderId, nextStatus, extra) {
       order.detail.is_ready = nextStatus === 'ready';
       order.detail.is_completed = nextStatus === 'delivered';
       order.detail.is_cancelled = nextStatus === 'cancelled';
+      order.detail.can_view_prescription = ['pending', 'confirmed', 'preparing', 'ready'].indexOf(nextStatus) !== -1;
+      if (!order.detail.can_view_prescription && Array.isArray(order.detail.items)) {
+        order.detail.items.forEach(function (item) { item.prescription_url = ''; });
+      }
       order.detail.next_status = nextStatus === 'pending' ? 'confirmed' : (nextStatus === 'confirmed' ? 'preparing' : (nextStatus === 'preparing' ? 'ready' : null));
       order.detail.next_label = (ORDER_STATUS_MAP[order.detail.next_status] || {}).t || '';
       if (extra.cancellation_reason) order.detail.cancellation_reason = extra.cancellation_reason;
@@ -443,9 +447,10 @@ function renderOrderDrawerDetail(detail) {
   if (!drawer || !detail) return;
   const status = pharmacyOrdersState.status;
   const closeHref = ordersHref(status);
+  const canViewRx = detail.can_view_prescription !== false && !detail.is_completed && !detail.is_cancelled;
   const itemsHtml = (detail.items || []).map(function (item) {
     const rx = item.prescription_required
-      ? (item.prescription_url
+      ? (canViewRx && item.prescription_url
         ? ' · <button type="button" class="order-prescription-inline view-prescription-trigger" data-prescription-url="' + escapeHtml(item.prescription_url) + '">Rx required&nbsp; see prescription ›</button>'
         : ' · Rx required')
       : '';
@@ -1010,6 +1015,12 @@ function initPharmacyOrderUi() {
 
     const rx = event.target.closest('.view-prescription-trigger');
     if (rx) {
+      if (rx.classList.contains('order-prescription-inline')) {
+        const detail = pharmacyOrdersState.details[pharmacyOrdersState.selectedId];
+        if (detail && (detail.is_completed || detail.is_cancelled || detail.can_view_prescription === false)) {
+          return;
+        }
+      }
       openPrescriptionViewer(rx.getAttribute('data-prescription-url') || '');
       return;
     }

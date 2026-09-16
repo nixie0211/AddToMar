@@ -768,6 +768,7 @@ function pharmacy_order_detail_from_row(array $order, array $items): array
         'is_ready' => $status === 'ready',
         'is_completed' => $isCompleted,
         'is_cancelled' => $status === 'cancelled',
+        'can_view_prescription' => pharmacy_order_allows_prescription_view($status),
         'next_status' => $next,
         'next_label' => $next !== null ? (string) (pharmacy_order_status_map()[$next]['t'] ?? ucfirst($next)) : '',
         'cancellation_reason' => trim((string) ($order['cancellation_reason'] ?? '')),
@@ -1061,13 +1062,30 @@ function pharmacy_upload_url(string $path): ?string
     return function_exists('app_url') ? app_url($path) : $path;
 }
 
+function pharmacy_order_allows_prescription_view($orderOrStatus): bool
+{
+    $status = is_array($orderOrStatus)
+        ? (string) ($orderOrStatus['status'] ?? '')
+        : (string) $orderOrStatus;
+
+    return in_array($status, ['pending', 'confirmed', 'preparing', 'ready'], true);
+}
+
 function pharmacy_prescription_url(array $order): ?string
 {
+    if (!pharmacy_order_allows_prescription_view($order)) {
+        return null;
+    }
+
     return pharmacy_upload_url((string) ($order['prescription_path'] ?? ''));
 }
 
 function pharmacy_item_prescription_url(array $item, array $order = []): ?string
 {
+    if ($order !== [] && !pharmacy_order_allows_prescription_view($order)) {
+        return null;
+    }
+
     $itemUrl = pharmacy_upload_url((string) ($item['prescription_path'] ?? ''));
     if ($itemUrl) {
         return $itemUrl;
