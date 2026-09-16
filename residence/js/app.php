@@ -3313,7 +3313,7 @@ function renderSavedAddresses(addresses){
   window.RESIDENCE_CONFIG.savedAddresses = addresses || [];
 
   if(!addresses || !addresses.length){
-    list.innerHTML = '<p class="muted" id="saved-address-empty">No saved addresses yet. Add one from the map.</p>';
+    list.innerHTML = '<div class="saved-address-empty" id="saved-address-empty"><p>No saved addresses yet</p><span>Add one from the map to reuse it on your next order.</span></div>';
     return;
   }
 
@@ -3322,13 +3322,13 @@ function renderSavedAddresses(addresses){
     const id = Number(item.id);
     return `
       <div class="addr-card${current ? ' addr-card--current' : ''}" data-address-id="${id}">
-        <div class="ai"><svg class="icon" style="width:18px;height:18px;" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg></div>
-        <div style="flex:1;">
-          <div style="font-weight:700; font-size:14px;">
+        <div class="ai"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg></div>
+        <div class="addr-card-copy">
+          <div class="addr-card-title">
             ${current ? 'Current address' : 'Saved address'}
-            ${current ? '<span class="badge badge-blue" style="margin-left:6px;">Default</span>' : ''}
+            ${current ? '<span class="addr-default">Default</span>' : ''}
           </div>
-          <div class="muted" style="font-size:13px; margin-top:3px;">${escHtml(item.address || '')}</div>
+          <div class="addr-card-address">${escHtml(item.address || '')}</div>
         </div>
         <div class="addr-card-actions">
           ${current ? '' : `<button type="button" class="btn btn-ghost btn-sm" onclick="setCurrentSavedAddress(${id})">Use as current</button>`}

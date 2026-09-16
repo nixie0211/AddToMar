@@ -72,17 +72,26 @@
           <div class="saved-addresses-head">
             <div class="saved-addresses-title">
               <span class="saved-addresses-title-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg></span>
-              <div><h3>Saved Addresses</h3><p>Manage your saved addresses for faster and easier orders.</p></div>
+              <div>
+                <h3>Saved addresses</h3>
+                <p>Keep delivery spots you use often so checkout is quicker.</p>
+              </div>
             </div>
-            <button type="button" class="btn saved-addresses-add" onclick="openAddressMapPicker('add')">+ <span>Add new address</span></button>
+            <button type="button" class="btn saved-addresses-add" onclick="openAddressMapPicker('add')">
+              <span class="saved-addresses-add-plus" aria-hidden="true">+</span>
+              Add new address
+            </button>
           </div>
           <div id="saved-address-list">
             <?php if ($savedAddresses === []): ?>
-            <p class="muted" id="saved-address-empty">No saved addresses yet. Add one from the map.</p>
+            <div class="saved-address-empty" id="saved-address-empty">
+              <p>No saved addresses yet</p>
+              <span>Add one from the map to reuse it on your next order.</span>
+            </div>
             <?php else: ?>
             <?php foreach ($savedAddresses as $savedAddress): ?>
             <div class="addr-card<?= !empty($savedAddress['is_current']) ? ' addr-card--current' : '' ?>" data-address-id="<?= (int) $savedAddress['id'] ?>">
-              <div class="ai"><svg class="icon" style="width:18px;height:18px;" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg></div>
+              <div class="ai"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg></div>
               <div class="addr-card-copy">
                 <div class="addr-card-title">
                   <?= !empty($savedAddress['is_current']) ? 'Current address' : 'Saved address' ?>
