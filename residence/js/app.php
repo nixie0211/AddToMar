@@ -1819,8 +1819,12 @@ async function placeOrder(){
     if(lastOrder){
       const receiptOrder = receiptWithCheckoutItems(lastOrder);
       sessionStorage.setItem('residence_last_order', JSON.stringify(receiptOrder));
-      (lastOrder.orders || []).forEach(order => {
-        if(order && !order.related_order_numbers) rememberResidenceOrder(order);
+      const childOrders = (lastOrder.orders || [lastOrder]).map(order => presentResidenceOrder(order, { skipStores:true }));
+      rememberResidenceOrder({
+        ...receiptOrder,
+        stores: childOrders,
+        is_group: childOrders.length > 1,
+        store_count: childOrders.length || 1,
       });
       clearPaidCheckoutItems();
       renderCheckoutPage();
