@@ -956,14 +956,26 @@ button.order-rx-doc-card{
   border:1px solid #d7e7e3;
   box-shadow:inset 0 1px 0 rgba(255,255,255,0.9);
 }
-.rx-viewer-body img{
+.rx-viewer-body img,
+.rx-viewer-body iframe{
   display:block;
   width:100%;
   height:auto;
+  min-height:280px;
   border-radius:12px;
   border:1px solid rgba(15, 45, 61, 0.1);
   background:#fff;
   box-shadow:0 14px 32px rgba(11, 34, 48, 0.14);
+}
+.rx-viewer-body iframe{
+  height:min(70vh, 640px);
+}
+.rx-viewer-missing{
+  margin:24px 8px;
+  color:#5c6e76;
+  font-size:14px;
+  font-weight:600;
+  text-align:center;
 }
 
 body.modal-open{

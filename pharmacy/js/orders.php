@@ -28,15 +28,64 @@ function syncModalOpenState() {
 function openPrescriptionViewer(url) {
   const viewer = document.getElementById('prescription-viewer');
   const image = document.getElementById('prescription-viewer-image');
-  if (!viewer || !image || !url) return;
+  const frame = document.getElementById('prescription-viewer-frame');
+  const missing = document.getElementById('prescription-viewer-missing');
+  if (!viewer) return;
 
-  image.src = url;
+  const src = String(url || '').trim();
+  const showMissing = function (message) {
+    if (image) {
+      image.hidden = true;
+      image.removeAttribute('src');
+    }
+    if (frame) {
+      frame.hidden = true;
+      frame.src = '';
+    }
+    if (missing) {
+      missing.textContent = message || 'The uploaded prescription could not be loaded.';
+      missing.hidden = false;
+    }
+  };
+
+  if (!src) {
+    showMissing('No prescription file was saved for this order.');
+    viewer.hidden = false;
+    syncModalOpenState();
+    return;
+  }
+
+  if (missing) missing.hidden = true;
+  const looksPdf = /\.pdf($|\?)/i.test(src);
+  if (image) {
+    image.onload = function () { if (missing) missing.hidden = true; };
+    image.onerror = function () {
+      if (!frame) {
+        showMissing();
+        return;
+      }
+      image.hidden = true;
+      frame.hidden = false;
+      frame.src = src;
+    };
+    image.hidden = looksPdf;
+    if (!looksPdf) image.src = src;
+    else image.removeAttribute('src');
+  }
+  if (frame) {
+    frame.hidden = !looksPdf;
+    frame.src = looksPdf ? src : '';
+  }
   viewer.hidden = false;
   syncModalOpenState();
 }
 
 function closePrescriptionViewer() {
   const viewer = document.getElementById('prescription-viewer');
+  const image = document.getElementById('prescription-viewer-image');
+  const frame = document.getElementById('prescription-viewer-frame');
+  if (image) image.removeAttribute('src');
+  if (frame) frame.src = '';
   if (!viewer) return;
 
   viewer.hidden = true;

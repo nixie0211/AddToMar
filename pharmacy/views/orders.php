@@ -505,6 +505,8 @@ $overviewPickupProofKind = $overviewPickupProofExt === 'pdf' ? 'pdf' : ($overvie
             <div class="rx-viewer-body">
               <div class="rx-viewer-canvas">
                 <img id="prescription-viewer-image" src="" alt="Uploaded prescription">
+                <iframe id="prescription-viewer-frame" title="Uploaded prescription" hidden></iframe>
+                <p class="rx-viewer-missing" id="prescription-viewer-missing" hidden>The uploaded prescription could not be loaded.</p>
               </div>
             </div>
           </div>

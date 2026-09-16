@@ -7,6 +7,23 @@ require_once dirname(__DIR__, 2) . '/pharmacy/includes/database.php';
 require_once dirname(__DIR__, 2) . '/includes/resident-notifications.php';
 require_once __DIR__ . '/catalog.php';
 
+function residence_order_prescription_url(int $orderId, int $itemId = 0, string $itemPath = '', string $orderPath = ''): string
+{
+    if ($itemPath === '' && $orderPath === '') {
+        return '';
+    }
+    if ($orderId <= 0) {
+        return residence_prescription_url($itemPath !== '' ? $itemPath : $orderPath);
+    }
+
+    $query = 'order_id=' . $orderId;
+    if ($itemId > 0) {
+        $query .= '&item_id=' . $itemId;
+    }
+
+    return function_exists('app_url') ? app_url('order-prescription.php?' . $query) : ('/order-prescription.php?' . $query);
+}
+
 function residence_prescription_url(string $path): string
 {
     $path = str_replace('\\', '/', trim($path));
@@ -129,11 +146,24 @@ function residence_store_order_upload(array $file, string $prefix): ?string
     }
 
     $filename = $prefix . '-' . bin2hex(random_bytes(6)) . '.' . $allowed[$mime];
-    if (!move_uploaded_file((string) $file['tmp_name'], $dir . '/' . $filename)) {
+    $absolute = $dir . '/' . $filename;
+    if (!move_uploaded_file((string) $file['tmp_name'], $absolute)) {
         return null;
     }
 
-    return 'data/uploads/orders/' . $filename;
+    $relative = 'data/uploads/orders/' . $filename;
+    if (!function_exists('pharmacy_store_order_upload_blob')) {
+        require_once dirname(__DIR__, 2) . '/pharmacy/includes/repository.php';
+    }
+    $bytes = file_get_contents($absolute);
+    if (is_string($bytes) && $bytes !== '') {
+        try {
+            pharmacy_store_order_upload_blob($relative, $bytes, $mime);
+        } catch (Throwable) {
+        }
+    }
+
+    return $relative;
 }
 
 /**
@@ -848,6 +878,7 @@ function residence_present_order(array $order, array $directory = []): array
         $quantity = max(1, (int) ($item['quantity'] ?? 1));
         $unitPrice = (float) ($item['unit_price'] ?? $item['price'] ?? 0);
         $items[] = [
+            'id' => (int) ($item['id'] ?? 0),
             'medicine_id' => (int) ($item['medicine_id'] ?? 0),
             'name' => (string) ($item['medicine_name'] ?? $item['name'] ?? 'Medicine'),
             'quantity' => $quantity,
@@ -855,7 +886,12 @@ function residence_present_order(array $order, array $directory = []): array
             'line_total' => $unitPrice * $quantity,
             'prescription_required' => !empty($item['prescription_required']),
             'prescription_path' => trim((string) ($item['prescription_path'] ?? '')),
-            'prescription_url' => residence_prescription_url((string) ($item['prescription_path'] ?? '')),
+            'prescription_url' => residence_order_prescription_url(
+                (int) ($order['id'] ?? 0),
+                (int) ($item['id'] ?? 0),
+                trim((string) ($item['prescription_path'] ?? '')),
+                trim((string) ($order['prescription_path'] ?? ''))
+            ),
             'item_note' => residence_item_note($item),
             'image' => (string) ($item['image'] ?? $item['image_url'] ?? ''),
             'pharmacy_id' => $pharmacyId,
@@ -887,7 +923,12 @@ function residence_present_order(array $order, array $directory = []): array
         'item_count' => count($items),
         'items' => $items,
         'prescription_path' => trim((string) ($order['prescription_path'] ?? '')),
-        'prescription_url' => residence_prescription_url((string) ($order['prescription_path'] ?? '')),
+        'prescription_url' => residence_order_prescription_url(
+            (int) ($order['id'] ?? 0),
+            0,
+            '',
+            trim((string) ($order['prescription_path'] ?? ''))
+        ),
         'pickup_proof_path' => trim((string) ($order['pickup_proof_path'] ?? '')),
         'pickup_proof_url' => residence_prescription_url((string) ($order['pickup_proof_path'] ?? '')),
         'balance_paid' => in_array($status, ['picked_up', 'pickedup', 'delivered', 'completed'], true),

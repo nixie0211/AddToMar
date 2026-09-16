@@ -25,6 +25,21 @@ function pharmacy_db(): PDO
     return $pdo;
 }
 
+function pharmacy_ensure_order_uploads_table(PDO $pdo): void
+{
+    $pdo->exec('
+        CREATE TABLE IF NOT EXISTS order_uploads (
+            id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            relative_path VARCHAR(255) NOT NULL,
+            filename VARCHAR(255) NOT NULL,
+            mime VARCHAR(127) NOT NULL DEFAULT \'application/octet-stream\',
+            content LONGBLOB NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE KEY uniq_order_upload_path (relative_path)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    ');
+}
+
 function pharmacy_ensure_column(PDO $pdo, string $table, string $column, string $definition): void
 {
     $tableStmt = $pdo->prepare('SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?');
@@ -65,6 +80,7 @@ function pharmacy_run_migrations(PDO $pdo): void
         $versionStmt->execute(['schema_version']);
         if ((string) $versionStmt->fetchColumn() === $schemaVersion) {
             pharmacy_ensure_column($pdo, 'orders', 'checkout_group_id', 'VARCHAR(50) NULL');
+            pharmacy_ensure_order_uploads_table($pdo);
             return;
         }
     } catch (Throwable) {
@@ -226,6 +242,7 @@ function pharmacy_run_migrations(PDO $pdo): void
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     ');
+    pharmacy_ensure_order_uploads_table($pdo);
 
     $indexStmt = $pdo->prepare('
         SELECT COUNT(*) FROM information_schema.STATISTICS

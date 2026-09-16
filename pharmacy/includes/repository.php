@@ -288,21 +288,26 @@ function pharmacy_get_expiring_medicines(int $limit = 10): array
     return array_slice($medicines, 0, $limit);
 }
 
-function pharmacy_get_order_by_id(int $orderId): ?array
+function pharmacy_get_order_by_id(int $orderId, bool $scoped = true): ?array
 {
     if ($orderId <= 0) {
         return null;
     }
 
-    $stmt = pharmacy_db()->prepare('
+    $sql = '
         SELECT o.*, c.name AS customer_name, c.phone AS customer_phone, c.address AS customer_address,
                c.email AS customer_email,
                (SELECT COUNT(*) FROM order_items oi WHERE oi.order_id = o.id) AS item_count
         FROM orders o
         LEFT JOIN customers c ON c.id = o.customer_id
-        WHERE o.id = ? AND ' . pharmacy_scope_sql('o') . '
-        LIMIT 1
-    ');
+        WHERE o.id = ?
+    ';
+    if ($scoped) {
+        $sql .= ' AND ' . pharmacy_scope_sql('o');
+    }
+    $sql .= ' LIMIT 1';
+
+    $stmt = pharmacy_db()->prepare($sql);
     $stmt->execute([$orderId]);
     $row = $stmt->fetch();
 
@@ -733,6 +738,7 @@ function pharmacy_order_detail_from_row(array $order, array $items): array
     foreach ($items as $item) {
         $qty = (int) ($item['quantity'] ?? 1);
         $itemRows[] = [
+            'id' => (int) ($item['id'] ?? 0),
             'name' => (string) ($item['medicine_name'] ?? 'Medicine'),
             'quantity' => $qty,
             'image_url' => trim((string) ($item['image_url'] ?? '')),
@@ -1063,6 +1069,148 @@ function pharmacy_upload_url(string $path): ?string
     return function_exists('app_url') ? app_url($relative) : '/' . $relative;
 }
 
+function pharmacy_order_upload_mime(string $filename): string
+{
+    $ext = strtolower((string) pathinfo($filename, PATHINFO_EXTENSION));
+
+    return match ($ext) {
+        'jpg', 'jpeg' => 'image/jpeg',
+        'png' => 'image/png',
+        'webp' => 'image/webp',
+        'pdf' => 'application/pdf',
+        default => 'application/octet-stream',
+    };
+}
+
+function pharmacy_store_order_upload_blob(string $relativePath, string $bytes, string $mime = ''): void
+{
+    $relativePath = str_replace('\\', '/', trim($relativePath));
+    if ($relativePath === '' || $bytes === '') {
+        return;
+    }
+
+    $filename = basename($relativePath);
+    if ($mime === '') {
+        $mime = pharmacy_order_upload_mime($filename);
+    }
+
+    try {
+        $stmt = pharmacy_db()->prepare(
+            'INSERT INTO order_uploads (relative_path, filename, mime, content)
+             VALUES (?, ?, ?, ?)
+             ON DUPLICATE KEY UPDATE filename = VALUES(filename), mime = VALUES(mime), content = VALUES(content)'
+        );
+        $stmt->execute([$relativePath, $filename, $mime, $bytes]);
+    } catch (Throwable) {
+        pharmacy_ensure_order_uploads_table(pharmacy_db());
+        $stmt = pharmacy_db()->prepare(
+            'INSERT INTO order_uploads (relative_path, filename, mime, content)
+             VALUES (?, ?, ?, ?)
+             ON DUPLICATE KEY UPDATE filename = VALUES(filename), mime = VALUES(mime), content = VALUES(content)'
+        );
+        $stmt->execute([$relativePath, $filename, $mime, $bytes]);
+    }
+}
+
+function pharmacy_order_upload_blob(string $relativePath): ?array
+{
+    $relativePath = str_replace('\\', '/', trim($relativePath));
+    if ($relativePath === '') {
+        return null;
+    }
+
+    try {
+        $stmt = pharmacy_db()->prepare(
+            'SELECT filename, mime, content FROM order_uploads WHERE relative_path = ? LIMIT 1'
+        );
+        $stmt->execute([$relativePath]);
+        $row = $stmt->fetch();
+    } catch (Throwable) {
+        return null;
+    }
+
+    if (!is_array($row)) {
+        return null;
+    }
+    if (is_resource($row['content'] ?? null)) {
+        $row['content'] = stream_get_contents($row['content']);
+    }
+    if (!is_string($row['content'] ?? null) || $row['content'] === '') {
+        return null;
+    }
+
+    return $row;
+}
+
+function pharmacy_read_order_upload_file(string $relativePath): ?array
+{
+    $blob = pharmacy_order_upload_blob($relativePath);
+    if ($blob !== null) {
+        return $blob;
+    }
+
+    $absolute = dirname(__DIR__, 2) . '/' . ltrim(str_replace('\\', '/', $relativePath), '/');
+    if (!is_file($absolute)) {
+        return null;
+    }
+    $bytes = file_get_contents($absolute);
+    if (!is_string($bytes) || $bytes === '') {
+        return null;
+    }
+
+    $filename = basename($relativePath);
+    $mime = pharmacy_order_upload_mime($filename);
+    try {
+        pharmacy_store_order_upload_blob($relativePath, $bytes, $mime);
+    } catch (Throwable) {
+    }
+
+    return [
+        'filename' => $filename,
+        'mime' => $mime,
+        'content' => $bytes,
+    ];
+}
+
+function pharmacy_order_prescription_file(array $order, array $item = []): ?array
+{
+    $path = trim((string) ($item['prescription_path'] ?? ''));
+    if ($path === '') {
+        $path = trim((string) ($order['prescription_path'] ?? ''));
+    }
+    if ($path === '') {
+        return null;
+    }
+
+    return pharmacy_read_order_upload_file($path);
+}
+
+function pharmacy_order_prescription_view_url(array $order, array $item = []): ?string
+{
+    if ($order !== [] && !pharmacy_order_allows_prescription_view($order)) {
+        return null;
+    }
+
+    $orderId = (int) ($order['id'] ?? 0);
+    $itemPath = trim((string) ($item['prescription_path'] ?? ''));
+    $orderPath = trim((string) ($order['prescription_path'] ?? ''));
+    if ($itemPath === '' && $orderPath === '') {
+        return null;
+    }
+
+    if ($orderId <= 0) {
+        return pharmacy_upload_url($itemPath !== '' ? $itemPath : $orderPath);
+    }
+
+    $query = 'order_id=' . $orderId;
+    $itemId = (int) ($item['id'] ?? 0);
+    if ($itemId > 0) {
+        $query .= '&item_id=' . $itemId;
+    }
+
+    return function_exists('app_url') ? app_url('order-prescription.php?' . $query) : ('/order-prescription.php?' . $query);
+}
+
 function pharmacy_order_allows_prescription_view($orderOrStatus): bool
 {
     $status = is_array($orderOrStatus)
@@ -1074,25 +1222,12 @@ function pharmacy_order_allows_prescription_view($orderOrStatus): bool
 
 function pharmacy_prescription_url(array $order): ?string
 {
-    if (!pharmacy_order_allows_prescription_view($order)) {
-        return null;
-    }
-
-    return pharmacy_upload_url((string) ($order['prescription_path'] ?? ''));
+    return pharmacy_order_prescription_view_url($order, []);
 }
 
 function pharmacy_item_prescription_url(array $item, array $order = []): ?string
 {
-    if ($order !== [] && !pharmacy_order_allows_prescription_view($order)) {
-        return null;
-    }
-
-    $itemUrl = pharmacy_upload_url((string) ($item['prescription_path'] ?? ''));
-    if ($itemUrl) {
-        return $itemUrl;
-    }
-
-    return $order !== [] ? pharmacy_prescription_url($order) : null;
+    return pharmacy_order_prescription_view_url($order, $item);
 }
 
 function pharmacy_order_requires_prescription(array $order, array $items = []): bool
