@@ -204,6 +204,7 @@ $overviewPickupProofKind = $overviewPickupProofExt === 'pdf' ? 'pdf' : ($overvie
             <?php if (!$hasPanelOrder): ?>
             <p class="order-empty-panel">Select an order from the list to view details.</p>
             <?php else: ?>
+            <div class="order-overview-body">
 
             <div class="order-section-label">Customer</div>
             <div class="list-row order-list-row">
@@ -334,7 +335,9 @@ $overviewPickupProofKind = $overviewPickupProofExt === 'pdf' ? 'pdf' : ($overvie
               <p class="order-cancellation-text"><?= htmlspecialchars($overviewCancellationReason !== '' ? $overviewCancellationReason : 'No reason recorded.', ENT_QUOTES, 'UTF-8') ?></p>
             </div>
             <?php endif; ?>
+            </div>
 
+            <?php if ($isPendingOverview || $canAdvanceStatus || $isReadyOverview): ?>
             <div class="order-panel-actions">
               <?php if ($isPendingOverview): ?>
               <div class="order-panel-actions-row">
@@ -367,6 +370,7 @@ $overviewPickupProofKind = $overviewPickupProofExt === 'pdf' ? 'pdf' : ($overvie
               </div>
               <?php endif; ?>
             </div>
+            <?php endif; ?>
 
             <?php endif; ?>
             </aside>
