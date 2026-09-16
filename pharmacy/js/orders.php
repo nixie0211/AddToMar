@@ -226,6 +226,9 @@ function closeCancelOrderModal() {
 
 let drawerRequestId = 0;
 let drawerAbort = null;
+let listRequestId = 0;
+let listAbort = null;
+let ordersNavGen = 0;
 
 function ordersViewUrl(href) {
   try {
@@ -253,6 +256,12 @@ function currentOrdersStatus() {
   return new URLSearchParams(window.location.search).get('status') || 'pending';
 }
 
+function escapeHtml(value) {
+  return String(value || '').replace(/[&<>"']/g, function (ch) {
+    return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch];
+  });
+}
+
 function syncOrdersHistory(nextUrl, options) {
   options = options || {};
   if (options.skipHistory || !nextUrl) return;
@@ -267,34 +276,50 @@ function ordersFragmentUrl(nextUrl) {
   const parsed = parseOrdersHref(nextUrl);
   const frag = new URL('api/orders-view.php', window.location.href);
   frag.searchParams.set('status', parsed.status);
-  if (parsed.orderId > 0) frag.searchParams.set('order_id', String(parsed.orderId));
   return frag.pathname + frag.search;
 }
 
 function markActiveOrderRow(orderId) {
   document.querySelectorAll('#view-orders .orders-table-row').forEach(function (row) {
-    const link = row.querySelector('a.orders-table-link');
-    let id = 0;
-    if (link) {
-      try {
-        id = parseInt(new URL(link.getAttribute('href'), window.location.href).searchParams.get('order_id') || '0', 10);
-      } catch (error) {
-        id = 0;
-      }
-    }
+    const id = parseInt(row.getAttribute('data-order-id') || '0', 10);
     row.classList.toggle('is-active', orderId > 0 && id === orderId);
   });
 }
 
-function applyOrderDrawerHtml(html) {
+function applyOrderDrawerHtml(html, orderId) {
   const doc = new DOMParser().parseFromString(html, 'text/html');
   const incoming = doc.getElementById('order-drawer');
   const current = document.getElementById('order-drawer');
   if (!incoming || !current) return false;
+  const loadedId = parseInt(incoming.getAttribute('data-order-id') || '0', 10);
+  if (orderId > 0 && loadedId > 0 && loadedId !== orderId) return false;
   current.replaceWith(incoming);
   incoming.hidden = false;
   incoming.classList.remove('is-loading');
+  incoming.setAttribute('data-order-id', String(orderId || loadedId || 0));
   return true;
+}
+
+function showOrderDrawerPlaceholder(orderId, fromEl) {
+  const drawer = document.getElementById('order-drawer');
+  if (!drawer) return;
+  const row = fromEl && fromEl.closest ? fromEl.closest('.orders-table-row') : null;
+  const orderNumber = ((row && row.querySelector('.ot-order')) ? row.querySelector('.ot-order').textContent : '').trim() || ('#' + orderId);
+  const customer = ((row && row.querySelector('.ot-customer-name')) ? row.querySelector('.ot-customer-name').textContent : '').trim();
+  const closeHref = 'index.php?view=orders&status=' + encodeURIComponent(currentOrdersStatus());
+  drawer.hidden = false;
+  drawer.classList.add('is-loading');
+  drawer.setAttribute('data-order-id', String(orderId));
+  const overview = drawer.querySelector('.order-overview');
+  if (!overview) return;
+  overview.innerHTML =
+    '<div class="panel-head">' +
+      '<div><h3 id="order-drawer-title">Order ' + escapeHtml(orderNumber.replace(/^#/, '#')) + '</h3></div>' +
+      '<a class="order-drawer-close-btn" id="order-drawer-close-btn" href="' + closeHref + '" aria-label="Close">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>' +
+      '</a>' +
+    '</div>' +
+    '<p class="order-empty-panel">' + (customer ? ('Loading details for ' + escapeHtml(customer) + '…') : 'Loading order details…') + '</p>';
 }
 
 async function loadOrderDrawer(orderId, status, options) {
@@ -317,27 +342,25 @@ async function loadOrderDrawer(orderId, status, options) {
     if (!response.ok) throw new Error('load');
     const html = await response.text();
     if (requestId !== drawerRequestId) return;
-    if (!applyOrderDrawerHtml(html)) throw new Error('parse');
+    if (!applyOrderDrawerHtml(html, orderId)) return;
   } catch (error) {
     if (error && error.name === 'AbortError') return;
     if (options.fallbackUrl) window.location.href = options.fallbackUrl;
   }
 }
 
-function openOrderFromLink(href, options) {
+function openOrderFromLink(href, options, fromEl) {
   options = options || {};
   const parsed = parseOrdersHref(href);
   if (parsed.orderId <= 0) {
     closeOrderDrawer(parsed.nextUrl, options);
     return;
   }
+  ordersNavGen += 1;
+  if (listAbort) listAbort.abort();
   syncOrdersHistory(parsed.nextUrl, options);
   markActiveOrderRow(parsed.orderId);
-  const drawer = document.getElementById('order-drawer');
-  if (drawer) {
-    drawer.hidden = false;
-    drawer.classList.add('is-loading');
-  }
+  showOrderDrawerPlaceholder(parsed.orderId, fromEl);
   loadOrderDrawer(parsed.orderId, parsed.status, { fallbackUrl: parsed.nextUrl });
 }
 
@@ -350,20 +373,38 @@ function closeOrderDrawer(href, options) {
   if (drawer) {
     drawer.hidden = true;
     drawer.classList.remove('is-loading');
+    drawer.setAttribute('data-order-id', '0');
   }
   markActiveOrderRow(0);
   syncOrdersHistory(nextUrl, Object.assign({ replace: true }, options));
+}
+
+function setActiveOrdersTab(status) {
+  document.querySelectorAll('#view-orders .tabs a.tab-btn').forEach(function (tab) {
+    try {
+      const tabStatus = new URL(tab.getAttribute('href'), window.location.href).searchParams.get('status') || 'pending';
+      tab.classList.toggle('active', tabStatus === status);
+    } catch (error) {
+      tab.classList.remove('active');
+    }
+  });
+}
+
+function showOrdersTableLoading() {
+  const card = document.querySelector('#view-orders .orders-table-card');
+  if (!card) return;
+  card.innerHTML = '<div class="orders-empty"><p class="orders-empty-title">Loading orders…</p></div>';
 }
 
 async function loadOrdersView(href, options) {
   options = options || {};
   const nextUrl = ordersViewUrl(href);
   if (!nextUrl) return;
-  if (!options.force && !options.skipHistory && (window.location.pathname + window.location.search) === nextUrl) {
-    return;
-  }
-  if (loadOrdersView.inFlight) return;
-  loadOrdersView.inFlight = true;
+  const parsed = parseOrdersHref(nextUrl);
+  const requestId = ++listRequestId;
+  const navGen = options.navGen || ordersNavGen;
+  if (listAbort) listAbort.abort();
+  listAbort = new AbortController();
 
   try {
     const response = await fetch(ordersFragmentUrl(nextUrl), {
@@ -373,37 +414,50 @@ async function loadOrdersView(href, options) {
         'X-Live-Sync': '1',
         Accept: 'text/html',
       },
+      signal: listAbort.signal,
     });
+    if (requestId !== listRequestId || navGen !== ordersNavGen) return;
     if (!response.ok) throw new Error('load');
 
     const html = await response.text();
+    if (requestId !== listRequestId || navGen !== ordersNavGen) return;
     const doc = new DOMParser().parseFromString(html, 'text/html');
-    const incoming = doc.getElementById('view-orders');
-    const current = document.getElementById('view-orders');
-    if (!incoming || !current) {
+    const incomingMain = doc.querySelector('.orders-main');
+    const currentMain = document.querySelector('#view-orders .orders-main');
+    if (!incomingMain || !currentMain) {
       window.location.href = nextUrl;
       return;
     }
 
-    incoming.classList.toggle('active', current.classList.contains('active'));
-    current.replaceWith(incoming);
+    currentMain.replaceWith(incomingMain);
+    setActiveOrdersTab(parsed.status);
+    if (parsed.orderId > 0) markActiveOrderRow(parsed.orderId);
     syncOrdersHistory(nextUrl, options);
-
-    const view = document.getElementById('view-orders');
-    if (view) delete view.dataset.orderUiBound;
-    initPharmacyOrderUi();
   } catch (error) {
+    if (error && error.name === 'AbortError') return;
+    if (requestId !== listRequestId || navGen !== ordersNavGen) return;
     window.location.href = nextUrl;
-  } finally {
-    loadOrdersView.inFlight = false;
   }
+}
+
+function switchOrdersTab(href, options) {
+  options = options || {};
+  const parsed = parseOrdersHref(href);
+  const navGen = ++ordersNavGen;
+  drawerRequestId += 1;
+  if (drawerAbort) drawerAbort.abort();
+  closeOrderDrawer(parsed.nextUrl, { skipHistory: true });
+  syncOrdersHistory(parsed.nextUrl, options);
+  setActiveOrdersTab(parsed.status);
+  showOrdersTableLoading();
+  loadOrdersView(parsed.nextUrl, { skipHistory: true, navGen: navGen });
 }
 
 function navigateOrdersLink(link) {
   const href = link.getAttribute('href');
   if (!href) return;
   if (link.classList.contains('tab-btn')) {
-    loadOrdersView(href);
+    switchOrdersTab(href);
     return;
   }
   if (link.classList.contains('order-drawer-close-btn') || link.id === 'order-drawer-close') {
@@ -411,7 +465,7 @@ function navigateOrdersLink(link) {
     closeOrderDrawer((close && close.getAttribute('href')) || href);
     return;
   }
-  openOrderFromLink(href);
+  openOrderFromLink(href, {}, link);
 }
 
 async function submitOrderStatusAdvance(button) {
@@ -762,7 +816,7 @@ window.addEventListener('popstate', function () {
     }
   }
   if (tabStatus !== status) {
-    loadOrdersView(href, { skipHistory: true, force: true });
+    switchOrdersTab(href, { skipHistory: true });
     return;
   }
   if (orderId > 0) {

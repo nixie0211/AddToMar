@@ -536,6 +536,43 @@ function pharmacy_get_order_items(int $orderId): array
     return pharmacy_get_order_items_map([$orderId])[$orderId] ?? [];
 }
 
+function pharmacy_order_table_items_map(array $orderIds): array
+{
+    $ids = [];
+    foreach ($orderIds as $orderId) {
+        $orderId = (int) $orderId;
+        if ($orderId > 0) {
+            $ids[$orderId] = $orderId;
+        }
+    }
+    $ids = array_values($ids);
+    $map = [];
+    foreach ($ids as $orderId) {
+        $map[$orderId] = [];
+    }
+    if ($ids === []) {
+        return $map;
+    }
+
+    $placeholders = implode(',', array_fill(0, count($ids), '?'));
+    $stmt = pharmacy_db()->prepare('
+        SELECT order_id, medicine_name, quantity, prescription_required
+        FROM order_items
+        WHERE order_id IN (' . $placeholders . ')
+        ORDER BY id ASC
+    ');
+    $stmt->execute($ids);
+    foreach ($stmt->fetchAll() as $item) {
+        $orderId = (int) ($item['order_id'] ?? 0);
+        if ($orderId <= 0) {
+            continue;
+        }
+        $map[$orderId][] = $item;
+    }
+
+    return $map;
+}
+
 function pharmacy_get_order_status_counts(): array
 {
     $rows = pharmacy_db()->query('SELECT status, COUNT(*) AS total FROM orders WHERE ' . pharmacy_scope_sql() . ' GROUP BY status')->fetchAll();

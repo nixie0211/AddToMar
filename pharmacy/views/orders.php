@@ -8,11 +8,16 @@ if (!in_array($activeStatus, $allowedStatuses, true)) {
 
 $selectedOrderId = isset($_GET['order_id']) ? (int) $_GET['order_id'] : 0;
 $pharmacyOrdersDrawerOnly = !empty($pharmacyOrdersDrawerOnly);
+$pharmacyOrdersListOnly = !empty($pharmacyOrdersListOnly);
 $orderStatusCounts = $orderStatusCounts ?? [];
 
 $filteredOrders = [];
 $orderItemsCache = [];
 $panelOrder = null;
+
+if ($pharmacyOrdersListOnly) {
+    $selectedOrderId = 0;
+}
 
 if ($pharmacyOrdersDrawerOnly) {
     if ($selectedOrderId > 0) {
@@ -26,9 +31,10 @@ if ($pharmacyOrdersDrawerOnly) {
     $filteredOrders = $activeStatus === 'all'
         ? pharmacy_get_orders(300)
         : pharmacy_get_orders(300, $activeStatus);
-    $orderItemsCache = pharmacy_get_order_items_map(array_map(static fn(array $order): int => (int) ($order['id'] ?? 0), $filteredOrders));
+    $orderIds = array_map(static fn(array $order): int => (int) ($order['id'] ?? 0), $filteredOrders);
+    $orderItemsCache = pharmacy_order_table_items_map($orderIds);
 
-    if ($selectedOrderId > 0) {
+    if (!$pharmacyOrdersListOnly && $selectedOrderId > 0) {
         foreach ($filteredOrders as $order) {
             if ((int) $order['id'] === $selectedOrderId) {
                 $panelOrder = $order;
@@ -39,8 +45,10 @@ if ($pharmacyOrdersDrawerOnly) {
             $fetched = pharmacy_get_order_by_id($selectedOrderId);
             if (is_array($fetched)) {
                 $panelOrder = $fetched;
-                $orderItemsCache[$selectedOrderId] = $orderItemsCache[$selectedOrderId] ?? pharmacy_get_order_items($selectedOrderId);
             }
+        }
+        if ($panelOrder !== null) {
+            $orderItemsCache[$selectedOrderId] = pharmacy_get_order_items($selectedOrderId);
         }
     }
 }
@@ -174,7 +182,7 @@ $overviewPickupProofKind = $overviewPickupProofExt === 'pdf' ? 'pdf' : ($overvie
                 $medicinesSummary .= ' · ' . $orderCancellationReason;
             }
             ?>
-                  <tr class="orders-table-row<?= $isActiveCard ? ' is-active' : '' ?>">
+                  <tr class="orders-table-row<?= $isActiveCard ? ' is-active' : '' ?>" data-order-id="<?= $orderId ?>">
                     <td>
                       <a class="orders-table-link" href="<?= htmlspecialchars(pharmacy_orders_url($activeStatus, $orderId), ENT_QUOTES, 'UTF-8') ?>">
                         <span class="ot-customer">
@@ -203,7 +211,8 @@ $overviewPickupProofKind = $overviewPickupProofExt === 'pdf' ? 'pdf' : ($overvie
           </div>
 <?php endif; ?>
 
-          <div class="order-drawer" id="order-drawer"<?= $hasPanelOrder ? '' : ' hidden' ?>>
+<?php if ($pharmacyOrdersDrawerOnly || empty($pharmacyOrdersListOnly)): ?>
+          <div class="order-drawer" id="order-drawer" data-order-id="<?= $hasPanelOrder ? $panelOrderId : 0 ?>"<?= $hasPanelOrder ? '' : ' hidden' ?>>
             <button type="button" class="order-drawer-backdrop" id="order-drawer-close" data-orders-close aria-label="Close order details"></button>
             <aside class="panel order-overview" role="dialog" aria-modal="true" aria-labelledby="order-drawer-title">
             <div class="panel-head">
@@ -394,8 +403,10 @@ $overviewPickupProofKind = $overviewPickupProofExt === 'pdf' ? 'pdf' : ($overvie
             <?php endif; ?>
             </aside>
           </div>
+<?php endif; ?>
 <?php if (!$pharmacyOrdersDrawerOnly): ?>
         </div>
+<?php if (empty($pharmacyOrdersListOnly)): ?>
 
         <div class="cancel-order-modal" id="cancel-order-modal" hidden>
           <button type="button" class="cancel-order-modal-backdrop" id="cancel-order-modal-close" aria-label="Close cancel order modal"></button>
@@ -498,5 +509,6 @@ $overviewPickupProofKind = $overviewPickupProofExt === 'pdf' ? 'pdf' : ($overvie
             </div>
           </div>
         </div>
+<?php endif; ?>
       </section>
 <?php endif; ?>

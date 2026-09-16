@@ -16,5 +16,6 @@ header('Cache-Control: no-store');
 
 $activeView = 'orders';
 $orderStatusCounts = pharmacy_get_order_status_counts();
+$pharmacyOrdersListOnly = true;
 
 include dirname(__DIR__) . '/views/orders.php';
