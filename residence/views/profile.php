@@ -64,7 +64,7 @@
             </div>
           </div>
           <div class="profile-actions">
-            <button class="btn btn-primary" type="button" id="save-profile-btn" onclick="saveProfileChanges()">Save changes</button>
+            <button class="btn btn-accent" type="button" id="save-profile-btn" onclick="saveProfileChanges()">Save changes</button>
           </div>
         </div>
 

@@ -4881,6 +4881,16 @@ table.hist-table tr:hover td{ background:var(--bg);}
   justify-content:flex-end;
   margin-top:8px;
 }
+.profile-actions .btn-accent,
+#save-profile-btn{
+  background:linear-gradient(135deg, #4ec4b4, #219e82);
+  color:#fff;
+  box-shadow:0 6px 16px rgba(33,158,130,.28);
+}
+.profile-actions .btn-accent:hover,
+#save-profile-btn:hover{
+  box-shadow:0 8px 22px rgba(33,158,130,.38);
+}
 .saved-addresses-head{
   display:flex;
   align-items:flex-start;
