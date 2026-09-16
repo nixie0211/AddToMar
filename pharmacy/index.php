@@ -34,7 +34,7 @@ require_once dirname(__DIR__) . '/includes/maps.php';
 <link rel="stylesheet" href="css/base.css?v=unified-mint-outer-canvas">
 <link rel="stylesheet" href="css/orders.css?v=completed-paid-total-2">
 <link rel="stylesheet" href="css/reports.css">
-<link rel="stylesheet" href="css/settings.css">
+<link rel="stylesheet" href="css/settings.css?v=profile-avatar-mint">
 <link rel="stylesheet" href="css/add-medicine.css?v=saving-overlay-1">
 <link rel="stylesheet" href="css/inventory.css?v=store-name-ellipsis-2">
 </head>

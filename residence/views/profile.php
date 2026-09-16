@@ -3,7 +3,7 @@
       $profileName = $residenceProfile['full_name'] !== '' ? $residenceProfile['full_name'] : 'Guest Customer';
       $profileEmail = $residenceProfile['email'] !== '' ? $residenceProfile['email'] : 'Not signed in with a registered account';
       $profileContact = $residenceProfile['contact_number'] !== '' ? residence_format_contact($residenceProfile['contact_number']) : '—';
-      $profileInitials = residence_user_initials($profileName);
+      $profileInitials = strtoupper(substr(preg_replace('/\s+/', '', $profileName) ?: 'N', 0, 1));
       $savedAddresses = customer_addresses_list($residenceProfile['email']);
       ?>
       <section class="page" data-page="profile" data-live-region="residence-profile" data-live-keys="account" data-live-skip-active="1">

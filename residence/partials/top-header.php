@@ -3,12 +3,7 @@
     $headerUserHasLocation = ($residenceProfile['latitude'] ?? null) !== null
         && ($residenceProfile['longitude'] ?? null) !== null;
     $headerBuyerName = trim((string) ($residenceProfile['full_name'] ?? 'Customer'));
-    $headerBuyerParts = preg_split('/\s+/', $headerBuyerName) ?: [];
-    $headerBuyerInitials = '';
-    foreach (array_slice($headerBuyerParts, 0, 2) as $headerBuyerPart) {
-        $headerBuyerInitials .= strtoupper(substr($headerBuyerPart, 0, 1));
-    }
-    $headerBuyerInitials = $headerBuyerInitials !== '' ? $headerBuyerInitials : 'CU';
+    $headerBuyerInitials = strtoupper(substr(preg_replace('/\s+/', '', $headerBuyerName) ?: 'N', 0, 1));
     $headerUnreadNotifications = count(array_filter(
         $residenceNotifications ?? [],
         static fn (array $notification): bool => empty($notification['read_at'])
