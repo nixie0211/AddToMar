@@ -352,6 +352,11 @@ function residence_place_checkout_groups(array $profile, array $groups, array $o
 
     $orders = [];
     $intentId = trim((string) ($options['paymongo_intent_id'] ?? ''));
+    $groupId = trim((string) ($options['checkout_group_id'] ?? ''));
+    if ($groupId === '') {
+        $groupId = residence_generate_order_number(pharmacy_db());
+    }
+    $first = true;
 
     foreach ($groups as $pharmacyId => $groupItems) {
         $pharmacyId = trim((string) $pharmacyId);
@@ -361,13 +366,17 @@ function residence_place_checkout_groups(array $profile, array $groups, array $o
                 $directory = residence_pharmacy_directory();
                 $existing['pharmacy_name'] = $directory[$pharmacyId]['name'] ?? ($existing['pharmacy_name'] ?? 'Pharmacy');
                 $orders[] = $existing;
+                $first = false;
                 continue;
             }
         }
 
         $placed = residence_place_order($profile, $pharmacyId, $groupItems, array_merge($options, [
             'item_prescriptions' => $prescriptions,
+            'checkout_group_id' => $groupId,
+            'order_number' => $first ? $groupId : '',
         ]));
+        $first = false;
 
         if (!($placed['ok'] ?? false)) {
             if ($orders !== []) {
@@ -381,9 +390,19 @@ function residence_place_checkout_groups(array $profile, array $groups, array $o
         $orders[] = $placed['order'];
     }
 
+    $combined = residence_combine_orders_for_receipt($orders);
+    if ($combined !== []) {
+        $combined['order_number'] = $groupId;
+        $combined['checkout_group_id'] = $groupId;
+        $combined['related_order_numbers'] = array_values(array_filter(array_map(
+            static fn (array $order): string => trim((string) ($order['order_number'] ?? '')),
+            $orders
+        )));
+    }
+
     return [
         'ok' => true,
-        'order' => $orders[0],
+        'order' => $combined !== [] ? $combined : ($orders[0] ?? null),
         'orders' => $orders,
     ];
 }
@@ -544,7 +563,9 @@ function residence_place_order(array $profile, string $pharmacyId, array $items,
         $total = $priced['total'];
         $downPayment = round($total * residence_down_payment_rate(), 2);
         $customerId = residence_upsert_customer($pdo, $profile, $pharmacyId);
-        $orderNumber = residence_generate_order_number($pdo);
+        $forcedNumber = trim((string) ($options['order_number'] ?? ''));
+        $orderNumber = $forcedNumber !== '' ? $forcedNumber : residence_generate_order_number($pdo);
+        $checkoutGroupId = trim((string) ($options['checkout_group_id'] ?? $orderNumber));
         $notes = 'Pickup date: ' . $pickupDate;
         $intentId = trim((string) ($options['paymongo_intent_id'] ?? ''));
         if ($intentId !== '') {
@@ -558,8 +579,8 @@ function residence_place_order(array $profile, string $pharmacyId, array $items,
         $orderStmt = $pdo->prepare('
             INSERT INTO orders (
                 pharmacy_id, order_number, customer_id, status, payment_method,
-                total_amount, down_payment, notes, paymongo_intent_id, prescription_path, pickup_proof_path
-            ) VALUES (?, ?, ?, "pending", ?, ?, ?, ?, ?, ?, ?)
+                total_amount, down_payment, notes, paymongo_intent_id, checkout_group_id, prescription_path, pickup_proof_path
+            ) VALUES (?, ?, ?, "pending", ?, ?, ?, ?, ?, ?, ?, ?)
         ');
         $orderStmt->execute([
             $pharmacyId,
@@ -570,6 +591,7 @@ function residence_place_order(array $profile, string $pharmacyId, array $items,
             $downPayment,
             $notes,
             $intentId !== '' ? $intentId : null,
+            $checkoutGroupId !== '' ? $checkoutGroupId : $orderNumber,
             $orderPrescriptionPath,
             $options['payment_proof_path'] ?? null,
         ]);
@@ -633,6 +655,7 @@ function residence_place_order(array $profile, string $pharmacyId, array $items,
                 'pickup_time' => $pickupTime,
                 'items' => $lineItems,
                 'paymongo_intent_id' => $intentId,
+                'checkout_group_id' => $checkoutGroupId !== '' ? $checkoutGroupId : $orderNumber,
                 'receipt_email' => $receiptEmail,
                 'payment_method' => trim((string) ($options['payment_method'] ?? 'gcash')),
                 'created_at' => date('Y-m-d H:i:s'),
@@ -739,6 +762,8 @@ function residence_present_order(array $order, array $directory = []): array
             'prescription_path' => trim((string) ($item['prescription_path'] ?? '')),
             'prescription_url' => residence_prescription_url((string) ($item['prescription_path'] ?? '')),
             'image' => (string) ($item['image'] ?? $item['image_url'] ?? ''),
+            'pharmacy_id' => $pharmacyId,
+            'pharmacy_name' => (string) ($order['pharmacy_name'] ?? $order['settings_pharmacy_name'] ?? $pharmacy['name'] ?? 'Pharmacy'),
         ];
     }
 
@@ -770,16 +795,171 @@ function residence_present_order(array $order, array $directory = []): array
         'pickup_proof_path' => trim((string) ($order['pickup_proof_path'] ?? '')),
         'pickup_proof_url' => residence_prescription_url((string) ($order['pickup_proof_path'] ?? '')),
         'balance_paid' => in_array($status, ['picked_up', 'pickedup', 'delivered', 'completed'], true),
+        'checkout_group_id' => trim((string) ($order['checkout_group_id'] ?? '')),
+        'paymongo_intent_id' => trim((string) ($order['paymongo_intent_id'] ?? '')),
+        'stores' => [],
+        'is_group' => false,
+        'store_count' => 1,
+        'partially_fulfilled' => false,
+        'completed_store_count' => in_array($status, ['picked_up', 'pickedup', 'delivered', 'completed'], true) ? 1 : 0,
     ];
+}
+
+function residence_order_progress_rank(string $status): int
+{
+    return match (strtolower(trim($status))) {
+        'cancelled' => 0,
+        'confirmed' => 2,
+        'preparing' => 3,
+        'ready' => 4,
+        'picked_up', 'pickedup', 'delivered', 'completed' => 5,
+        default => 1,
+    };
+}
+
+function residence_status_from_progress_rank(int $rank): string
+{
+    return match ($rank) {
+        0 => 'cancelled',
+        2 => 'confirmed',
+        3 => 'preparing',
+        4 => 'ready',
+        5 => 'completed',
+        default => 'pending',
+    };
+}
+
+function residence_order_group_key(array $order): string
+{
+    $group = trim((string) ($order['checkout_group_id'] ?? ''));
+    if ($group !== '') {
+        return 'g:' . $group;
+    }
+    $intent = trim((string) ($order['paymongo_intent_id'] ?? ''));
+    if ($intent !== '') {
+        return 'i:' . $intent;
+    }
+
+    return 'o:' . (string) ($order['id'] ?? $order['order_number'] ?? uniqid('order', true));
+}
+
+function residence_parent_fulfillment(array $statuses): array
+{
+    $active = array_values(array_filter(
+        $statuses,
+        static fn (string $status): bool => strtolower($status) !== 'cancelled'
+    ));
+    if ($active === []) {
+        $meta = residence_order_status_meta('cancelled');
+
+        return $meta + [
+            'status' => 'cancelled',
+            'partial' => false,
+            'completed' => 0,
+            'store_count' => count($statuses),
+        ];
+    }
+
+    $ranks = array_map('residence_order_progress_rank', $active);
+    $min = (int) min($ranks);
+    $status = residence_status_from_progress_rank($min);
+    $meta = residence_order_status_meta($status);
+    $completed = count(array_filter(
+        $active,
+        static fn (string $status): bool => residence_order_progress_rank($status) >= 5
+    ));
+    $partial = $completed > 0 && $completed < count($active);
+    if ($partial) {
+        $meta['label'] = 'Partially fulfilled';
+        $meta['class'] = 'partial';
+    }
+
+    return $meta + [
+        'status' => $status,
+        'partial' => $partial,
+        'completed' => $completed,
+        'store_count' => count($active),
+    ];
+}
+
+function residence_present_order_group(array $orders, array $directory = []): array
+{
+    usort($orders, static function (array $left, array $right): int {
+        return strcmp((string) ($left['created_at'] ?? ''), (string) ($right['created_at'] ?? ''));
+    });
+    $stores = array_map(
+        static fn (array $order): array => residence_present_order($order, $directory),
+        $orders
+    );
+    $primary = $stores[0];
+    $primary['stores'] = $stores;
+    $primary['store_count'] = count($stores);
+    $primary['is_group'] = count($stores) > 1;
+    if (count($stores) === 1) {
+        return $primary;
+    }
+
+    $groupId = trim((string) ($orders[0]['checkout_group_id'] ?? ''));
+    $items = [];
+    $total = 0.0;
+    $down = 0.0;
+    $statuses = [];
+    foreach ($stores as $store) {
+        $total += (float) ($store['total_amount'] ?? 0);
+        $down += (float) ($store['down_payment'] ?? 0);
+        $statuses[] = (string) ($store['status'] ?? 'pending');
+        foreach ($store['items'] ?? [] as $item) {
+            $item['pharmacy_id'] = $store['pharmacy_id'];
+            $item['pharmacy_name'] = $store['pharmacy_name'];
+            $items[] = $item;
+        }
+    }
+    $overall = residence_parent_fulfillment($statuses);
+    $names = array_values(array_unique(array_filter(array_map(
+        static fn (array $store): string => trim((string) ($store['pharmacy_name'] ?? '')),
+        $stores
+    ))));
+
+    return array_merge($primary, [
+        'order_number' => $groupId !== '' ? $groupId : (string) ($primary['order_number'] ?? ''),
+        'related_order_numbers' => array_values(array_filter(array_map(
+            static fn (array $store): string => (string) ($store['order_number'] ?? ''),
+            $stores
+        ))),
+        'pharmacy_name' => implode(', ', $names),
+        'stores' => $stores,
+        'is_group' => true,
+        'store_count' => count($stores),
+        'items' => $items,
+        'item_count' => count($items),
+        'total_amount' => round($total, 2),
+        'down_payment' => round($down, 2),
+        'status' => $overall['status'],
+        'status_tab' => $overall['tab'],
+        'status_class' => $overall['class'],
+        'status_label' => $overall['label'],
+        'partially_fulfilled' => !empty($overall['partial']),
+        'completed_store_count' => (int) ($overall['completed'] ?? 0),
+        'balance_paid' => ($overall['status'] ?? '') === 'completed',
+    ]);
 }
 
 function residence_customer_orders_payload(string $email): array
 {
     $directory = residence_pharmacy_directory();
-    $orders = [];
+    $buckets = [];
     foreach (residence_get_customer_orders($email) as $order) {
-        $orders[] = residence_present_order($order, $directory);
+        $buckets[residence_order_group_key($order)][] = $order;
     }
+
+    $orders = [];
+    foreach ($buckets as $group) {
+        $orders[] = residence_present_order_group($group, $directory);
+    }
+
+    usort($orders, static function (array $left, array $right): int {
+        return strcmp((string) ($right['created_at'] ?? ''), (string) ($left['created_at'] ?? ''));
+    });
 
     return $orders;
 }

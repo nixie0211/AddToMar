@@ -6916,3 +6916,109 @@ body.is-pharmacy-empty.is-pharmacy-profile-page .page[data-page="pharmacy-profil
   #orders-list-view .order-reference-card{grid-template-columns:1fr !important;}
   #orders-list-view .orders-reference-head p{margin-left:0 !important;}
 }
+
+.mo-parent-head{
+  display:flex;
+  justify-content:space-between;
+  gap:16px;
+  align-items:flex-start;
+  margin:8px 0 14px;
+  padding:18px 20px;
+  border:1px solid #d7efe6;
+  border-radius:16px;
+  background:linear-gradient(180deg,#f3fbf8,#fff);
+}
+.mo-parent-head h2{margin:0;color:#14384d;font:800 24px var(--font-display);}
+.mo-parent-head p{margin:6px 0 0;color:#4d6a75;font-size:13px;}
+.mo-parent-head small{display:flex;align-items:center;gap:6px;margin-top:8px;color:#6b8290;font-size:12px;}
+.mo-parent-badge{display:grid;justify-items:end;gap:4px;}
+.mo-parent-badge strong{
+  display:inline-flex;
+  padding:7px 12px;
+  border-radius:999px;
+  background:#e7f6ef;
+  color:#087c66;
+  font-size:12px;
+  font-weight:800;
+}
+.mo-parent-badge strong.partial{background:#e8f1ff;color:#2457d6;}
+.mo-parent-badge strong.preparing{background:#fff6e5;color:#c47b12;}
+.mo-parent-badge strong.processing{background:#fff6e5;color:#c47b12;}
+.mo-parent-badge strong.ready{background:#e7f6ef;color:#087c66;}
+.mo-parent-badge strong.completed{background:#e7f6ef;color:#087c66;}
+.mo-parent-badge small{color:#6b8290;font-size:11px;}
+.mo-parent-note{
+  margin:0 0 16px;
+  padding:12px 14px;
+  border-radius:12px;
+  background:#eefaf4;
+  color:#1f5f4e;
+  font-size:13px;
+  line-height:1.45;
+}
+.mo-order-tabs{display:flex;gap:10px;margin:0 0 16px;}
+.mo-order-tabs button{
+  border:0;
+  border-bottom:2px solid transparent;
+  padding:10px 14px;
+  background:transparent;
+  color:#6c8090;
+  font-size:13px;
+  font-weight:800;
+  cursor:pointer;
+}
+.mo-order-tabs button.is-active{border-color:#07836d;color:#087d68;background:#e4f8f1;border-radius:10px 10px 0 0;}
+.mo-store-card{
+  margin:0 0 14px;
+  padding:16px 18px 14px;
+  border:1px solid #e2eeea;
+  border-radius:16px;
+  background:#fff;
+}
+.mo-store-head{display:flex;align-items:center;gap:12px;}
+.mo-store-logo{
+  width:42px;height:42px;min-width:42px;
+  display:grid;place-items:center;
+  overflow:hidden;
+  border-radius:12px;
+  background:#eef6f3;
+  color:#0a6b54;
+  font-weight:800;
+}
+.mo-store-logo img{width:100%;height:100%;object-fit:contain;background:#fff;}
+.mo-store-head strong{display:block;color:#14384d;font-size:15px;}
+.mo-store-head small{display:block;color:#6b8290;font-size:12px;line-height:1.35;}
+.mo-store-status{
+  margin-left:auto;
+  padding:6px 10px;
+  border-radius:999px;
+  background:#fff6e5;
+  color:#c47b12;
+  font-size:11px;
+  font-weight:800;
+  white-space:nowrap;
+}
+.mo-store-status.ready,.mo-store-status.completed,.mo-store-status.picked-up{background:#e7f6ef;color:#087c66;}
+.mo-store-status.confirmed{background:#e8f1ff;color:#2457d6;}
+.mo-store-items{display:grid;gap:10px;margin:14px 0 10px;}
+.mo-store-item{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:10px;align-items:center;}
+.mo-store-item img{width:44px;height:44px;object-fit:contain;border:1px solid #edf3f1;border-radius:8px;background:#f8fbfa;}
+.mo-store-item b{display:block;color:#163948;font-size:13px;}
+.mo-store-item small{color:#6b8290;font-size:12px;}
+.mo-store-foot{display:flex;justify-content:space-between;padding-top:10px;border-top:1px dashed #e2eeea;color:#526779;font-size:13px;}
+.mo-store-track{display:none;margin-top:12px;}
+.mo-store-card.is-open .mo-store-track{display:block;}
+.mo-store-track-btn{
+  margin-top:10px;
+  border:0;
+  background:transparent;
+  color:#087c66;
+  font-size:13px;
+  font-weight:800;
+  cursor:pointer;
+}
+.mo-store-timeline{padding:10px 4px;}
+@media (max-width:760px){
+  .mo-parent-head{flex-direction:column;}
+  .mo-parent-badge{justify-items:start;}
+}

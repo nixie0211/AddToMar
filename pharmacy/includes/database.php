@@ -123,6 +123,7 @@ function pharmacy_run_migrations(PDO $pdo): void
     pharmacy_ensure_column($pdo, 'orders', 'cancellation_reason', 'TEXT NULL AFTER pickup_proof_path');
     pharmacy_ensure_column($pdo, 'orders', 'down_payment', 'DECIMAL(10,2) NOT NULL DEFAULT 0 AFTER total_amount');
     pharmacy_ensure_column($pdo, 'orders', 'paymongo_intent_id', 'VARCHAR(80) NULL AFTER notes');
+    pharmacy_ensure_column($pdo, 'orders', 'checkout_group_id', 'VARCHAR(50) NULL AFTER paymongo_intent_id');
     pharmacy_ensure_column($pdo, 'order_items', 'prescription_path', 'VARCHAR(255) NULL AFTER prescription_required');
 
     $pdo->exec(<<<'SQL'
@@ -186,6 +187,7 @@ function pharmacy_run_migrations(PDO $pdo): void
     pharmacy_ensure_column($pdo, 'orders', 'cancellation_reason', 'TEXT NULL AFTER pickup_proof_path');
     pharmacy_ensure_column($pdo, 'orders', 'down_payment', 'DECIMAL(10,2) NOT NULL DEFAULT 0 AFTER total_amount');
     pharmacy_ensure_column($pdo, 'orders', 'paymongo_intent_id', 'VARCHAR(80) NULL AFTER notes');
+    pharmacy_ensure_column($pdo, 'orders', 'checkout_group_id', 'VARCHAR(50) NULL AFTER paymongo_intent_id');
     pharmacy_ensure_column($pdo, 'order_items', 'prescription_path', 'VARCHAR(255) NULL AFTER prescription_required');
 
     pharmacy_ensure_column($pdo, 'medicines', 'pharmacy_id', 'VARCHAR(32) NULL AFTER id');

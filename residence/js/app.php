@@ -1746,10 +1746,14 @@ function applyPaidPayment(d){
       orders: d.orders || d.order?.orders || [],
     });
     if(receipt) sessionStorage.setItem('residence_last_order', JSON.stringify(receipt));
-    (d.orders || []).forEach(order => {
-      if(order && !order.related_order_numbers) rememberResidenceOrder(order);
+    const childOrders = (d.orders || (d.order ? [d.order] : [])).map(order => presentResidenceOrder(order, { skipStores:true }));
+    rememberResidenceOrder({
+      ...(receipt || d.order || {}),
+      stores: childOrders,
+      is_group: childOrders.length > 1,
+      store_count: childOrders.length || 1,
     });
-    if(!d.orders?.length && d.order && !d.order.related_order_numbers) rememberResidenceOrder(d.order);
+    refreshResidenceOrders();
   }
   toast('Payment authorized. Status updated.');
 }
@@ -1864,10 +1868,15 @@ async function placeOrder(){
     }
 
     const receiptOrder = combineOrdersForReceipt(result.orders, result.order);
+    const childOrders = (result.orders || []).map(order => presentResidenceOrder(order, { skipStores:true }));
     sessionStorage.setItem('residence_last_order', JSON.stringify(receiptOrder));
-    (result.orders || []).forEach(order => {
-      if(order && !order.related_order_numbers) rememberResidenceOrder(order);
+    rememberResidenceOrder({
+      ...receiptOrder,
+      stores: childOrders,
+      is_group: childOrders.length > 1,
+      store_count: childOrders.length || 1,
     });
+    refreshResidenceOrders();
     if(window.buyNowCheckout){
       window.buyNowCheckout = null;
     }else{
@@ -2476,16 +2485,24 @@ function rememberResidenceOrder(order){
   const presented = presentResidenceOrder(order);
   if(!presented.order_number) return;
   const list = window.RESIDENCE_CONFIG.orders = Array.isArray(window.RESIDENCE_CONFIG?.orders) ? window.RESIDENCE_CONFIG.orders : [];
-  const index = list.findIndex(item => String(item.order_number) === String(presented.order_number));
-  if(index >= 0) list.splice(index, 1);
+  const related = new Set([
+    String(presented.order_number),
+    ...((presented.related_order_numbers || []).map(String)),
+    ...((presented.stores || []).map(store => String(store.order_number || ''))),
+  ].filter(Boolean));
+  for(let index = list.length - 1; index >= 0; index -= 1){
+    const item = list[index];
+    const ids = [item.order_number, ...(item.related_order_numbers || []), ...((item.stores || []).map(store => store.order_number))].map(String);
+    if(ids.some(id => related.has(id))) list.splice(index, 1);
+  }
   list.unshift(presented);
   renderResidenceOrders();
 }
 
-function presentResidenceOrder(order){
+function presentResidenceOrder(order, options = {}){
   const status = String(order.status || 'pending');
   const meta = residenceOrderStatusMeta(status);
-  const created = order.created_at ? new Date(order.created_at.replace(' ', 'T')) : new Date();
+  const created = order.created_at ? new Date(String(order.created_at).replace(' ', 'T')) : new Date();
   const items = Array.isArray(order.items) ? order.items.map(item => {
     const quantity = Math.max(1, Number(item.quantity) || 1);
     const unitPrice = Number(item.unit_price ?? item.price ?? 0);
@@ -2498,10 +2515,15 @@ function presentResidenceOrder(order){
       prescription_required: !!item.prescription_required,
       prescription_url: String(item.prescription_url || ''),
       image: item.image || item.image_url || '',
+      pharmacy_id: String(item.pharmacy_id || order.pharmacy_id || ''),
+      pharmacy_name: item.pharmacy_name || item.pharmacyName || order.pharmacy_name || '',
     };
   }) : [];
   const pharmacy = getMarketplacePharmacy(order.pharmacy_id) || {};
-  return {
+  const stores = !options.skipStores && Array.isArray(order.stores) && order.stores.length
+    ? order.stores.map(store => presentResidenceOrder(store, { skipStores:true }))
+    : [];
+  const presented = {
     id: Number(order.id) || 0,
     order_number: String(order.order_number || ''),
     pharmacy_id: String(order.pharmacy_id || pharmacy.id || ''),
@@ -2525,7 +2547,23 @@ function presentResidenceOrder(order){
     prescription_url: String(order.prescription_url || ''),
     pickup_proof_url: String(order.pickup_proof_url || (order.pickup_proof_path ? '../' + String(order.pickup_proof_path).replace(/^\.\//, '') : '')),
     balance_paid: !!order.balance_paid,
+    checkout_group_id: String(order.checkout_group_id || ''),
+    related_order_numbers: Array.isArray(order.related_order_numbers) ? order.related_order_numbers.map(String) : [],
+    stores,
+    is_group: stores.length > 1 || !!order.is_group,
+    store_count: stores.length || Number(order.store_count) || 1,
+    partially_fulfilled: !!order.partially_fulfilled,
+    completed_store_count: Number(order.completed_store_count) || 0,
   };
+  if(!options.skipStores && presented.stores.length === 0){
+    presented.stores = [{ ...presented, stores:[], is_group:false, store_count:1 }];
+  }
+  if(!presented.related_order_numbers.length){
+    presented.related_order_numbers = presented.stores.map(store => String(store.order_number || '')).filter(Boolean);
+  }
+  presented.store_count = presented.stores.length || 1;
+  presented.is_group = presented.store_count > 1;
+  return presented;
 }
 
 function residenceOrderStatusMeta(status){
@@ -2536,6 +2574,7 @@ function residenceOrderStatusMeta(status){
   if(key === 'cancelled') return { tab:'cancelled', className:'cancelled', label:'Cancelled' };
   if(key === 'confirmed') return { tab:'confirmed', className:'confirmed', label:'Confirmed' };
   if(key === 'preparing') return { tab:'preparing', className:'preparing', label:'Preparing' };
+  if(key === 'partial' || key === 'partially_fulfilled') return { tab:'processing', className:'partial', label:'Partially fulfilled' };
   return { tab:'processing', className:'processing', label:'Processing' };
 }
 
@@ -2597,7 +2636,10 @@ function orderMatchesSearch(order, query){
     || normalizeOrderSearch(number).includes(q)
     || (compactQ !== '' && compactNumber.includes(compactQ))
     || id === raw
-    || id === q;
+    || id === q
+    || String(order.pharmacy_name || '').toLowerCase().includes(raw)
+    || (order.related_order_numbers || []).some(value => String(value).toLowerCase().includes(raw) || normalizeOrderSearch(value).includes(q))
+    || (order.stores || []).some(store => String(store.order_number || '').toLowerCase().includes(raw) || String(store.pharmacy_name || '').toLowerCase().includes(raw));
 }
 
 function renderResidenceOrders(){
@@ -2630,21 +2672,27 @@ function renderResidenceOrders(){
     }).join('');
     const extra = Math.max(0, (order.items || []).length - 3);
     const extraHtml = extra > 0 ? `<em>+${extra}</em>` : '';
-    const pickup = escapeHtml(order.pharmacy_address || order.pharmacy_name || 'Pharmacy pickup');
     const number = escapeHtml(order.order_number);
     const count = order.item_count || (order.items || []).length;
+    const storeCount = Number(order.store_count || order.stores?.length || 1);
+    const summary = storeCount > 1
+      ? `${storeCount} stores • ${count} item${count === 1 ? '' : 's'}`
+      : `${count} item${count === 1 ? '' : 's'} • ${escapeHtml(order.pharmacy_name)}`;
+    const pickup = storeCount > 1
+      ? 'Multiple pharmacies in this checkout'
+      : escapeHtml(order.pharmacy_address || order.pharmacy_name || 'Pharmacy pickup');
     return `
       <article class="order-reference-card" data-order-number="${number}" data-order-tab="${escapeHtml(order.status_tab)}">
         <div class="order-reference-product">
           <div>
             <b>Order #${number}</b>
-            <small>${count} item${count === 1 ? '' : 's'} • ${escapeHtml(order.pharmacy_name)}</small>
+            <small>${summary}</small>
             <div class="order-reference-thumbs">${thumbs}${extraHtml}</div>
           </div>
         </div>
         <div class="order-reference-address">
           <b>${ordersListIcon('pin')} Pickup branch</b>
-          <span>${pickup.replace(/,\s*/g, ',<br>')}</span>
+          <span>${storeCount > 1 ? pickup : pickup.replace(/,\s*/g, ',<br>')}</span>
           <b class="is-pickup">${ordersListIcon('box')} Pick up only</b>
           <span>Show this order at the pharmacy counter.</span>
         </div>
@@ -2825,12 +2873,75 @@ function odIcon(name){
   return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:16px;height:16px;max-width:16px;max-height:16px;display:block;flex:none">${body}</svg>`;
 }
 
+function findResidenceOrder(id){
+  const needle = String(id || '');
+  return residenceOrders().find(item => {
+    const order = presentResidenceOrder(item);
+    if(String(order.order_number) === needle || String(order.id) === needle) return true;
+    return (order.stores || []).some(store => String(store.order_number) === needle || String(store.id) === needle);
+  }) || null;
+}
+
+function orderProgressIndex(status){
+  const key = String(status || '').toLowerCase();
+  if(key === 'cancelled') return 0;
+  if(key === 'confirmed') return 2;
+  if(key === 'preparing') return 3;
+  if(key === 'ready') return 4;
+  if(['picked_up','pickedup','delivered','completed'].includes(key)) return 5;
+  return 1;
+}
+
+function orderTimelineHtml(status, stamp){
+  const current = orderProgressIndex(status);
+  const steps = [
+    {name:'Order placed', icon:'check'},
+    {name:'Processing', icon:'clock'},
+    {name:'Confirmed', icon:'check'},
+    {name:'Preparing', icon:'capsule'},
+    {name:'Ready for pick up', icon:'store'},
+    {name:'Completed', icon:'check'}
+  ].map((step, index) => {
+    const state = String(status).toLowerCase() === 'cancelled' && index > 0
+      ? 'is-muted'
+      : (index < current ? 'is-done' : index === current ? 'is-current' : 'is-muted');
+    const icon = (state === 'is-done' || (state === 'is-current' && index === 5)) ? 'check' : step.icon;
+    return { ...step, state, icon, time: state !== 'is-muted' ? stamp : '' };
+  });
+  return steps.map((step, index) => {
+    const rail = index < steps.length - 1
+      ? `<span class="od-rail${index < current ? ' is-done' : ''}"></span>`
+      : '';
+    return `<div class="od-step ${step.state}${step.time ? ' is-dated' : ''}"><span class="od-node">${odIcon(step.icon)}</span><strong>${step.name}</strong><small>${step.time ? escapeHtml(step.time) : '&nbsp;'}</small></div>${rail}`;
+  }).join('');
+}
+
+function bindGroupedOrderDetail(root){
+  root.querySelectorAll('[data-mo-tab]').forEach(button => {
+    button.addEventListener('click', () => {
+      const tab = button.dataset.moTab;
+      root.querySelectorAll('[data-mo-tab]').forEach(item => item.classList.toggle('is-active', item === button));
+      root.querySelectorAll('[data-mo-panel]').forEach(panel => {
+        panel.hidden = panel.dataset.moPanel !== tab;
+      });
+    });
+  });
+  root.querySelectorAll('[data-mo-track]').forEach(button => {
+    button.addEventListener('click', () => {
+      const card = button.closest('.mo-store-card');
+      if(!card) return;
+      const open = card.classList.toggle('is-open');
+      button.textContent = open ? 'Hide tracking details' : 'View tracking details';
+    });
+  });
+}
+
 function renderOrderDetail(id){
   const root = document.getElementById('orders-detail-view');
   if(!root) return;
   root.dataset.orderId = String(id);
 
-  const order = residenceOrders().find(item => String(item.order_number) === String(id) || String(item.id) === String(id));
+  const order = findResidenceOrder(id);
   if(!order){
     root.innerHTML = `<button type="button" class="od-back" onclick="closeOrderDetail()">${odIcon('back')} Back to Orders</button><p class="orders-empty">This order was not found.</p>`;
     return;
@@ -2841,121 +2952,91 @@ function renderOrderDetail(id){
   const remaining = roundMoney(data.total_amount - paidOnline);
   const fullyPaid = data.balance_paid || ['picked_up','pickedup','delivered','completed'].includes(String(data.status).toLowerCase());
   const peso = (n) => formatMoney(n);
-  const progressIndex = {
-    pending: 1,
-    processing: 1,
-    confirmed: 2,
-    preparing: 3,
-    ready: 4,
-    picked_up: 5,
-    pickedup: 5,
-    delivered: 5,
-    completed: 5,
-    cancelled: 0
-  };
-  const current = progressIndex[data.status] ?? 1;
   const stamp = `${data.date_label} • ${data.time_label}`;
-
-  const steps = [
-    {name:'Order placed', icon:'check'},
-    {name:'Processing', icon:'clock'},
-    {name:'Confirmed', icon:'check'},
-    {name:'Preparing', icon:'capsule'},
-    {name:'Ready for pick up', icon:'store'},
-    {name:'Completed', icon:'check'}
-  ].map((step, index) => {
-    const state = data.status === 'cancelled' && index > 0
-      ? 'is-muted'
-      : (index < current ? 'is-done' : index === current ? 'is-current' : 'is-muted');
-    const icon = (state === 'is-done' || (state === 'is-current' && index === 6)) ? 'check' : step.icon;
-    const showTime = state !== 'is-muted';
-    return { ...step, time: showTime ? stamp : '', state, icon };
-  });
-
-  const items = data.items || [];
+  const timelineHtml = orderTimelineHtml(data.status, stamp);
   const fallbackImage = cartMedicineFallbackImage();
-  const timelineHtml = steps.map((step, index) => {
-    const rail = index < steps.length - 1
-      ? `<span class="od-rail${index < current ? ' is-done' : ''}"></span>`
-      : '';
-    return `<div class="od-step ${step.state}${step.time ? ' is-dated' : ''}"><span class="od-node">${odIcon(step.icon)}</span><strong>${step.name}</strong><small>${step.time ? escapeHtml(step.time) : '&nbsp;'}</small></div>${rail}`;
-  }).join('');
-
-  const rxUrl = String(data.prescription_url || '').trim();
-  const itemsHtml = items.map((item) => `
-    <div class="od-row">
-      <div class="od-product">
-        <img src="${escapeHtml(item.image || fallbackImage)}" alt="" width="52" height="52" onerror="this.onerror=null;this.src='${fallbackImage}'">
-        <div>
-          <b>${escapeHtml(item.name)}</b>
-          <em>${escapeHtml(data.pharmacy_name)}</em>
-          ${item.prescription_required ? `<span class="od-stock">Rx required <button type="button" class="od-rx-link" data-rx-url="${escapeHtml(String(item.prescription_url || rxUrl || '').trim())}">see prescription ›</button></span>` : ''}
-        </div>
-      </div>
-      <span>${peso(item.unit_price)}</span>
-      <span>${item.quantity}</span>
-      <span>${peso(item.line_total)}</span>
-    </div>`).join('') || '<p class="orders-empty">No items listed for this order.</p>';
-
+  const stores = Array.isArray(data.stores) && data.stores.length ? data.stores : [data];
+  const storeCount = stores.length;
+  const completedStores = stores.filter(store => orderProgressIndex(store.status) >= 5).length;
   const confirmed = data.down_payment > 0;
-  const pharmacy = getMarketplacePharmacy(data.pharmacy_id) || {};
-  const branchName = data.pharmacy_name || pharmacy.branch || pharmacy.name || 'Pharmacy';
-  const branchAddress = data.pharmacy_address || pharmacy.address || 'Pickup at the pharmacy counter';
-  const safeBranch = escHtml(branchName);
-  const safeAddress = escHtml(String(branchAddress).replace(/\s*,\s*/g, ', ').replace(/\s+/g, ' ').trim());
-  const directionsUrl = orderBranchDirectionsUrl(pharmacy);
-  const directionsControl = directionsUrl
-    ? `<a class="od-branch-go" href="${escHtml(directionsUrl)}" target="_blank" rel="noopener noreferrer" aria-label="View directions">${odIcon('chevron')}</a>`
-    : `<button type="button" class="od-branch-go" onclick="toast('Directions are unavailable for this branch.')" aria-label="View directions">${odIcon('chevron')}</button>`;
   const pickupProofHtml = data.pickup_proof_url
     ? `<a class="od-pickup-proof" href="${escHtml(data.pickup_proof_url)}" target="_blank" rel="noopener noreferrer"><span class="od-pickup-proof-icon">${odIcon('image')}</span><span><strong>Pickup completed</strong><small>${escapeHtml(String(data.pickup_proof_url).split('/').pop())}</small></span>${odIcon('chevron')}</a>`
     : '';
 
+  const storeCards = stores.map(store => {
+    const pharmacy = getMarketplacePharmacy(store.pharmacy_id) || {};
+    const logo = store.pharmacy_logo || pharmacy.logo_url || '';
+    const logoHtml = logo
+      ? `<img src="${escHtml(logo)}" alt="" onerror="this.style.display='none'">`
+      : `<span>${escHtml(String(store.pharmacy_name || 'P').slice(0, 1))}</span>`;
+    const itemsHtml = (store.items || []).map(item => `
+      <div class="mo-store-item">
+        <img src="${escapeHtml(item.image || fallbackImage)}" alt="" onerror="this.onerror=null;this.src='${fallbackImage}'">
+        <div>
+          <b>${escapeHtml(item.name)}</b>
+          <small>Qty: ${item.quantity}</small>
+        </div>
+        <strong>${peso(item.line_total)}</strong>
+      </div>
+    `).join('');
+    const subtotal = (store.items || []).reduce((sum, item) => sum + Number(item.line_total || 0), 0) || Number(store.total_amount || 0);
+    return `
+      <article class="mo-store-card">
+        <header class="mo-store-head">
+          <div class="mo-store-logo">${logoHtml}</div>
+          <div>
+            <strong>${escHtml(store.pharmacy_name)}</strong>
+            <small>Pickup: ${escHtml(store.pharmacy_address || pharmacy.address || 'Pharmacy counter')}</small>
+          </div>
+          <span class="mo-store-status ${escHtml(store.status_class || '')}">${escHtml(store.status_label || 'Processing')}</span>
+        </header>
+        <div class="mo-store-items">${itemsHtml}</div>
+        <div class="mo-store-foot">
+          <span>Store Subtotal</span>
+          <b>${peso(store.total_amount || subtotal)}</b>
+        </div>
+        <div class="mo-store-track">
+          <div class="od-timeline mo-store-timeline">${orderTimelineHtml(store.status, `${store.date_label || data.date_label} • ${store.time_label || data.time_label}`)}</div>
+        </div>
+        <button type="button" class="mo-store-track-btn" data-mo-track>View tracking details</button>
+      </article>`;
+  }).join('');
+
+  const fulfillmentNote = storeCount > 1
+    ? `${completedStores} of ${storeCount} stores completed`
+    : '';
+  const statusBadge = data.partially_fulfilled ? 'Partially fulfilled' : (data.status_label || 'Processing');
+
   root.innerHTML = `
     <button type="button" class="od-back" onclick="closeOrderDetail()">${odIcon('back')} Back to Orders</button>
+    <div class="mo-parent-head">
+      <div>
+        <h2>Order #${escHtml(data.order_number)}</h2>
+        <p>${storeCount} store${storeCount === 1 ? '' : 's'} • ${data.item_count || (data.items || []).length} item${(data.item_count || 1) === 1 ? '' : 's'} • ${peso(data.total_amount)}</p>
+        <small>${odIcon('calendar')} ${escHtml(data.date_label)} • ${escHtml(data.time_label)}</small>
+      </div>
+      <div class="mo-parent-badge">
+        <strong class="${escHtml(data.status_class || '')}">${escHtml(statusBadge)}</strong>
+        ${fulfillmentNote ? `<small>${escHtml(fulfillmentNote)}</small>` : ''}
+      </div>
+    </div>
+    ${storeCount > 1 ? `<p class="mo-parent-note">You purchased items from multiple pharmacies in one checkout. Each store will process and deliver your items separately.</p>` : ''}
+    <div class="mo-order-tabs">
+      <button type="button" class="is-active" data-mo-tab="summary">Order Summary</button>
+      <button type="button" data-mo-tab="timeline">Timeline</button>
+    </div>
     <div class="od-layout">
       <main class="od-main">
-        <div class="od-title-row">
-          <h2>Order Details</h2>
+        <div data-mo-panel="summary">${storeCards}</div>
+        <div data-mo-panel="timeline" hidden>
+          <section class="od-timeline">${timelineHtml}</section>
+          <p class="mo-parent-note">Overall status follows the slowest pharmacy in this checkout: Order placed, Processing, Confirmed, Preparing, Ready for pick up, then Completed.</p>
         </div>
-        <h3 class="od-number">Order #${escHtml(data.order_number)}</h3>
-        <p class="od-placed">${odIcon('calendar')} Placed on ${escHtml(data.date_label)} • ${escHtml(data.time_label)}</p>
-        <section class="od-timeline">${timelineHtml}</section>
-        <section class="od-items">
-          <header>
-            <h3><span class="od-icon">${odIcon('bag')}</span> Items in this Order</h3>
-            <b>${items.length} Item${items.length === 1 ? '' : 's'}</b>
-          </header>
-          <div class="od-table">
-            <div class="od-head"><span>Product</span><span>Price</span><span>Quantity</span><span>Total</span></div>
-            ${itemsHtml}
-          </div>
-        </section>
       </main>
       <aside class="od-aside">
-        <section class="od-card od-branch">
-          <header>
-            <h3><span class="od-icon">${odIcon('store')}</span> Pickup Branch</h3>
-            <span class="od-badge">${escHtml(data.status_label || 'Pending')}</span>
-          </header>
-          <div class="od-branch-body">
-            <div class="od-branch-copy">
-              <div class="od-branch-name">${odIcon('pin')}<strong>${safeBranch}</strong></div>
-              <p class="od-branch-address"><span>${safeAddress}</span>${directionsControl}</p>
-            </div>
-          </div>
-        </section>
-        <section class="od-confirmed ${confirmed ? '' : 'is-pending'}" hidden>
-          <div>
-            <h3>${confirmed ? 'Downpayment Confirmed' : 'Awaiting Downpayment'}</h3>
-            <div class="od-gcash-line"><span class="od-gcash">G</span><b>GCash • ${peso(data.down_payment || data.total_amount * CHECKOUT_DOWN_RATE)}</b></div>
-            <p>${confirmed ? 'Payment confirmed via PayMongo' : 'Complete your GCash payment to confirm this order.'}</p>
-            ${confirmed ? `<small>${odIcon('clock')} ${escHtml(data.date_label)} • ${escHtml(data.time_label)}</small>` : ''}
-          </div>
-        </section>
         <section class="od-card od-summary">
           <h3><span class="od-icon">${odIcon('receipt')}</span><span>Payment Summary<small>Payment details and transaction breakdown</small></span></h3>
-          <div class="od-payment-summary-card"><div class="od-payment-summary-method"><span class="od-gcash">G</span><b>GCash<br>${peso(data.down_payment)}</b></div><div class="od-payment-summary-info"><small>${confirmed ? 'Payment confirmed via PayMongo' : 'Payment pending'}</small>${confirmed ? `<small>${escHtml(data.date_label)} â€¢ ${escHtml(data.time_label)}</small>` : ''}</div><span class="od-paid-badge">✓ Paid</span></div>
+          <div class="od-payment-summary-card"><div class="od-payment-summary-method"><span class="od-gcash">G</span><b>GCash<br>${peso(data.down_payment)}</b></div><div class="od-payment-summary-info"><small>${confirmed ? 'Payment confirmed via PayMongo' : 'Payment pending'}</small>${confirmed ? `<small>${escHtml(data.date_label)} • ${escHtml(data.time_label)}</small>` : ''}</div><span class="od-paid-badge">✓ Paid</span></div>
           <div class="od-sum"><span>Total Amount</span><b>${peso(data.total_amount)}</b></div>
           <div class="od-sum"><span>${fullyPaid ? 'Paid (100%)' : 'Paid (60%)'}<small>60% · paid via GCash</small></span><b class="is-paid">${peso(fullyPaid ? data.total_amount : data.down_payment)}</b></div>
           <div class="od-sum od-sum-balance">
@@ -2967,6 +3048,7 @@ function renderOrderDetail(id){
         ${pickupProofHtml}
       </aside>
     </div>`;
+  bindGroupedOrderDetail(root);
 }
 
 function renderReferenceOrderDetail(id){
