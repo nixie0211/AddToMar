@@ -739,6 +739,7 @@ function proceedToCheckout(){
     toast('Check the items you want to check out.');
     return;
   }
+  resetCheckoutPaymentSession();
   go('checkout');
 }
 
@@ -958,6 +959,9 @@ function renderCheckoutPage(){
 
   const checkoutItems = cartCheckoutItems();
   const checkoutSignature = cartItemsSignature(checkoutItems);
+  if(window.paymongoPaid && checkoutSignature !== checkoutPaidSignature){
+    resetCheckoutPaymentSession();
+  }
   captureCheckoutItemNotes();
   if(summaryLines.dataset.checkoutSignature === checkoutSignature && checkoutItems.length > 0){
     return;
@@ -1716,6 +1720,26 @@ async function completePayMongoPayment(intentId, fromPoll){
 }
 
 let checkoutPaymentStatus = 'pending';
+let checkoutPaidSignature = '';
+
+function resetCheckoutPaymentSession(){
+  stopPayMongoPoll();
+  closePayMongoPopup();
+  paymongoIntentId = '';
+  paymongoCompleting = false;
+  checkoutPaying = false;
+  paymongoAuthUrl = '';
+  checkoutPaidSignature = '';
+  if(window.RESIDENCE_CONFIG) window.RESIDENCE_CONFIG.pendingPaymentIntent = '';
+  setPayModalOpen('paymongo-auth-modal', false);
+  const walletBtn = document.querySelector('.paymongo-wallet-btn');
+  if(walletBtn){
+    walletBtn.disabled = false;
+    walletBtn.textContent = 'Pay with GCash';
+  }
+  setCheckoutPaymentStatus('pending');
+  setCheckoutPayBusy(false);
+}
 
 function syncCheckoutConfirmButton(){
   const placeBtn = document.getElementById('checkout-place-order-btn');
@@ -1774,6 +1798,7 @@ function setCheckoutPaymentStatus(status){
 function applyPaidPayment(d){
   window.paymongoPaid = true;
   checkoutPaying = false;
+  checkoutPaidSignature = cartItemsSignature(cartCheckoutItems());
   setCheckoutPaymentStatus('paid');
   const btn = document.querySelector('.paymongo-wallet-btn');
   if(btn){
@@ -1820,6 +1845,7 @@ function clearPaidCheckoutItems(){
   }
   syncCartCount();
   renderCartPage();
+  resetCheckoutPaymentSession();
 }
 
 function closePayMongoReceiptModal(){
@@ -2339,6 +2365,7 @@ function buyNowFromPreview(){
   // Buy now uses a temporary checkout item and never changes the saved cart.
   window.buyNowCheckout = { pharmacyId:data.pharmacyId, pharmacyName:(getMarketplacePharmacy(data.pharmacyId)?.name || data.pharmacyName || data.pharmacyLabel || 'Pharmacy'), item:{ ...data, quantity:qty, selected:true } };
   closeProductPreview({ skipPharmacyReturn: true });
+  resetCheckoutPaymentSession();
   go('checkout');
   toast(qty > 1 ? `${qty} items added — proceed to checkout` : 'Proceeding to checkout');
 }
@@ -4721,6 +4748,14 @@ document.addEventListener('DOMContentLoaded', () => {
   if(paidReturn){
     sessionStorage.removeItem('residence_paid_clear');
     clearPaidCheckoutItems();
+    try{
+      const url = new URL(location.href);
+      if(url.searchParams.has('paid') || url.searchParams.has('payment_intent_id')){
+        url.searchParams.delete('paid');
+        url.searchParams.delete('payment_intent_id');
+        history.replaceState({}, '', url.pathname + url.search + url.hash);
+      }
+    }catch(e){}
   }
   const pendingIntent = window.RESIDENCE_CONFIG?.pendingPaymentIntent || new URLSearchParams(location.search).get('payment_intent_id');
   if(pendingIntent){
