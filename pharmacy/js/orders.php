@@ -224,6 +224,9 @@ function closeCancelOrderModal() {
   syncModalOpenState();
 }
 
+let drawerRequestId = 0;
+let drawerAbort = null;
+
 function ordersViewUrl(href) {
   try {
     const url = new URL(href, window.location.href);
@@ -231,6 +234,125 @@ function ordersViewUrl(href) {
   } catch (error) {
     return href || '';
   }
+}
+
+function parseOrdersHref(href) {
+  try {
+    const url = new URL(href, window.location.href);
+    return {
+      nextUrl: url.pathname + url.search,
+      status: url.searchParams.get('status') || 'pending',
+      orderId: parseInt(url.searchParams.get('order_id') || '0', 10),
+    };
+  } catch (error) {
+    return { nextUrl: href || '', status: 'pending', orderId: 0 };
+  }
+}
+
+function currentOrdersStatus() {
+  return new URLSearchParams(window.location.search).get('status') || 'pending';
+}
+
+function syncOrdersHistory(nextUrl, options) {
+  options = options || {};
+  if (options.skipHistory || !nextUrl) return;
+  const currentUrl = window.location.pathname + window.location.search;
+  if (currentUrl === nextUrl) return;
+  const state = { view: 'orders' };
+  if (options.replace) history.replaceState(state, '', nextUrl);
+  else history.pushState(state, '', nextUrl);
+}
+
+function ordersFragmentUrl(nextUrl) {
+  const parsed = parseOrdersHref(nextUrl);
+  const frag = new URL('api/orders-view.php', window.location.href);
+  frag.searchParams.set('status', parsed.status);
+  if (parsed.orderId > 0) frag.searchParams.set('order_id', String(parsed.orderId));
+  return frag.pathname + frag.search;
+}
+
+function markActiveOrderRow(orderId) {
+  document.querySelectorAll('#view-orders .orders-table-row').forEach(function (row) {
+    const link = row.querySelector('a.orders-table-link');
+    let id = 0;
+    if (link) {
+      try {
+        id = parseInt(new URL(link.getAttribute('href'), window.location.href).searchParams.get('order_id') || '0', 10);
+      } catch (error) {
+        id = 0;
+      }
+    }
+    row.classList.toggle('is-active', orderId > 0 && id === orderId);
+  });
+}
+
+function applyOrderDrawerHtml(html) {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const incoming = doc.getElementById('order-drawer');
+  const current = document.getElementById('order-drawer');
+  if (!incoming || !current) return false;
+  current.replaceWith(incoming);
+  incoming.hidden = false;
+  incoming.classList.remove('is-loading');
+  return true;
+}
+
+async function loadOrderDrawer(orderId, status, options) {
+  options = options || {};
+  const requestId = ++drawerRequestId;
+  if (drawerAbort) drawerAbort.abort();
+  drawerAbort = new AbortController();
+
+  try {
+    const response = await fetch(
+      'api/order-drawer.php?order_id=' + encodeURIComponent(String(orderId)) + '&status=' + encodeURIComponent(status || currentOrdersStatus()),
+      {
+        credentials: 'same-origin',
+        cache: 'no-store',
+        headers: { Accept: 'text/html' },
+        signal: drawerAbort.signal,
+      }
+    );
+    if (requestId !== drawerRequestId) return;
+    if (!response.ok) throw new Error('load');
+    const html = await response.text();
+    if (requestId !== drawerRequestId) return;
+    if (!applyOrderDrawerHtml(html)) throw new Error('parse');
+  } catch (error) {
+    if (error && error.name === 'AbortError') return;
+    if (options.fallbackUrl) window.location.href = options.fallbackUrl;
+  }
+}
+
+function openOrderFromLink(href, options) {
+  options = options || {};
+  const parsed = parseOrdersHref(href);
+  if (parsed.orderId <= 0) {
+    closeOrderDrawer(parsed.nextUrl, options);
+    return;
+  }
+  syncOrdersHistory(parsed.nextUrl, options);
+  markActiveOrderRow(parsed.orderId);
+  const drawer = document.getElementById('order-drawer');
+  if (drawer) {
+    drawer.hidden = false;
+    drawer.classList.add('is-loading');
+  }
+  loadOrderDrawer(parsed.orderId, parsed.status, { fallbackUrl: parsed.nextUrl });
+}
+
+function closeOrderDrawer(href, options) {
+  options = options || {};
+  const nextUrl = ordersViewUrl(href);
+  drawerRequestId += 1;
+  if (drawerAbort) drawerAbort.abort();
+  const drawer = document.getElementById('order-drawer');
+  if (drawer) {
+    drawer.hidden = true;
+    drawer.classList.remove('is-loading');
+  }
+  markActiveOrderRow(0);
+  syncOrdersHistory(nextUrl, Object.assign({ replace: true }, options));
 }
 
 async function loadOrdersView(href, options) {
@@ -244,7 +366,7 @@ async function loadOrdersView(href, options) {
   loadOrdersView.inFlight = true;
 
   try {
-    const response = await fetch(nextUrl, {
+    const response = await fetch(ordersFragmentUrl(nextUrl), {
       credentials: 'same-origin',
       cache: 'no-store',
       headers: {
@@ -265,15 +387,7 @@ async function loadOrdersView(href, options) {
 
     incoming.classList.toggle('active', current.classList.contains('active'));
     current.replaceWith(incoming);
-
-    if (!options.skipHistory) {
-      const currentUrl = window.location.pathname + window.location.search;
-      if (currentUrl !== nextUrl) {
-        const state = { view: 'orders' };
-        if (options.replace) history.replaceState(state, '', nextUrl);
-        else history.pushState(state, '', nextUrl);
-      }
-    }
+    syncOrdersHistory(nextUrl, options);
 
     const view = document.getElementById('view-orders');
     if (view) delete view.dataset.orderUiBound;
@@ -288,7 +402,16 @@ async function loadOrdersView(href, options) {
 function navigateOrdersLink(link) {
   const href = link.getAttribute('href');
   if (!href) return;
-  loadOrdersView(href);
+  if (link.classList.contains('tab-btn')) {
+    loadOrdersView(href);
+    return;
+  }
+  if (link.classList.contains('order-drawer-close-btn') || link.id === 'order-drawer-close') {
+    const close = document.getElementById('order-drawer-close-btn');
+    closeOrderDrawer((close && close.getAttribute('href')) || href);
+    return;
+  }
+  openOrderFromLink(href);
 }
 
 async function submitOrderStatusAdvance(button) {
@@ -322,7 +445,7 @@ async function submitOrderStatusAdvance(button) {
     }
 
     const status = result.status || nextStatus;
-    loadOrdersView('index.php?view=orders&status=' + encodeURIComponent(status) + '&order_id=' + orderId, { replace: true, force: true });
+    openOrderFromLink('index.php?view=orders&status=' + encodeURIComponent(status) + '&order_id=' + orderId, { replace: true });
   } catch (error) {
     window.alert('Could not update order status. Please try again.');
     button.disabled = false;
@@ -348,7 +471,7 @@ async function completeOrder(orderId) {
     throw new Error(result.message || 'Could not complete this order.');
   }
 
-  loadOrdersView('index.php?view=orders&status=delivered&order_id=' + orderId, { replace: true, force: true });
+  openOrderFromLink('index.php?view=orders&status=delivered&order_id=' + orderId, { replace: true });
 }
 
 async function uploadPickupProof(orderId, file) {
@@ -371,240 +494,248 @@ async function uploadPickupProof(orderId, file) {
   }
 }
 
+async function handleCancelOrderSubmit(cancelOrderSubmitBtn) {
+  const select = document.getElementById('cancel-reason-select');
+  const otherInput = document.getElementById('cancel-reason-other-input');
+  const reason = getCancelReason();
+  const orderId = cancelOrderId;
+
+  if (!orderId) return;
+  if (!(select?.value || '')) {
+    setCancelOrderError('Please select a cancellation reason.');
+    select?.focus();
+    return;
+  }
+  if ((select?.value || '') === CANCEL_REASON_OTHER && !reason) {
+    setCancelOrderError('Please specify the cancellation reason.');
+    otherInput?.focus();
+    return;
+  }
+
+  cancelOrderSubmitBtn.disabled = true;
+  cancelOrderSubmitBtn.textContent = 'Cancelling...';
+  setCancelOrderError('');
+
+  try {
+    const body = new FormData();
+    body.append('order_id', String(orderId));
+    body.append('reason', reason);
+
+    const response = await fetch('api/cancel-order.php', {
+      method: 'POST',
+      body,
+      credentials: 'same-origin',
+    });
+
+    const result = await response.json().catch(function () {
+      return { success: false, message: 'Could not cancel order.' };
+    });
+
+    if (!response.ok || !result.success) {
+      setCancelOrderError(result.message || 'Could not cancel order.');
+      cancelOrderSubmitBtn.disabled = false;
+      cancelOrderSubmitBtn.textContent = 'Cancel order';
+      return;
+    }
+
+    closeCancelOrderModal();
+    openOrderFromLink('index.php?view=orders&status=cancelled&order_id=' + orderId, { replace: true });
+  } catch (error) {
+    setCancelOrderError('Could not cancel order. Please try again.');
+    cancelOrderSubmitBtn.disabled = false;
+    cancelOrderSubmitBtn.textContent = 'Cancel order';
+  }
+}
+
+async function handlePickupProofSubmit(pickupProofSubmitBtn) {
+  const input = document.getElementById('pickup-proof-input');
+  const file = input?.files && input.files[0];
+  const orderId = pickupProofOrderId;
+
+  if (!orderId) return;
+  if (!file && !pickupProofHasExisting) {
+    setPickupProofError('Choose a file to continue.');
+    return;
+  }
+
+  pickupProofSubmitBtn.disabled = true;
+  pickupProofSubmitBtn.textContent = 'Processing...';
+  setPickupProofError('');
+
+  try {
+    if (file) {
+      await uploadPickupProof(orderId, file);
+    }
+    await completeOrder(orderId);
+    closePickupProofModal();
+  } catch (error) {
+    setPickupProofError(error.message || 'Could not complete this order.');
+    pickupProofSubmitBtn.disabled = false;
+    pickupProofSubmitBtn.textContent = 'Mark as complete';
+    updatePickupProofSubmitState();
+  }
+}
+
+function handlePickupProofChange() {
+  const pickupProofInput = document.getElementById('pickup-proof-input');
+  const file = pickupProofInput && pickupProofInput.files && pickupProofInput.files[0];
+  const preview = document.getElementById('pickup-proof-preview');
+  const previewImage = document.getElementById('pickup-proof-preview-image');
+  const previewName = document.getElementById('pickup-proof-preview-name');
+
+  setPickupProofError('');
+
+  if (!file) {
+    if (preview) preview.hidden = true;
+    updatePickupProofSubmitState();
+    return;
+  }
+
+  if (previewName) {
+    previewName.textContent = file.name;
+  }
+  if (preview) {
+    preview.hidden = false;
+  }
+  if (previewImage) {
+    if (file.type === 'application/pdf') {
+      previewImage.hidden = true;
+      previewImage.removeAttribute('src');
+    } else {
+      previewImage.hidden = false;
+      previewImage.src = URL.createObjectURL(file);
+    }
+  }
+
+  pickupProofHasExisting = false;
+  updatePickupProofSubmitState();
+}
+
 function initPharmacyOrderUi() {
   const view = document.getElementById('view-orders');
   if (!view || view.dataset.orderUiBound === '1') return;
   view.dataset.orderUiBound = '1';
-  document.querySelectorAll('#view-orders .tabs a.tab-btn, #view-orders a.orders-table-link, #view-orders a.order-drawer-close-btn').forEach(function (link) {
-    link.addEventListener('click', function (event) {
+
+  view.addEventListener('click', function (event) {
+    const tab = event.target.closest('.tabs a.tab-btn');
+    if (tab && view.contains(tab)) {
       event.preventDefault();
-      event.stopPropagation();
-      navigateOrdersLink(link);
-    });
-  });
-  document.getElementById('order-drawer-close')?.addEventListener('click', function () {
-    const close = document.getElementById('order-drawer-close-btn');
-    if (close) navigateOrdersLink(close);
-  });
-
-  document.querySelectorAll('.view-prescription-trigger').forEach(function (trigger) {
-    trigger.addEventListener('click', function () {
-      openPrescriptionViewer(trigger.getAttribute('data-prescription-url') || '');
-    });
-  });
-
-  document.getElementById('prescription-viewer-close')?.addEventListener('click', closePrescriptionViewer);
-  document.getElementById('prescription-viewer-close-btn')?.addEventListener('click', closePrescriptionViewer);
-  document.getElementById('pickup-proof-modal-close')?.addEventListener('click', closePickupProofModal);
-  document.getElementById('pickup-proof-modal-close-btn')?.addEventListener('click', closePickupProofModal);
-  document.getElementById('pickup-proof-cancel-btn')?.addEventListener('click', closePickupProofModal);
-  document.getElementById('cancel-order-modal-close')?.addEventListener('click', closeCancelOrderModal);
-  document.getElementById('cancel-order-modal-close-btn')?.addEventListener('click', closeCancelOrderModal);
-  document.getElementById('cancel-order-dismiss-btn')?.addEventListener('click', closeCancelOrderModal);
-
-  const cancelReasonSelect = document.getElementById('cancel-reason-select');
-  if (cancelReasonSelect) {
-    cancelReasonSelect.addEventListener('change', function () {
-      setCancelOrderError('');
-      toggleCancelOtherField();
-    });
-  }
-
-  const cancelReasonOtherInput = document.getElementById('cancel-reason-other-input');
-  if (cancelReasonOtherInput) {
-    cancelReasonOtherInput.addEventListener('input', function () {
-      setCancelOrderError('');
-    });
-  }
-
-  const cancelOrderSubmitBtn = document.getElementById('cancel-order-submit-btn');
-  if (cancelOrderSubmitBtn) {
-    cancelOrderSubmitBtn.addEventListener('click', async function () {
-      const select = document.getElementById('cancel-reason-select');
-      const otherInput = document.getElementById('cancel-reason-other-input');
-      const reason = getCancelReason();
-      const orderId = cancelOrderId;
-
-      if (!orderId) return;
-      if (!(select?.value || '')) {
-        setCancelOrderError('Please select a cancellation reason.');
-        select?.focus();
-        return;
-      }
-      if ((select?.value || '') === CANCEL_REASON_OTHER && !reason) {
-        setCancelOrderError('Please specify the cancellation reason.');
-        otherInput?.focus();
-        return;
-      }
-
-      cancelOrderSubmitBtn.disabled = true;
-      cancelOrderSubmitBtn.textContent = 'Cancelling...';
-      setCancelOrderError('');
-
-      try {
-        const body = new FormData();
-        body.append('order_id', String(orderId));
-        body.append('reason', reason);
-
-        const response = await fetch('api/cancel-order.php', {
-          method: 'POST',
-          body,
-          credentials: 'same-origin',
-        });
-
-        const result = await response.json().catch(function () {
-          return { success: false, message: 'Could not cancel order.' };
-        });
-
-        if (!response.ok || !result.success) {
-          setCancelOrderError(result.message || 'Could not cancel order.');
-          cancelOrderSubmitBtn.disabled = false;
-          cancelOrderSubmitBtn.textContent = 'Cancel order';
-          return;
-        }
-
-        loadOrdersView('index.php?view=orders&status=cancelled&order_id=' + orderId, { replace: true, force: true });
-      } catch (error) {
-        setCancelOrderError('Could not cancel order. Please try again.');
-        cancelOrderSubmitBtn.disabled = false;
-        cancelOrderSubmitBtn.textContent = 'Cancel order';
-      }
-    });
-  }
-
-  if (!window.__pharmacyOrderEscapeBound) {
-    window.__pharmacyOrderEscapeBound = true;
-    document.addEventListener('keydown', function (event) {
-    if (event.key !== 'Escape') return;
-    if (document.getElementById('cancel-order-modal')?.hidden === false) {
-      closeCancelOrderModal();
+      navigateOrdersLink(tab);
       return;
     }
-    if (document.getElementById('pickup-proof-modal')?.hidden === false) {
-      closePickupProofModal();
+
+    const tableLink = event.target.closest('a.orders-table-link');
+    if (tableLink && view.contains(tableLink)) {
+      event.preventDefault();
+      navigateOrdersLink(tableLink);
       return;
     }
-    if (document.getElementById('prescription-viewer')?.hidden === false) {
+
+    const closeEl = event.target.closest('#order-drawer-close, #order-drawer-close-btn');
+    if (closeEl) {
+      event.preventDefault();
+      navigateOrdersLink(closeEl);
+      return;
+    }
+
+    const rx = event.target.closest('.view-prescription-trigger');
+    if (rx) {
+      openPrescriptionViewer(rx.getAttribute('data-prescription-url') || '');
+      return;
+    }
+
+    if (event.target.closest('#prescription-viewer-close, #prescription-viewer-close-btn')) {
       closePrescriptionViewer();
       return;
     }
-    const drawerClose = document.getElementById('order-drawer-close-btn');
-    if (document.getElementById('order-drawer')?.hidden === false && drawerClose) {
-      navigateOrdersLink(drawerClose);
+    if (event.target.closest('#pickup-proof-modal-close, #pickup-proof-modal-close-btn, #pickup-proof-cancel-btn')) {
+      closePickupProofModal();
+      return;
     }
-    });
-  }
+    if (event.target.closest('#cancel-order-modal-close, #cancel-order-modal-close-btn, #cancel-order-dismiss-btn')) {
+      closeCancelOrderModal();
+      return;
+    }
 
-  const pickupProofInput = document.getElementById('pickup-proof-input');
-  if (pickupProofInput) {
-    pickupProofInput.addEventListener('change', function () {
-      const file = pickupProofInput.files && pickupProofInput.files[0];
-      const preview = document.getElementById('pickup-proof-preview');
-      const previewImage = document.getElementById('pickup-proof-preview-image');
-      const previewName = document.getElementById('pickup-proof-preview-name');
-
-      setPickupProofError('');
-
-      if (!file) {
-        if (preview) preview.hidden = true;
-        updatePickupProofSubmitState();
-        return;
-      }
-
-      if (previewName) {
-        previewName.textContent = file.name;
-      }
-
-      if (preview) {
-        preview.hidden = false;
-      }
-
-      if (previewImage) {
-        if (file.type === 'application/pdf') {
-          previewImage.hidden = true;
-          previewImage.removeAttribute('src');
-        } else {
-          previewImage.hidden = false;
-          previewImage.src = URL.createObjectURL(file);
-        }
-      }
-
-      pickupProofHasExisting = false;
-      updatePickupProofSubmitState();
-    });
-  }
-
-  const pickupProofSubmitBtn = document.getElementById('pickup-proof-submit-btn');
-  if (pickupProofSubmitBtn) {
-    pickupProofSubmitBtn.addEventListener('click', async function () {
-      const input = document.getElementById('pickup-proof-input');
-      const file = input?.files && input.files[0];
-      const orderId = pickupProofOrderId;
-
-      if (!orderId) return;
-      if (!file && !pickupProofHasExisting) {
-        setPickupProofError('Choose a file to continue.');
-        return;
-      }
-
-      pickupProofSubmitBtn.disabled = true;
-      pickupProofSubmitBtn.textContent = 'Processing...';
-      setPickupProofError('');
-
-      try {
-        if (file) {
-          await uploadPickupProof(orderId, file);
-        }
-        await completeOrder(orderId);
-      } catch (error) {
-        setPickupProofError(error.message || 'Could not complete this order.');
-        pickupProofSubmitBtn.disabled = false;
-        pickupProofSubmitBtn.textContent = 'Mark as complete';
-        updatePickupProofSubmitState();
-      }
-    });
-  }
-
-  const updateStatusBtn = document.getElementById('update-order-status-btn');
-  if (updateStatusBtn) {
-    updateStatusBtn.addEventListener('click', function () {
+    const updateStatusBtn = event.target.closest('#update-order-status-btn, #confirm-order-btn');
+    if (updateStatusBtn) {
       submitOrderStatusAdvance(updateStatusBtn);
-    });
-  }
+      return;
+    }
 
-  const confirmOrderBtn = document.getElementById('confirm-order-btn');
-  if (confirmOrderBtn) {
-    confirmOrderBtn.addEventListener('click', function () {
-      submitOrderStatusAdvance(confirmOrderBtn);
-    });
-  }
-
-  const completeBtn = document.getElementById('complete-order-btn');
-  if (completeBtn) {
-    completeBtn.addEventListener('click', function () {
+    const completeBtn = event.target.closest('#complete-order-btn');
+    if (completeBtn) {
       const orderId = parseInt(completeBtn.dataset.orderId || '0', 10);
       if (!orderId) return;
-
       openPickupProofModal(
         orderId,
         completeBtn.dataset.orderNumber || '',
         completeBtn.dataset.customer || '',
         completeBtn.dataset.hasProof || '0'
       );
-    });
-  }
+      return;
+    }
 
-  const cancelBtn = document.getElementById('cancel-order-btn');
-  if (cancelBtn) {
-    cancelBtn.addEventListener('click', function () {
+    const cancelBtn = event.target.closest('#cancel-order-btn');
+    if (cancelBtn) {
       const orderId = parseInt(cancelBtn.dataset.orderId || '0', 10);
       if (!orderId) return;
-
       openCancelOrderModal(
         orderId,
         cancelBtn.dataset.orderNumber || '',
         cancelBtn.dataset.customer || ''
       );
+      return;
+    }
+
+    const cancelOrderSubmitBtn = event.target.closest('#cancel-order-submit-btn');
+    if (cancelOrderSubmitBtn) {
+      handleCancelOrderSubmit(cancelOrderSubmitBtn);
+      return;
+    }
+
+    const pickupProofSubmitBtn = event.target.closest('#pickup-proof-submit-btn');
+    if (pickupProofSubmitBtn) {
+      handlePickupProofSubmit(pickupProofSubmitBtn);
+    }
+  });
+
+  view.addEventListener('change', function (event) {
+    if (event.target && event.target.id === 'cancel-reason-select') {
+      setCancelOrderError('');
+      toggleCancelOtherField();
+    }
+    if (event.target && event.target.id === 'pickup-proof-input') {
+      handlePickupProofChange();
+    }
+  });
+
+  view.addEventListener('input', function (event) {
+    if (event.target && event.target.id === 'cancel-reason-other-input') {
+      setCancelOrderError('');
+    }
+  });
+
+  if (!window.__pharmacyOrderEscapeBound) {
+    window.__pharmacyOrderEscapeBound = true;
+    document.addEventListener('keydown', function (event) {
+      if (event.key !== 'Escape') return;
+      if (document.getElementById('cancel-order-modal')?.hidden === false) {
+        closeCancelOrderModal();
+        return;
+      }
+      if (document.getElementById('pickup-proof-modal')?.hidden === false) {
+        closePickupProofModal();
+        return;
+      }
+      if (document.getElementById('prescription-viewer')?.hidden === false) {
+        closePrescriptionViewer();
+        return;
+      }
+      const drawerClose = document.getElementById('order-drawer-close-btn');
+      if (document.getElementById('order-drawer')?.hidden === false && drawerClose) {
+        navigateOrdersLink(drawerClose);
+      }
     });
   }
 }
@@ -618,5 +749,25 @@ document.addEventListener('livesync:applied', function () {
 window.addEventListener('popstate', function () {
   const params = new URLSearchParams(window.location.search);
   if ((params.get('view') || '') !== 'orders') return;
-  loadOrdersView(window.location.pathname + window.location.search, { skipHistory: true });
+  const href = window.location.pathname + window.location.search;
+  const orderId = parseInt(params.get('order_id') || '0', 10);
+  const status = params.get('status') || 'pending';
+  const activeTab = document.querySelector('#view-orders .tab-btn.active');
+  let tabStatus = status;
+  if (activeTab) {
+    try {
+      tabStatus = new URL(activeTab.getAttribute('href'), window.location.href).searchParams.get('status') || status;
+    } catch (error) {
+      tabStatus = status;
+    }
+  }
+  if (tabStatus !== status) {
+    loadOrdersView(href, { skipHistory: true, force: true });
+    return;
+  }
+  if (orderId > 0) {
+    openOrderFromLink(href, { skipHistory: true });
+    return;
+  }
+  closeOrderDrawer(href, { skipHistory: true });
 });

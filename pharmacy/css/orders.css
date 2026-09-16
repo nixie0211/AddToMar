@@ -234,6 +234,16 @@
   background:rgba(11, 34, 48, 0.4);
   cursor:pointer;
 }
+.order-drawer.is-loading .order-overview{
+  pointer-events:none;
+}
+.order-drawer.is-loading .order-overview::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:rgba(255,255,255,.45);
+  z-index:2;
+}
 .order-overview{
   position:relative;
   z-index:1;

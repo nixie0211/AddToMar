@@ -482,27 +482,58 @@ function pharmacy_get_orders(int $limit = 50, ?string $status = null): array
     return $stmt->fetchAll();
 }
 
-function pharmacy_get_order_items(int $orderId): array
+function pharmacy_hydrate_order_item(array $item): array
 {
+    $item['image_url'] = pharmacy_medicine_image_url([
+        'id' => (int) ($item['catalog_medicine_id'] ?? $item['medicine_id'] ?? 0),
+        'medicine_id' => (int) ($item['catalog_medicine_id'] ?? $item['medicine_id'] ?? 0),
+        'image_path' => (string) ($item['image_path'] ?? ''),
+    ]) ?? '';
+
+    return $item;
+}
+
+function pharmacy_get_order_items_map(array $orderIds): array
+{
+    $ids = [];
+    foreach ($orderIds as $orderId) {
+        $orderId = (int) $orderId;
+        if ($orderId > 0) {
+            $ids[$orderId] = $orderId;
+        }
+    }
+    $ids = array_values($ids);
+    $map = [];
+    foreach ($ids as $orderId) {
+        $map[$orderId] = [];
+    }
+    if ($ids === []) {
+        return $map;
+    }
+
+    $placeholders = implode(',', array_fill(0, count($ids), '?'));
     $stmt = pharmacy_db()->prepare('
         SELECT oi.*, m.image_path, m.id AS catalog_medicine_id
         FROM order_items oi
         LEFT JOIN medicines m ON m.id = oi.medicine_id
-        WHERE oi.order_id = ?
+        WHERE oi.order_id IN (' . $placeholders . ')
         ORDER BY oi.id ASC
     ');
-    $stmt->execute([$orderId]);
-    $items = $stmt->fetchAll();
-    foreach ($items as &$item) {
-        $item['image_url'] = pharmacy_medicine_image_url([
-            'id' => (int) ($item['catalog_medicine_id'] ?? $item['medicine_id'] ?? 0),
-            'medicine_id' => (int) ($item['catalog_medicine_id'] ?? $item['medicine_id'] ?? 0),
-            'image_path' => (string) ($item['image_path'] ?? ''),
-        ]) ?? '';
+    $stmt->execute($ids);
+    foreach ($stmt->fetchAll() as $item) {
+        $orderId = (int) ($item['order_id'] ?? 0);
+        if ($orderId <= 0) {
+            continue;
+        }
+        $map[$orderId][] = pharmacy_hydrate_order_item($item);
     }
-    unset($item);
 
-    return $items;
+    return $map;
+}
+
+function pharmacy_get_order_items(int $orderId): array
+{
+    return pharmacy_get_order_items_map([$orderId])[$orderId] ?? [];
 }
 
 function pharmacy_get_order_status_counts(): array
