@@ -649,6 +649,142 @@ function pharmacy_orders_url(string $status = 'pending', int $orderId = 0): stri
     return 'index.php?' . http_build_query($params);
 }
 
+function pharmacy_orders_allowed_status(string $status): string
+{
+    $allowed = array_merge(['all'], array_keys(pharmacy_order_status_map()));
+    $status = trim($status);
+
+    return in_array($status, $allowed, true) ? $status : 'pending';
+}
+
+function pharmacy_order_list_row(array $order, array $items, int $index): array
+{
+    $status = (string) ($order['status'] ?? 'pending');
+    $meta = pharmacy_order_status_map()[$status] ?? ['c' => 'badge-gray', 't' => ucfirst($status)];
+    $createdAt = strtotime((string) ($order['created_at'] ?? '')) ?: time();
+    $customer = trim((string) ($order['customer_name'] ?? 'Customer'));
+    $reason = trim((string) ($order['cancellation_reason'] ?? ''));
+    $summary = pharmacy_order_items_summary($items);
+    if ($status === 'cancelled' && $reason !== '') {
+        $summary .= ' · ' . $reason;
+    }
+
+    return [
+        'id' => (int) ($order['id'] ?? 0),
+        'order_number' => (string) ($order['order_number'] ?? 'ORD-0000'),
+        'status' => $status,
+        'status_label' => $meta['t'],
+        'customer_name' => $customer,
+        'customer_initials' => pharmacy_initials($customer),
+        'avatar' => pharmacy_order_avatar_tone($index),
+        'medicines_summary' => $summary,
+        'date_label' => date('d/m/Y', $createdAt),
+        'time_label' => date('g:i a', $createdAt),
+        'amount_label' => pharmacy_format_money((float) ($order['total_amount'] ?? 0)),
+        'cancellation_reason' => $reason,
+    ];
+}
+
+function pharmacy_orders_list_payload_from(array $orders, array $itemsCache, array $counts, string $status): array
+{
+    $status = pharmacy_orders_allowed_status($status);
+    $rows = [];
+    foreach (array_values($orders) as $index => $order) {
+        $orderId = (int) ($order['id'] ?? 0);
+        $rows[] = pharmacy_order_list_row($order, $itemsCache[$orderId] ?? [], $index);
+    }
+
+    return [
+        'success' => true,
+        'status' => $status,
+        'counts' => $counts,
+        'total' => (int) array_sum($counts),
+        'orders' => $rows,
+    ];
+}
+
+function pharmacy_orders_list_payload(string $status = 'pending'): array
+{
+    $status = pharmacy_orders_allowed_status($status);
+    $counts = pharmacy_get_order_status_counts();
+    $orders = $status === 'all'
+        ? pharmacy_get_orders(300)
+        : pharmacy_get_orders(300, $status);
+    $itemsCache = pharmacy_order_table_items_map(array_map(static fn(array $order): int => (int) ($order['id'] ?? 0), $orders));
+
+    return pharmacy_orders_list_payload_from($orders, $itemsCache, $counts, $status);
+}
+
+function pharmacy_order_detail_payload(int $orderId): ?array
+{
+    $order = pharmacy_get_order_by_id($orderId);
+    if ($order === null) {
+        return null;
+    }
+
+    $items = pharmacy_get_order_items($orderId);
+    $status = (string) ($order['status'] ?? 'pending');
+    $meta = pharmacy_order_status_map()[$status] ?? ['c' => 'badge-gray', 't' => ucfirst($status)];
+    $customer = trim((string) ($order['customer_name'] ?? 'Customer'));
+    $contact = trim((string) ($order['customer_phone'] ?? ''));
+    $address = trim((string) ($order['customer_address'] ?? ''));
+    $next = pharmacy_next_order_status($status);
+    $total = max(0, (float) ($order['total_amount'] ?? 0));
+    $down = pharmacy_order_down_payment($order);
+    $isCompleted = $status === 'delivered';
+    $pickupUrl = pharmacy_pickup_proof_url($order);
+    $percent = pharmacy_order_down_payment_percent($order);
+    $itemRows = [];
+    foreach ($items as $item) {
+        $qty = (int) ($item['quantity'] ?? 1);
+        $itemRows[] = [
+            'name' => (string) ($item['medicine_name'] ?? 'Medicine'),
+            'quantity' => $qty,
+            'image_url' => trim((string) ($item['image_url'] ?? '')),
+            'prescription_required' => !empty($item['prescription_required']),
+            'prescription_url' => pharmacy_item_prescription_url($item, $order),
+            'note' => trim((string) ($item['item_note'] ?? '')),
+            'line_total_label' => pharmacy_format_money((float) ($item['unit_price'] ?? 0) * $qty),
+        ];
+    }
+
+    return [
+        'id' => (int) ($order['id'] ?? 0),
+        'order_number' => (string) ($order['order_number'] ?? 'ORD-0000'),
+        'status' => $status,
+        'status_label' => $meta['t'],
+        'status_class' => $meta['c'],
+        'customer_name' => $customer,
+        'customer_initials' => pharmacy_initials($customer),
+        'customer_line' => implode(' · ', array_filter([$contact, $address])) ?: 'No contact details',
+        'pharmacy_name' => (string) ($order['pharmacy_name'] ?? 'Pharmacy'),
+        'items' => $itemRows,
+        'created_label' => pharmacy_format_date((string) ($order['created_at'] ?? '')),
+        'total_label' => pharmacy_format_money($total),
+        'paid_label' => pharmacy_format_money($isCompleted ? $total : $down),
+        'paid_percent' => $isCompleted ? 100 : $percent,
+        'paid_note_percent' => $percent,
+        'balance_label' => pharmacy_format_money($isCompleted ? 0 : pharmacy_order_balance_on_pickup($order)),
+        'balance_percent' => $isCompleted ? 0 : max(0, 100 - $percent),
+        'payment_note' => $isCompleted
+            ? '✓ All payments have been settled. Your order is fully paid.'
+            : 'Customer pays the remaining balance when collecting this order at the pharmacy.',
+        'is_pending' => $status === 'pending',
+        'is_ready' => $status === 'ready',
+        'is_completed' => $isCompleted,
+        'is_cancelled' => $status === 'cancelled',
+        'next_status' => $next,
+        'next_label' => $next !== null ? (string) (pharmacy_order_status_map()[$next]['t'] ?? ucfirst($next)) : '',
+        'cancellation_reason' => trim((string) ($order['cancellation_reason'] ?? '')),
+        'has_pickup_proof' => $pickupUrl !== null,
+        'pickup_proof_url' => $pickupUrl,
+        'pickup_proof_name' => basename((string) ($order['pickup_proof_path'] ?? 'pickup-proof.jpg')),
+        'pickup_proof_kind' => strtolower(pathinfo((string) ($order['pickup_proof_path'] ?? ''), PATHINFO_EXTENSION)) === 'pdf'
+            ? 'pdf'
+            : ($pickupUrl ? 'img' : 'empty'),
+    ];
+}
+
 function pharmacy_active_view(array $allowedViews): string
 {
     $view = trim((string) ($_GET['view'] ?? 'dashboard'));

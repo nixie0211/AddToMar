@@ -262,6 +262,200 @@ function escapeHtml(value) {
   });
 }
 
+const ORDER_STATUS_MAP = {
+  pending: { t: 'Pending' },
+  confirmed: { t: 'Confirmed' },
+  preparing: { t: 'Preparing' },
+  ready: { t: 'Ready for Pickup' },
+  delivered: { t: 'Completed' },
+  cancelled: { t: 'Cancelled' },
+};
+
+let pharmacyOrdersState = {
+  status: 'pending',
+  counts: { pending: 0, confirmed: 0, preparing: 0, ready: 0, delivered: 0, cancelled: 0 },
+  total: 0,
+  orders: [],
+  selectedId: 0,
+  details: {},
+};
+
+function ordersHref(status, orderId) {
+  let href = 'index.php?view=orders&status=' + encodeURIComponent(status || 'pending');
+  if (orderId) href += '&order_id=' + encodeURIComponent(String(orderId));
+  return href;
+}
+
+function applyOrdersPayload(payload, status) {
+  if (!payload || payload.success === false) return;
+  pharmacyOrdersState.status = payload.status || status || pharmacyOrdersState.status;
+  pharmacyOrdersState.counts = Object.assign({}, pharmacyOrdersState.counts, payload.counts || {});
+  pharmacyOrdersState.total = Number(payload.total || 0);
+  pharmacyOrdersState.orders = Array.isArray(payload.orders) ? payload.orders : [];
+}
+
+function renderPharmacyOrders() {
+  const view = document.getElementById('view-orders');
+  if (!view) return;
+  const counts = pharmacyOrdersState.counts || {};
+  const total = pharmacyOrdersState.total || Object.keys(counts).reduce(function (sum, key) {
+    return sum + Number(counts[key] || 0);
+  }, 0);
+  const stats = view.querySelectorAll('.orders-stat strong');
+  if (stats[0]) stats[0].textContent = String(total);
+  if (stats[1]) stats[1].textContent = String(counts.delivered || 0);
+  if (stats[2]) stats[2].textContent = String(counts.pending || 0);
+  if (stats[3]) stats[3].textContent = String(counts.cancelled || 0);
+
+  view.querySelectorAll('.tabs a.tab-btn').forEach(function (tab) {
+    let tabStatus = 'pending';
+    try {
+      tabStatus = new URL(tab.getAttribute('href'), window.location.href).searchParams.get('status') || 'pending';
+    } catch (error) {}
+    tab.classList.toggle('active', tabStatus === pharmacyOrdersState.status);
+    const countEl = tab.querySelector('.count');
+    if (countEl) {
+      countEl.textContent = String(tabStatus === 'all' ? total : (counts[tabStatus] || 0));
+    }
+  });
+
+  const card = view.querySelector('.orders-table-card');
+  if (!card) return;
+  const orders = pharmacyOrdersState.orders || [];
+  if (orders.length === 0) {
+    const label = pharmacyOrdersState.status === 'all'
+      ? 'No orders yet'
+      : ('No ' + ((ORDER_STATUS_MAP[pharmacyOrdersState.status] || {}).t || pharmacyOrdersState.status) + ' orders');
+    card.innerHTML = '<div class="orders-empty"><p class="orders-empty-title">' + escapeHtml(label) + '</p><p class="orders-empty-copy">Orders in this status will appear here.</p></div>';
+    return;
+  }
+
+  const selectedId = pharmacyOrdersState.selectedId;
+  const status = pharmacyOrdersState.status;
+  const rows = orders.map(function (order) {
+    const id = Number(order.id || 0);
+    const href = ordersHref(status, id);
+    const active = selectedId > 0 && id === selectedId ? ' is-active' : '';
+    const avatar = order.avatar || { bg: '#e6f7f1', fg: '#0d9488' };
+    return '<tr class="orders-table-row' + active + '" data-order-id="' + id + '">' +
+      '<td><a class="orders-table-link" href="' + href + '"><span class="ot-customer"><span class="ot-avatar" style="background:' + escapeHtml(avatar.bg) + ';color:' + escapeHtml(avatar.fg) + ';">' + escapeHtml(order.customer_initials || '') + '</span><span class="ot-customer-name">' + escapeHtml(order.customer_name || 'Customer') + '</span></span></a></td>' +
+      '<td><a class="orders-table-link" href="' + href + '"><span class="ot-order">#' + escapeHtml(order.order_number || '') + '</span></a></td>' +
+      '<td><a class="orders-table-link" href="' + href + '"><span class="ot-meds">' + escapeHtml(order.medicines_summary || '') + '</span></a></td>' +
+      '<td><a class="orders-table-link" href="' + href + '">' + escapeHtml(order.date_label || '') + '</a></td>' +
+      '<td><a class="orders-table-link" href="' + href + '">' + escapeHtml(order.time_label || '') + '</a></td>' +
+      '<td><a class="orders-table-link" href="' + href + '"><span class="ot-amount">' + escapeHtml(order.amount_label || '') + '</span></a></td>' +
+      '<td><a class="orders-table-link" href="' + href + '"><span class="ot-pill ot-pill--' + escapeHtml(order.status || '') + '">' + escapeHtml(order.status_label || order.status || '') + '</span></a></td>' +
+    '</tr>';
+  }).join('');
+  card.innerHTML = '<div class="orders-table-wrap"><table class="orders-table"><thead><tr><th>Customer</th><th>Order</th><th>Medicines</th><th>Order Date</th><th>Order Time</th><th>Amount</th><th>Status</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+}
+
+function applyOrderStatusLocally(orderId, nextStatus, extra) {
+  extra = extra || {};
+  const counts = pharmacyOrdersState.counts;
+  const order = (pharmacyOrdersState.orders || []).find(function (row) { return Number(row.id) === Number(orderId); });
+  const prev = order ? order.status : '';
+  if (counts && prev && prev !== nextStatus) {
+    counts[prev] = Math.max(0, Number(counts[prev] || 0) - 1);
+    counts[nextStatus] = Number(counts[nextStatus] || 0) + 1;
+    pharmacyOrdersState.total = Object.keys(counts).reduce(function (sum, key) {
+      return sum + Number(counts[key] || 0);
+    }, 0);
+  }
+  if (order) {
+    order.status = nextStatus;
+    order.status_label = extra.label || (ORDER_STATUS_MAP[nextStatus] || {}).t || nextStatus;
+    if (extra.cancellation_reason) {
+      order.cancellation_reason = extra.cancellation_reason;
+    }
+  }
+  if (pharmacyOrdersState.status !== 'all' && pharmacyOrdersState.status !== nextStatus) {
+    pharmacyOrdersState.orders = (pharmacyOrdersState.orders || []).filter(function (row) {
+      return Number(row.id) !== Number(orderId);
+    });
+  }
+  delete pharmacyOrdersState.details[orderId];
+}
+
+function hydratePharmacyOrders() {
+  const node = document.getElementById('pharmacy-orders-payload');
+  if (!node) return;
+  try {
+    applyOrdersPayload(JSON.parse(node.textContent || '{}'), currentOrdersStatus());
+  } catch (error) {}
+}
+
+function renderOrderDrawerDetail(detail) {
+  const drawer = document.getElementById('order-drawer');
+  if (!drawer || !detail) return;
+  const status = pharmacyOrdersState.status;
+  const closeHref = ordersHref(status);
+  const itemsHtml = (detail.items || []).map(function (item) {
+    const rx = item.prescription_required
+      ? (item.prescription_url
+        ? ' · <button type="button" class="order-prescription-inline view-prescription-trigger" data-prescription-url="' + escapeHtml(item.prescription_url) + '">Rx required&nbsp; see prescription ›</button>'
+        : ' · Rx required')
+      : '';
+    const note = item.note ? '<div class="t2 order-item-note">Note: ' + escapeHtml(item.note) + '</div>' : '';
+    const thumb = item.image_url
+      ? '<div class="med-thumb' + (item.prescription_required ? ' med-thumb--rx' : '') + ' med-thumb--photo"><img src="' + escapeHtml(item.image_url) + '" alt=""></div>'
+      : '<div class="med-thumb' + (item.prescription_required ? ' med-thumb--rx' : '') + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7L12 3 4 7v10l8 4 8-4V7z"/></svg></div>';
+    return '<div class="list-row order-list-row order-med-row">' + thumb +
+      '<div class="list-body"><div class="t1 order-med-title">' + escapeHtml(item.name || 'Medicine') + '</div>' +
+      '<div class="t2 order-med-pharmacy">' + escapeHtml(detail.pharmacy_name || 'Pharmacy') + '</div>' +
+      '<div class="t2">Qty ' + Number(item.quantity || 1) + rx + '</div>' + note + '</div>' +
+      '<div class="list-meta mono">' + escapeHtml(item.line_total_label || '') + '</div></div>';
+  }).join('');
+
+  let actions = '';
+  if (detail.is_pending) {
+    actions = '<div class="order-panel-actions"><div class="order-panel-actions-row">' +
+      '<button type="button" class="btn btn-danger order-cancel-btn" id="cancel-order-btn" data-order-id="' + detail.id + '" data-order-number="' + escapeHtml(detail.order_number) + '" data-customer="' + escapeHtml(detail.customer_name) + '">Cancel order</button>' +
+      '<button type="button" class="btn btn-accent order-confirm-btn" id="confirm-order-btn" data-order-id="' + detail.id + '" data-next-status="confirmed" data-next-label="Confirmed">Confirm order</button>' +
+      '</div></div>';
+  } else if (detail.next_status) {
+    actions = '<div class="order-panel-actions"><div class="order-panel-actions-row">' +
+      '<button type="button" class="btn btn-accent order-update-status-btn" id="update-order-status-btn" data-order-id="' + detail.id + '" data-next-status="' + escapeHtml(detail.next_status) + '" data-next-label="' + escapeHtml(detail.next_label) + '">Update status</button>' +
+      '</div></div>';
+  } else if (detail.is_ready) {
+    actions = '<div class="order-panel-actions"><div class="order-panel-actions-row">' +
+      '<button type="button" class="btn btn-accent order-complete-btn" id="complete-order-btn" data-order-id="' + detail.id + '" data-order-number="' + escapeHtml(detail.order_number) + '" data-customer="' + escapeHtml(detail.customer_name) + '" data-has-proof="' + (detail.has_pickup_proof ? '1' : '0') + '">Mark as complete</button>' +
+      '</div></div>';
+  }
+
+  let extra = '';
+  if (detail.is_completed && detail.has_pickup_proof) {
+    extra += '<div class="order-rx-docs-block"><h3 class="order-rx-docs-title">Proof of pickup</h3>' +
+      '<button type="button" class="order-rx-doc-card view-prescription-trigger" data-prescription-url="' + escapeHtml(detail.pickup_proof_url || '') + '">' +
+      '<span class="order-rx-doc-meta"><strong>Pickup completed</strong><small>' + escapeHtml(detail.pickup_proof_name || '') + '</small></span></button></div>';
+  }
+  if (detail.is_cancelled) {
+    extra += '<div class="order-section-label">Cancellation reason</div><div class="order-cancellation-card"><p class="order-cancellation-text">' + escapeHtml(detail.cancellation_reason || 'No reason recorded.') + '</p></div>';
+  }
+
+  const overview = drawer.querySelector('.order-overview');
+  if (!overview) return;
+  overview.innerHTML =
+    '<div class="panel-head"><div><h3 id="order-drawer-title">Order #' + escapeHtml(detail.order_number) + '</h3></div>' +
+    '<span class="badge ' + escapeHtml(detail.status_class || '') + '">' + escapeHtml(detail.status_label || '') + '</span>' +
+    '<a class="order-drawer-close-btn" id="order-drawer-close-btn" href="' + closeHref + '" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></a></div>' +
+    '<div class="order-overview-body">' +
+    '<div class="order-section-label">Customer</div>' +
+    '<div class="list-row order-list-row"><div class="avatar" style="width:36px;height:36px;font-size:12px;">' + escapeHtml(detail.customer_initials) + '</div>' +
+    '<div class="list-body"><div class="t1">' + escapeHtml(detail.customer_name) + '</div><div class="t2">' + escapeHtml(detail.customer_line) + '</div></div></div>' +
+    '<div class="order-section-label">Medicines</div>' + itemsHtml +
+    '<div class="order-payment-card"><h3 class="payment-summary-title"><span>Payment Summary<small>Payment details and transaction breakdown</small></span></h3>' +
+    '<div class="payment-summary-method"><b class="payment-gcash-icon">G</b><span class="payment-summary-details"><strong>GCash</strong><b>' + escapeHtml(detail.paid_label) + '</b></span><small class="payment-summary-meta">Payment confirmed via PayMongo<br>' + escapeHtml(detail.created_label) + '</small><span class="payment-summary-confirmed">✓ Paid</span></div>' +
+    '<div class="order-payment-row"><span>Total Amount</span><span class="mono">' + escapeHtml(detail.total_label) + '</span></div>' +
+    '<div class="order-payment-row order-payment-row--paid"><span>Paid (' + Number(detail.paid_percent || 0) + '%)<small>' + Number(detail.paid_note_percent || 0) + '% · paid via GCash</small></span><span class="mono">' + escapeHtml(detail.paid_label) + '</span></div>' +
+    '<div class="order-payment-row order-payment-row--due"><span>Remaining Balance (' + Number(detail.balance_percent || 0) + '%)</span><span class="mono">' + escapeHtml(detail.balance_label) + '</span></div>' +
+    '<p class="order-payment-note">' + escapeHtml(detail.payment_note) + '</p></div>' + extra +
+    '</div>' + actions;
+  drawer.hidden = false;
+  drawer.classList.remove('is-loading');
+  drawer.setAttribute('data-order-id', String(detail.id || 0));
+}
+
 function syncOrdersHistory(nextUrl, options) {
   options = options || {};
   if (options.skipHistory || !nextUrl) return;
@@ -329,20 +523,27 @@ async function loadOrderDrawer(orderId, status, options) {
   drawerAbort = new AbortController();
 
   try {
+    if (pharmacyOrdersState.details[orderId]) {
+      if (requestId !== drawerRequestId) return;
+      renderOrderDrawerDetail(pharmacyOrdersState.details[orderId]);
+      return;
+    }
     const response = await fetch(
-      'api/order-drawer.php?order_id=' + encodeURIComponent(String(orderId)) + '&status=' + encodeURIComponent(status || currentOrdersStatus()),
+      'api/order-detail.php?order_id=' + encodeURIComponent(String(orderId)),
       {
         credentials: 'same-origin',
         cache: 'no-store',
-        headers: { Accept: 'text/html' },
+        headers: { Accept: 'application/json' },
         signal: drawerAbort.signal,
       }
     );
     if (requestId !== drawerRequestId) return;
     if (!response.ok) throw new Error('load');
-    const html = await response.text();
+    const result = await response.json();
     if (requestId !== drawerRequestId) return;
-    if (!applyOrderDrawerHtml(html, orderId)) return;
+    if (!result || !result.success || !result.order) throw new Error('parse');
+    pharmacyOrdersState.details[orderId] = result.order;
+    renderOrderDrawerDetail(result.order);
   } catch (error) {
     if (error && error.name === 'AbortError') return;
     if (options.fallbackUrl) window.location.href = options.fallbackUrl;
@@ -358,6 +559,7 @@ function openOrderFromLink(href, options, fromEl) {
   }
   ordersNavGen += 1;
   if (listAbort) listAbort.abort();
+  pharmacyOrdersState.selectedId = parsed.orderId;
   syncOrdersHistory(parsed.nextUrl, options);
   markActiveOrderRow(parsed.orderId);
   showOrderDrawerPlaceholder(parsed.orderId, fromEl);
@@ -369,6 +571,7 @@ function closeOrderDrawer(href, options) {
   const nextUrl = ordersViewUrl(href);
   drawerRequestId += 1;
   if (drawerAbort) drawerAbort.abort();
+  pharmacyOrdersState.selectedId = 0;
   const drawer = document.getElementById('order-drawer');
   if (drawer) {
     drawer.hidden = true;
@@ -407,31 +610,23 @@ async function loadOrdersView(href, options) {
   listAbort = new AbortController();
 
   try {
-    const response = await fetch(ordersFragmentUrl(nextUrl), {
+    const response = await fetch('api/orders-list.php?status=' + encodeURIComponent(parsed.status), {
       credentials: 'same-origin',
       cache: 'no-store',
-      headers: {
-        'X-Live-Sync': '1',
-        Accept: 'text/html',
-      },
+      headers: { Accept: 'application/json' },
       signal: listAbort.signal,
     });
     if (requestId !== listRequestId || navGen !== ordersNavGen) return;
     if (!response.ok) throw new Error('load');
-
-    const html = await response.text();
+    const payload = await response.json();
     if (requestId !== listRequestId || navGen !== ordersNavGen) return;
-    const doc = new DOMParser().parseFromString(html, 'text/html');
-    const incomingMain = doc.querySelector('.orders-main');
-    const currentMain = document.querySelector('#view-orders .orders-main');
-    if (!incomingMain || !currentMain) {
-      window.location.href = nextUrl;
-      return;
+    applyOrdersPayload(payload, parsed.status);
+    if (options.keepSelection) {
+      pharmacyOrdersState.selectedId = parsed.orderId || pharmacyOrdersState.selectedId;
+    } else if (!options.keepDrawer) {
+      pharmacyOrdersState.selectedId = 0;
     }
-
-    currentMain.replaceWith(incomingMain);
-    setActiveOrdersTab(parsed.status);
-    if (parsed.orderId > 0) markActiveOrderRow(parsed.orderId);
+    renderPharmacyOrders();
     syncOrdersHistory(nextUrl, options);
   } catch (error) {
     if (error && error.name === 'AbortError') return;
@@ -448,6 +643,8 @@ function switchOrdersTab(href, options) {
   if (drawerAbort) drawerAbort.abort();
   closeOrderDrawer(parsed.nextUrl, { skipHistory: true });
   syncOrdersHistory(parsed.nextUrl, options);
+  pharmacyOrdersState.status = parsed.status;
+  pharmacyOrdersState.selectedId = 0;
   setActiveOrdersTab(parsed.status);
   showOrdersTableLoading();
   loadOrdersView(parsed.nextUrl, { skipHistory: true, navGen: navGen });
@@ -455,10 +652,9 @@ function switchOrdersTab(href, options) {
 
 function stayOnOrdersTable() {
   const status = currentOrdersStatus();
-  const href = 'index.php?view=orders&status=' + encodeURIComponent(status);
-  const navGen = ++ordersNavGen;
+  const href = ordersHref(status);
   closeOrderDrawer(href, { replace: true });
-  loadOrdersView(href, { skipHistory: true, navGen: navGen });
+  renderPharmacyOrders();
 }
 
 function navigateOrdersLink(link) {
@@ -506,6 +702,7 @@ async function submitOrderStatusAdvance(button) {
       return;
     }
 
+    applyOrderStatusLocally(orderId, result.status || nextStatus);
     stayOnOrdersTable();
   } catch (error) {
     window.alert('Could not update order status. Please try again.');
@@ -532,6 +729,7 @@ async function completeOrder(orderId) {
     throw new Error(result.message || 'Could not complete this order.');
   }
 
+  applyOrderStatusLocally(orderId, 'delivered');
   stayOnOrdersTable();
 }
 
@@ -600,6 +798,7 @@ async function handleCancelOrderSubmit(cancelOrderSubmitBtn) {
     }
 
     closeCancelOrderModal();
+    applyOrderStatusLocally(orderId, 'cancelled', { cancellation_reason: reason, label: 'Cancelled' });
     stayOnOrdersTable();
   } catch (error) {
     setCancelOrderError('Could not cancel order. Please try again.');
@@ -801,11 +1000,23 @@ function initPharmacyOrderUi() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', initPharmacyOrderUi);
+document.addEventListener('DOMContentLoaded', function () {
+  hydratePharmacyOrders();
+  initPharmacyOrderUi();
+});
 document.addEventListener('livesync:applied', function () {
   const view = document.getElementById('view-orders');
   if (view) delete view.dataset.orderUiBound;
   initPharmacyOrderUi();
+});
+document.addEventListener('livesync:change', function (event) {
+  const keys = (event.detail && event.detail.keys) || [];
+  if (keys.indexOf('orders') === -1) return;
+  const view = document.getElementById('view-orders');
+  if (!view || !view.classList.contains('active')) return;
+  const drawer = document.getElementById('order-drawer');
+  if (drawer && drawer.hidden === false) return;
+  loadOrdersView(ordersHref(currentOrdersStatus()), { skipHistory: true, navGen: ++ordersNavGen });
 });
 window.addEventListener('popstate', function () {
   const params = new URLSearchParams(window.location.search);

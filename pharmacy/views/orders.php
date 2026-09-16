@@ -112,7 +112,7 @@ $overviewPickupProofExt = strtolower(pathinfo($overviewPickupProofPath, PATHINFO
 $overviewPickupProofKind = $overviewPickupProofExt === 'pdf' ? 'pdf' : ($overviewPickupProofUrl ? 'img' : 'empty');
 ?>
 <?php if (!$pharmacyOrdersDrawerOnly): ?>
-      <section class="<?= pharmacy_view_class('orders', $activeView) ?>" id="view-orders" data-live-region="pharmacy-orders" data-live-keys="orders">
+      <section class="<?= pharmacy_view_class('orders', $activeView) ?>" id="view-orders" data-live-region="pharmacy-orders" data-live-keys="orders" data-live-mode="js">
         <div class="orders-layout">
           <div class="orders-main">
             <div class="orders-stats">
@@ -509,6 +509,9 @@ $overviewPickupProofKind = $overviewPickupProofExt === 'pdf' ? 'pdf' : ($overvie
             </div>
           </div>
         </div>
+<?php endif; ?>
+<?php if (empty($pharmacyOrdersListOnly)): ?>
+<script type="application/json" id="pharmacy-orders-payload"><?= json_encode(pharmacy_orders_list_payload_from($filteredOrders, $orderItemsCache, $statusCounts, $activeStatus), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>
 <?php endif; ?>
       </section>
 <?php endif; ?>
