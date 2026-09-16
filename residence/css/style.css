@@ -7180,6 +7180,160 @@ body.is-pharmacy-empty.is-pharmacy-profile-page .page[data-page="pharmacy-profil
   cursor:pointer;
 }
 .mo-store-timeline{padding:10px 4px;}
+.od-cancel-btn{
+  margin-top:8px;
+  min-height:auto;
+  padding:8px 14px;
+  border:1px solid #f1c4c4;
+  border-radius:999px;
+  background:#fff5f5;
+  color:#c13d47;
+  box-shadow:none;
+  font-size:12.5px;
+  font-weight:700;
+}
+.od-cancel-btn:hover{ background:#fdecee; color:#ad2633; box-shadow:none; }
+.mo-cancel-reason{
+  margin:0 0 16px;
+  padding:12px 14px;
+  border:1px solid #f3d4d4;
+  border-radius:12px;
+  background:#fff7f7;
+}
+.mo-cancel-reason strong{
+  display:block;
+  margin-bottom:4px;
+  color:#9d2b33;
+  font-family:var(--font-display);
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+}
+.mo-cancel-reason span{
+  color:#5c3a3d;
+  font-size:13.5px;
+  line-height:1.45;
+}
+.residence-cancel-order-modal{
+  position:fixed;
+  inset:0;
+  z-index:3200;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+}
+.residence-cancel-order-modal[hidden]{ display:none !important; }
+.residence-cancel-order-backdrop{
+  position:absolute;
+  inset:0;
+  border:0;
+  background:rgba(15,28,32,.48);
+  cursor:pointer;
+}
+.residence-cancel-order-sheet{
+  position:relative;
+  z-index:1;
+  width:min(520px, 100%);
+  background:#fff;
+  border-radius:18px;
+  box-shadow:0 24px 60px rgba(15,28,32,.25);
+  overflow:hidden;
+}
+.residence-cancel-order-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  padding:18px 20px;
+  border-bottom:1px solid #f0e4e4;
+  background:linear-gradient(180deg, #fff7f7 0%, #fff 100%);
+}
+.residence-cancel-order-head span{
+  display:block;
+  color:#b42318;
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+}
+.residence-cancel-order-head h3{
+  margin:4px 0 0;
+  font-size:18px;
+  font-weight:800;
+}
+.residence-cancel-order-head p{
+  margin:4px 0 0;
+  color:var(--ink-soft);
+  font-size:13px;
+}
+.residence-cancel-order-close{
+  width:36px;
+  height:36px;
+  border:0;
+  border-radius:10px;
+  background:#fdecec;
+  color:#8a3a3f;
+  font-size:22px;
+  line-height:1;
+}
+.residence-cancel-order-body{
+  display:grid;
+  gap:14px;
+  padding:18px 20px;
+}
+.residence-cancel-order-body > p{
+  margin:0;
+  color:var(--ink-soft);
+  font-size:13.5px;
+  line-height:1.45;
+}
+.residence-cancel-order-body label{
+  display:grid;
+  gap:7px;
+  color:var(--ink);
+  font-family:var(--font-display);
+  font-size:13px;
+  font-weight:700;
+}
+.residence-cancel-order-body select,
+.residence-cancel-order-body textarea{
+  width:100%;
+  border:1.5px solid var(--border);
+  border-radius:10px;
+  background:#fff;
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:14px;
+  font-weight:500;
+}
+.residence-cancel-order-body select{ height:46px; padding:0 12px; }
+.residence-cancel-order-body textarea{ min-height:110px; padding:12px 14px; resize:vertical; line-height:1.45; }
+.residence-cancel-order-error{
+  margin:0;
+  color:#bd3030;
+  font-size:13px;
+  font-weight:700;
+}
+.residence-cancel-order-foot{
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+  padding:14px 20px 18px;
+  border-top:1px solid var(--border);
+}
+.residence-cancel-order-foot .btn{
+  min-height:42px;
+  padding:0 18px;
+  border-radius:12px;
+  font-size:13px;
+}
+.residence-cancel-order-foot #residence-cancel-order-submit{
+  background:#c13d47;
+  color:#fff;
+  box-shadow:0 6px 14px rgba(193,61,71,.22);
+}
 @media (max-width:760px){
   .mo-parent-head{flex-direction:column;}
   .mo-parent-badge{justify-items:start;}

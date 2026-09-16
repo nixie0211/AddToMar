@@ -2552,6 +2552,8 @@ function presentResidenceOrder(order, options = {}){
     pickup_proof_url: String(order.pickup_proof_url || (order.pickup_proof_path ? '../' + String(order.pickup_proof_path).replace(/^\.\//, '') : '')),
     balance_paid: !!order.balance_paid,
     checkout_group_id: String(order.checkout_group_id || ''),
+    cancellation_reason: String(order.cancellation_reason || ''),
+    can_cancel: order.can_cancel === true || order.can_cancel === 1 || order.can_cancel === '1',
     related_order_numbers: Array.isArray(order.related_order_numbers) ? order.related_order_numbers.map(String) : [],
     stores,
     is_group: stores.length > 1 || !!order.is_group,
@@ -2567,6 +2569,10 @@ function presentResidenceOrder(order, options = {}){
   }
   presented.store_count = presented.stores.length || 1;
   presented.is_group = presented.store_count > 1;
+  if(presented.can_cancel !== true){
+    const stores = presented.stores.length ? presented.stores : [presented];
+    presented.can_cancel = stores.every(store => ['pending','processing'].includes(String(store.status || '').toLowerCase()));
+  }
   return presented;
 }
 
@@ -2800,6 +2806,7 @@ let residenceOrdersRefreshTimer = null;
 async function refreshResidenceOrders(){
   const cfg = window.RESIDENCE_CONFIG || {};
   if(!cfg.ordersUrl) return;
+  if(document.getElementById('residence-cancel-order-modal')?.hidden === false) return;
   try{
     const response = await fetch(cfg.ordersUrl, {credentials:'same-origin', cache:'no-store'});
     const data = await response.json();
@@ -3001,6 +3008,13 @@ function renderOrderDetail(id){
     ? `${completedStores} of ${storeCount} stores completed`
     : '';
   const statusBadge = data.partially_fulfilled ? 'Partially fulfilled' : (data.status_label || 'Processing');
+  const canCancel = !!data.can_cancel && ['pending', 'processing'].includes(String(data.status || '').toLowerCase()) && !data.partially_fulfilled;
+  const cancelHtml = canCancel
+    ? `<button type="button" class="btn od-cancel-btn" onclick="openResidenceCancelOrder(${Number(data.id) || 0}, '${escHtml(data.order_number)}')">Cancel order</button>`
+    : '';
+  const cancelReasonHtml = String(data.status || '').toLowerCase() === 'cancelled' && data.cancellation_reason
+    ? `<p class="mo-cancel-reason"><strong>Cancellation reason</strong><span>${escHtml(data.cancellation_reason)}</span></p>`
+    : '';
 
   root.innerHTML = `
     <button type="button" class="od-back" onclick="closeOrderDetail()">${odIcon('back')} Back to Orders</button>
@@ -3013,8 +3027,10 @@ function renderOrderDetail(id){
       <div class="mo-parent-badge">
         <strong class="${escHtml(data.status_class || '')}">${escHtml(statusBadge)}</strong>
         ${fulfillmentNote ? `<small>${escHtml(fulfillmentNote)}</small>` : ''}
+        ${cancelHtml}
       </div>
     </div>
+    ${cancelReasonHtml}
     ${storeCount > 1 ? `<p class="mo-parent-note">You purchased items from multiple pharmacies in one checkout. Each store will process and deliver your items separately.</p>` : ''}
     <div class="od-layout">
       <main class="od-main">
@@ -3041,6 +3057,138 @@ function renderOrderDetail(id){
 
 function renderReferenceOrderDetail(id){
   return renderOrderDetail(id);
+}
+
+let residenceCancelOrderId = 0;
+let residenceCancelOrderNumber = '';
+
+function setResidenceCancelOrderError(message){
+  const error = document.getElementById('residence-cancel-order-error');
+  if(!error) return;
+  if(!message){
+    error.hidden = true;
+    error.textContent = '';
+    return;
+  }
+  error.hidden = false;
+  error.textContent = message;
+}
+
+function toggleResidenceCancelOtherReason(){
+  const select = document.getElementById('residence-cancel-reason-select');
+  const otherInput = document.getElementById('residence-cancel-reason-other-input');
+  const isOther = (select?.value || '') === 'Other';
+  if(otherInput){
+    otherInput.required = isOther;
+    otherInput.placeholder = isOther
+      ? 'Type the specific reason for cancelling this order...'
+      : 'Add more detail (optional)';
+  }
+}
+
+function resetResidenceCancelOrderForm(){
+  const select = document.getElementById('residence-cancel-reason-select');
+  const otherInput = document.getElementById('residence-cancel-reason-other-input');
+  const submitBtn = document.getElementById('residence-cancel-order-submit');
+  if(select) select.value = '';
+  if(otherInput) otherInput.value = '';
+  if(submitBtn){
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Cancel order';
+  }
+  setResidenceCancelOrderError('');
+  toggleResidenceCancelOtherReason();
+}
+
+function openResidenceCancelOrder(orderId, orderNumber){
+  residenceCancelOrderId = Number(orderId) || 0;
+  residenceCancelOrderNumber = String(orderNumber || '');
+  const modal = document.getElementById('residence-cancel-order-modal');
+  const sub = document.getElementById('residence-cancel-order-sub');
+  if(!modal) return;
+  resetResidenceCancelOrderForm();
+  if(sub) sub.textContent = residenceCancelOrderNumber ? `Order #${residenceCancelOrderNumber}` : '';
+  modal.hidden = false;
+  document.getElementById('residence-cancel-reason-select')?.focus();
+}
+window.openResidenceCancelOrder = openResidenceCancelOrder;
+
+function closeResidenceCancelOrderModal(){
+  const modal = document.getElementById('residence-cancel-order-modal');
+  if(modal) modal.hidden = true;
+  residenceCancelOrderId = 0;
+  residenceCancelOrderNumber = '';
+  resetResidenceCancelOrderForm();
+}
+window.closeResidenceCancelOrderModal = closeResidenceCancelOrderModal;
+
+async function submitResidenceCancelOrder(){
+  const select = document.getElementById('residence-cancel-reason-select');
+  const otherInput = document.getElementById('residence-cancel-reason-other-input');
+  const submitBtn = document.getElementById('residence-cancel-order-submit');
+  const reason = String(select?.value || '').trim();
+  const otherReason = String(otherInput?.value || '').trim();
+  if(!reason){
+    setResidenceCancelOrderError('Please select a cancellation reason.');
+    return;
+  }
+  if(reason === 'Other' && otherReason === ''){
+    setResidenceCancelOrderError('Please type the reason for cancellation.');
+    otherInput?.focus();
+    return;
+  }
+  if(submitBtn){
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Cancelling...';
+  }
+  setResidenceCancelOrderError('');
+  try{
+    const body = new FormData();
+    body.set('order_id', String(residenceCancelOrderId || 0));
+    body.set('order_number', residenceCancelOrderNumber);
+    body.set('reason', reason);
+    body.set('other_reason', otherReason);
+    const response = await fetch(window.RESIDENCE_CONFIG?.cancelOrderUrl || '../ajax/cancel-residence-order.php', {
+      method: 'POST',
+      body,
+      credentials: 'same-origin'
+    });
+    const result = await response.json().catch(() => ({ ok:false, error:'Could not cancel this order.' }));
+    if(!result?.ok){
+      setResidenceCancelOrderError(result.error || 'Could not cancel this order.');
+      if(submitBtn){
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Cancel order';
+      }
+      return;
+    }
+    if(Array.isArray(result.orders)){
+      window.RESIDENCE_CONFIG = window.RESIDENCE_CONFIG || {};
+      window.RESIDENCE_CONFIG.orders = result.orders;
+    }
+    const detailId = document.getElementById('orders-detail-view')?.dataset?.orderId || residenceCancelOrderNumber;
+    closeResidenceCancelOrderModal();
+    renderResidenceOrders();
+    if(detailId) renderOrderDetail(detailId);
+    toast(result.message || 'Order cancelled.');
+  }catch(e){
+    setResidenceCancelOrderError('Could not cancel this order. Please try again.');
+    if(submitBtn){
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Cancel order';
+    }
+  }
+}
+
+function initResidenceCancelOrderModal(){
+  const select = document.getElementById('residence-cancel-reason-select');
+  select?.addEventListener('change', toggleResidenceCancelOtherReason);
+  document.getElementById('residence-cancel-order-submit')?.addEventListener('click', submitResidenceCancelOrder);
+  document.addEventListener('keydown', (event) => {
+    if(event.key === 'Escape' && document.getElementById('residence-cancel-order-modal')?.hidden === false){
+      closeResidenceCancelOrderModal();
+    }
+  });
 }
 
 function orderBranchDirectionsUrl(pharmacy){
@@ -4540,6 +4688,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initProfilePasswordToggles();
   initAddressMapPicker();
   initLocatorSearch();
+  initResidenceCancelOrderModal();
 
   if(pendingIntent){
     go('checkout');

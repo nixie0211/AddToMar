@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/includes/auth.php';
+require_once dirname(__DIR__) . '/includes/customers.php';
 require_once dirname(__DIR__) . '/residence/includes/orders.php';
 
 header('Content-Type: application/json; charset=utf-8');

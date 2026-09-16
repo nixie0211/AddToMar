@@ -828,12 +828,19 @@ function residence_present_order(array $order, array $directory = []): array
         'balance_paid' => in_array($status, ['picked_up', 'pickedup', 'delivered', 'completed'], true),
         'checkout_group_id' => trim((string) ($order['checkout_group_id'] ?? '')),
         'paymongo_intent_id' => trim((string) ($order['paymongo_intent_id'] ?? '')),
+        'cancellation_reason' => trim((string) ($order['cancellation_reason'] ?? '')),
+        'can_cancel' => residence_order_status_is_cancellable($status),
         'stores' => [],
         'is_group' => false,
         'store_count' => 1,
         'partially_fulfilled' => false,
         'completed_store_count' => in_array($status, ['picked_up', 'pickedup', 'delivered', 'completed'], true) ? 1 : 0,
     ];
+}
+
+function residence_order_status_is_cancellable(string $status): bool
+{
+    return in_array(strtolower(trim($status)), ['pending', 'processing'], true);
 }
 
 function residence_order_progress_rank(string $status): int
@@ -951,6 +958,16 @@ function residence_present_order_group(array $orders, array $directory = []): ar
         $stores
     ))));
 
+    $reasons = array_values(array_unique(array_filter(array_map(
+        static fn (array $store): string => trim((string) ($store['cancellation_reason'] ?? '')),
+        $stores
+    ))));
+    $canCancel = $stores !== [] && array_reduce(
+        $stores,
+        static fn (bool $ok, array $store): bool => $ok && !empty($store['can_cancel']),
+        true
+    );
+
     return array_merge($primary, [
         'order_number' => $groupId !== '' ? $groupId : (string) ($primary['order_number'] ?? ''),
         'related_order_numbers' => array_values(array_filter(array_map(
@@ -972,6 +989,8 @@ function residence_present_order_group(array $orders, array $directory = []): ar
         'partially_fulfilled' => !empty($overall['partial']),
         'completed_store_count' => (int) ($overall['completed'] ?? 0),
         'balance_paid' => ($overall['status'] ?? '') === 'completed',
+        'cancellation_reason' => implode(' · ', $reasons),
+        'can_cancel' => $canCancel,
     ]);
 }
 
@@ -993,6 +1012,122 @@ function residence_customer_orders_payload(string $email): array
     });
 
     return $orders;
+}
+
+function residence_find_customer_order_group(string $email, int $orderId, string $orderNumber = ''): array
+{
+    $orderNumber = trim($orderNumber);
+    foreach (residence_customer_orders_payload($email) as $group) {
+        $ids = [(int) ($group['id'] ?? 0)];
+        $numbers = [
+            (string) ($group['order_number'] ?? ''),
+            (string) ($group['checkout_group_id'] ?? ''),
+        ];
+        foreach ($group['stores'] ?? [] as $store) {
+            $ids[] = (int) ($store['id'] ?? 0);
+            $numbers[] = (string) ($store['order_number'] ?? '');
+            $numbers[] = (string) ($store['checkout_group_id'] ?? '');
+        }
+        if ($orderId > 0 && in_array($orderId, $ids, true)) {
+            return $group;
+        }
+        if ($orderNumber !== '' && in_array($orderNumber, $numbers, true)) {
+            return $group;
+        }
+    }
+
+    return [];
+}
+
+function residence_restore_order_stock(PDO $pdo, int $orderId): void
+{
+    $stmt = $pdo->prepare('SELECT medicine_id, quantity FROM order_items WHERE order_id = ?');
+    $stmt->execute([$orderId]);
+    $restore = $pdo->prepare('UPDATE medicines SET stock_quantity = stock_quantity + ? WHERE id = ?');
+    foreach ($stmt->fetchAll() as $item) {
+        $medicineId = (int) ($item['medicine_id'] ?? 0);
+        $quantity = max(0, (int) ($item['quantity'] ?? 0));
+        if ($medicineId > 0 && $quantity > 0) {
+            $restore->execute([$quantity, $medicineId]);
+        }
+    }
+}
+
+function residence_cancel_customer_order(string $email, int $orderId, string $orderNumber, string $reason): array
+{
+    $reason = trim($reason);
+    if ($reason === '') {
+        return ['ok' => false, 'error' => 'Please provide a cancellation reason.'];
+    }
+    if (mb_strlen($reason) > 500) {
+        return ['ok' => false, 'error' => 'Cancellation reason must be 500 characters or less.'];
+    }
+
+    $group = residence_find_customer_order_group($email, $orderId, $orderNumber);
+    if ($group === []) {
+        return ['ok' => false, 'error' => 'This order was not found.'];
+    }
+    if (empty($group['can_cancel'])) {
+        return ['ok' => false, 'error' => 'Only processing orders can be cancelled.'];
+    }
+
+    $stores = $group['stores'] ?? [];
+    if ($stores === []) {
+        $stores = [$group];
+    }
+
+    $pdo = pharmacy_db();
+    $pdo->beginTransaction();
+    try {
+        $update = $pdo->prepare('
+            UPDATE orders
+            SET status = "cancelled", cancellation_reason = ?
+            WHERE id = ? AND status IN ("pending", "processing")
+        ');
+        $cancelled = [];
+        foreach ($stores as $store) {
+            $storeId = (int) ($store['id'] ?? 0);
+            if ($storeId <= 0 || empty($store['can_cancel'])) {
+                throw new RuntimeException('Only processing orders can be cancelled.');
+            }
+            $update->execute([$reason, $storeId]);
+            if ($update->rowCount() < 1) {
+                throw new RuntimeException('Only processing orders can be cancelled.');
+            }
+            residence_restore_order_stock($pdo, $storeId);
+            $cancelled[] = $store;
+        }
+        $pdo->commit();
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+
+        return ['ok' => false, 'error' => $e->getMessage()];
+    }
+
+    $notifyEmail = strtolower(trim($email));
+    foreach ($cancelled as $store) {
+        $orderNumberLabel = trim((string) ($store['order_number'] ?? ''));
+        $pharmacyName = trim((string) ($store['pharmacy_name'] ?? 'the pharmacy'));
+        if ($notifyEmail === '' || $orderNumberLabel === '') {
+            continue;
+        }
+        resident_notification_add(
+            $notifyEmail,
+            'Order cancelled',
+            'You cancelled order #' . $orderNumberLabel . ' at ' . ($pharmacyName !== '' ? $pharmacyName : 'the pharmacy') . ' — ' . $reason,
+            'order',
+            '',
+            $orderNumberLabel
+        );
+    }
+
+    return [
+        'ok' => true,
+        'message' => 'Order cancelled.',
+        'orders' => residence_customer_orders_payload($email),
+    ];
 }
 
 function residence_find_order_by_intent(string $intentId): ?array

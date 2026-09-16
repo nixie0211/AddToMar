@@ -162,3 +162,40 @@
     </div>
   </section>
 </div>
+
+<div class="residence-cancel-order-modal" id="residence-cancel-order-modal" hidden>
+  <button type="button" class="residence-cancel-order-backdrop" onclick="closeResidenceCancelOrderModal()" aria-label="Close cancel order"></button>
+  <section class="residence-cancel-order-sheet" role="dialog" aria-modal="true" aria-labelledby="residence-cancel-order-title">
+    <div class="residence-cancel-order-head">
+      <div>
+        <span>Cancel order</span>
+        <h3 id="residence-cancel-order-title">Reason for cancellation</h3>
+        <p id="residence-cancel-order-sub"></p>
+      </div>
+      <button type="button" class="residence-cancel-order-close" onclick="closeResidenceCancelOrderModal()" aria-label="Close">&times;</button>
+    </div>
+    <div class="residence-cancel-order-body">
+      <p>Choose a reason, or pick Other and type the specific reason. This cannot be undone.</p>
+      <label for="residence-cancel-reason-select">
+        <span>Cancellation reason</span>
+        <select id="residence-cancel-reason-select">
+          <option value="">Select a reason</option>
+          <option value="Changed my mind">Changed my mind</option>
+          <option value="Ordered by mistake">Ordered by mistake</option>
+          <option value="Need to update my order">Need to update my order</option>
+          <option value="Found another pharmacy">Found another pharmacy</option>
+          <option value="Other">Other</option>
+        </select>
+      </label>
+      <label id="residence-cancel-reason-other-field" for="residence-cancel-reason-other-input">
+        <span>Specify reason</span>
+        <textarea id="residence-cancel-reason-other-input" rows="4" maxlength="500" placeholder="Add more detail, or type a specific reason..."></textarea>
+      </label>
+      <p class="residence-cancel-order-error" id="residence-cancel-order-error" hidden role="alert"></p>
+    </div>
+    <div class="residence-cancel-order-foot">
+      <button type="button" class="btn btn-ghost" onclick="closeResidenceCancelOrderModal()">Keep order</button>
+      <button type="button" class="btn" id="residence-cancel-order-submit">Cancel order</button>
+    </div>
+  </section>
+</div>
