@@ -309,6 +309,8 @@ function residence_combine_orders_for_receipt(array $orders): array
     $items = [];
     $total = 0.0;
     $down = 0.0;
+    $subtotal = 0.0;
+    $vat = 0.0;
     $numbers = [];
     $names = [];
     $addresses = [];
@@ -328,6 +330,23 @@ function residence_combine_orders_for_receipt(array $orders): array
         }
         $total += (float) ($order['total_amount'] ?? 0);
         $down += (float) ($order['down_payment'] ?? 0);
+        $orderSubtotal = (float) ($order['subtotal'] ?? 0);
+        $orderVat = (float) ($order['vat'] ?? 0);
+        if ($orderSubtotal <= 0 || $orderVat <= 0) {
+            $itemSubtotal = 0.0;
+            foreach ($order['items'] ?? [] as $pricedItem) {
+                if (!is_array($pricedItem)) {
+                    continue;
+                }
+                $qty = max(1, (int) ($pricedItem['quantity'] ?? 1));
+                $itemSubtotal += (float) ($pricedItem['unit_price'] ?? $pricedItem['price'] ?? 0) * $qty;
+            }
+            $priced = residence_apply_vat($itemSubtotal);
+            $orderSubtotal = (float) $priced['subtotal'];
+            $orderVat = (float) $priced['vat'];
+        }
+        $subtotal += $orderSubtotal;
+        $vat += $orderVat;
         $pharmacyName = $name !== '' ? $name : 'Pharmacy';
         foreach ($order['items'] ?? [] as $item) {
             if (!is_array($item)) {
@@ -350,6 +369,8 @@ function residence_combine_orders_for_receipt(array $orders): array
     $primary['pharmacy_address'] = implode(' · ', $addresses);
     $primary['total_amount'] = round($total, 2);
     $primary['down_payment'] = round($down, 2);
+    $primary['subtotal'] = round($subtotal, 2);
+    $primary['vat'] = round($vat, 2);
     $primary['item_count'] = count($items);
 
     return $primary;
@@ -720,6 +741,8 @@ function residence_place_order(array $profile, string $pharmacyId, array $items,
                 'order_number' => $orderNumber,
                 'pharmacy_id' => $pharmacyId,
                 'pharmacy_name' => $directory[$pharmacyId]['name'],
+                'subtotal' => $priced['subtotal'],
+                'vat' => $priced['vat'],
                 'total_amount' => $total,
                 'down_payment' => $downPayment,
                 'status' => 'pending',

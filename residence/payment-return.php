@@ -17,6 +17,7 @@ $error = '';
 $order = null;
 $paymentMeta = [];
 $emailed = false;
+$sendAdminVat = false;
 
 if ($intentId === '' && is_array($pending)) {
     $intentId = (string) ($pending['intent_id'] ?? '');
@@ -91,6 +92,7 @@ if ($intentId === '') {
                     $order['payer_name'] = $pending['name'] ?? ($order['payer_name'] ?? '');
                     $order['receipt_email'] = $pending['email'] ?? '';
                     unset($_SESSION['paymongo_pending']);
+                    $sendAdminVat = true;
                 }
             }
         }
@@ -111,6 +113,12 @@ if ($order && $error === '') {
     );
     $emailed = !empty($mail['ok']);
     $mailError = (string) ($mail['error'] ?? '');
+    if ($sendAdminVat) {
+        try {
+            residence_notify_admin_vat($order, $paymentMeta);
+        } catch (Throwable) {
+        }
+    }
     $_SESSION['paymongo_last_receipt'] = [
         'order' => $order,
         'payment' => $paymentMeta,

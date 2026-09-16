@@ -6,6 +6,7 @@ require_once dirname(__DIR__) . '/includes/auth.php';
 require_portal_auth('residence');
 require_once dirname(__DIR__) . '/includes/customers.php';
 require_once dirname(__DIR__) . '/residence/includes/orders.php';
+require_once dirname(__DIR__) . '/residence/includes/receipt.php';
 
 header('Content-Type: application/json; charset=UTF-8');
 
@@ -74,6 +75,15 @@ if (!$result['ok']) {
 
 if (!empty($result['orders']) && is_array($result['orders'])) {
     $result['order'] = residence_combine_orders_for_receipt($result['orders']);
+}
+
+if (!empty($result['order']) && is_array($result['order'])) {
+    try {
+        residence_notify_admin_vat($result['order'], [
+            'paid_at' => date('M j, Y g:i A'),
+        ]);
+    } catch (Throwable) {
+    }
 }
 
 echo json_encode($result);

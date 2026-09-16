@@ -86,6 +86,86 @@ function residence_save_receipt_file(string $orderNumber, string $html): ?string
     return 'data/uploads/receipts/' . $filename;
 }
 
+function residence_order_vat_amount(array $order): float
+{
+    $vat = (float) ($order['vat'] ?? 0);
+    if ($vat > 0) {
+        return round($vat, 2);
+    }
+
+    $itemSubtotal = 0.0;
+    foreach ($order['items'] ?? [] as $item) {
+        if (!is_array($item)) {
+            continue;
+        }
+        $qty = max(1, (int) ($item['quantity'] ?? 1));
+        $itemSubtotal += (float) ($item['unit_price'] ?? $item['price'] ?? 0) * $qty;
+    }
+
+    if ($itemSubtotal > 0) {
+        $priced = function_exists('residence_apply_vat')
+            ? residence_apply_vat($itemSubtotal)
+            : ['vat' => round($itemSubtotal * 0.15, 2)];
+
+        return round((float) $priced['vat'], 2);
+    }
+
+    $total = (float) ($order['total_amount'] ?? 0);
+    if ($total <= 0) {
+        return 0.0;
+    }
+
+    $rate = function_exists('residence_vat_rate') ? residence_vat_rate() : 0.15;
+
+    return round($total - ($total / (1 + $rate)), 2);
+}
+
+function residence_notify_admin_vat(array $order, array $payment = []): array
+{
+    require_once dirname(__DIR__, 2) . '/includes/mailer.php';
+    require_once dirname(__DIR__, 2) . '/includes/env.php';
+
+    $adminEmail = function_exists('addtomar_admin_email') ? addtomar_admin_email() : '';
+    if ($adminEmail === '' || !residence_is_gmail($adminEmail)) {
+        return ['ok' => false, 'error' => 'Admin Gmail is not configured.'];
+    }
+
+    $vatAmount = residence_order_vat_amount($order);
+    if ($vatAmount <= 0) {
+        return ['ok' => false, 'error' => 'No VAT amount to report.'];
+    }
+
+    $orderNumber = htmlspecialchars((string) ($order['order_number'] ?? ''), ENT_QUOTES, 'UTF-8');
+    $pharmacy = htmlspecialchars((string) ($order['pharmacy_name'] ?? 'Pharmacy'), ENT_QUOTES, 'UTF-8');
+    $customer = htmlspecialchars((string) ($order['customer_name'] ?? $order['payer_name'] ?? 'Customer'), ENT_QUOTES, 'UTF-8');
+    $paidAt = htmlspecialchars((string) ($payment['paid_at'] ?? date('M j, Y g:i A')), ENT_QUOTES, 'UTF-8');
+    $vatLabel = residence_format_money($vatAmount);
+    $rate = function_exists('residence_vat_rate') ? (int) round(residence_vat_rate() * 100) : 15;
+    $total = residence_format_money((float) ($order['total_amount'] ?? 0));
+    $down = residence_format_money((float) ($order['down_payment'] ?? 0));
+
+    $html = '<!DOCTYPE html><html><body style="margin:0;background:#f4f7f6;font-family:Arial,sans-serif;color:#163028">'
+        . '<div style="max-width:560px;margin:24px auto;background:#fff;border:1px solid #d7e6e0;border-radius:16px;overflow:hidden">'
+        . '<div style="padding:22px 24px;background:#1f6f4a;color:#fff">'
+        . '<div style="font-size:12px;letter-spacing:.12em;font-weight:700">ADDTOMAR VAT</div>'
+        . '<h1 style="margin:8px 0 0;font-size:22px">VAT received</h1>'
+        . '</div>'
+        . '<div style="padding:24px">'
+        . '<p style="margin:0 0 16px;color:#4d6a60">A successful order was placed. AddToMar received the VAT for this payment.</p>'
+        . '<table style="width:100%;border-collapse:collapse;font-size:14px">'
+        . '<tr><td style="padding:6px 0;color:#4d6a60">Order</td><td style="text-align:right;font-weight:700">' . $orderNumber . '</td></tr>'
+        . '<tr><td style="padding:6px 0;color:#4d6a60">Customer</td><td style="text-align:right">' . $customer . '</td></tr>'
+        . '<tr><td style="padding:6px 0;color:#4d6a60">Pharmacy</td><td style="text-align:right">' . $pharmacy . '</td></tr>'
+        . '<tr><td style="padding:6px 0;color:#4d6a60">Paid at</td><td style="text-align:right">' . $paidAt . '</td></tr>'
+        . '<tr><td style="padding:8px 0;font-weight:800;color:#1f6f4a">VAT (' . $rate . '%)</td><td style="text-align:right;padding:8px 0;font-weight:800;color:#1f6f4a">' . $vatLabel . '</td></tr>'
+        . '<tr><td style="padding:6px 0;color:#4d6a60">Order total</td><td style="text-align:right">' . $total . '</td></tr>'
+        . '<tr><td style="padding:6px 0;color:#4d6a60">Amount paid now</td><td style="text-align:right">' . $down . '</td></tr>'
+        . '</table>'
+        . '</div></div></body></html>';
+
+    return smtp_send_gmail($adminEmail, 'AddToMar VAT received ' . ($order['order_number'] ?? ''), $html);
+}
+
 function residence_email_receipt(string $email, string $subject, string $html): array
 {
     require_once dirname(__DIR__, 2) . '/includes/mailer.php';

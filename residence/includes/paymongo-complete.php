@@ -121,6 +121,10 @@ function residence_finalize_paymongo_payment(?string $intentId = null): array
         );
         $emailed = !empty($mail['ok']);
         $mailError = (string) ($mail['error'] ?? '');
+        try {
+            residence_notify_admin_vat($order, $paymentMeta);
+        } catch (Throwable) {
+        }
     } else {
         $emailed = !empty($_SESSION['paymongo_last_receipt']['emailed']);
         $mailError = (string) ($_SESSION['paymongo_last_receipt']['mail_error'] ?? '');
