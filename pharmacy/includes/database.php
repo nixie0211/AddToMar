@@ -38,13 +38,22 @@ function pharmacy_ensure_column(PDO $pdo, string $table, string $column, string 
     ');
     $stmt->execute([PHARMACY_DB_NAME, $table, $column]);
     if ((int) $stmt->fetchColumn() === 0) {
-        $pdo->exec('ALTER TABLE `' . $table . '` ADD COLUMN `' . $column . '` ' . $definition);
+        try {
+            $pdo->exec('ALTER TABLE `' . $table . '` ADD COLUMN `' . $column . '` ' . $definition);
+        } catch (Throwable $error) {
+            $plain = preg_replace('/\s+AFTER\s+`?[A-Za-z0-9_]+`?$/i', '', $definition) ?: $definition;
+            if ($plain !== $definition) {
+                $pdo->exec('ALTER TABLE `' . $table . '` ADD COLUMN `' . $column . '` ' . $plain);
+            } else {
+                throw $error;
+            }
+        }
     }
 }
 
 function pharmacy_run_migrations(PDO $pdo): void
 {
-    $schemaVersion = '2026-09-14-medicine-images';
+    $schemaVersion = '2026-09-16-checkout-group';
     try {
         $pdo->exec('
             CREATE TABLE IF NOT EXISTS app_meta (
@@ -55,6 +64,7 @@ function pharmacy_run_migrations(PDO $pdo): void
         $versionStmt = $pdo->prepare('SELECT meta_value FROM app_meta WHERE meta_key = ? LIMIT 1');
         $versionStmt->execute(['schema_version']);
         if ((string) $versionStmt->fetchColumn() === $schemaVersion) {
+            pharmacy_ensure_column($pdo, 'orders', 'checkout_group_id', 'VARCHAR(50) NULL');
             return;
         }
     } catch (Throwable) {

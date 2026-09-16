@@ -576,25 +576,56 @@ function residence_place_order(array $profile, string $pharmacyId, array $items,
             $notes .= ' | Receipt: ' . $receiptEmail;
         }
 
-        $orderStmt = $pdo->prepare('
-            INSERT INTO orders (
-                pharmacy_id, order_number, customer_id, status, payment_method,
-                total_amount, down_payment, notes, paymongo_intent_id, checkout_group_id, prescription_path, pickup_proof_path
-            ) VALUES (?, ?, ?, "pending", ?, ?, ?, ?, ?, ?, ?, ?)
-        ');
-        $orderStmt->execute([
-            $pharmacyId,
-            $orderNumber,
-            $customerId,
-            trim((string) ($options['payment_method'] ?? 'gcash')),
-            $total,
-            $downPayment,
-            $notes,
-            $intentId !== '' ? $intentId : null,
-            $checkoutGroupId !== '' ? $checkoutGroupId : $orderNumber,
-            $orderPrescriptionPath,
-            $options['payment_proof_path'] ?? null,
-        ]);
+        if (function_exists('pharmacy_ensure_column')) {
+            try {
+                pharmacy_ensure_column($pdo, 'orders', 'checkout_group_id', 'VARCHAR(50) NULL');
+            } catch (Throwable) {
+            }
+        }
+
+        try {
+            $orderStmt = $pdo->prepare('
+                INSERT INTO orders (
+                    pharmacy_id, order_number, customer_id, status, payment_method,
+                    total_amount, down_payment, notes, paymongo_intent_id, checkout_group_id, prescription_path, pickup_proof_path
+                ) VALUES (?, ?, ?, "pending", ?, ?, ?, ?, ?, ?, ?, ?)
+            ');
+            $orderStmt->execute([
+                $pharmacyId,
+                $orderNumber,
+                $customerId,
+                trim((string) ($options['payment_method'] ?? 'gcash')),
+                $total,
+                $downPayment,
+                $notes,
+                $intentId !== '' ? $intentId : null,
+                $checkoutGroupId !== '' ? $checkoutGroupId : $orderNumber,
+                $orderPrescriptionPath,
+                $options['payment_proof_path'] ?? null,
+            ]);
+        } catch (Throwable $insertError) {
+            if (!str_contains($insertError->getMessage(), 'checkout_group_id')) {
+                throw $insertError;
+            }
+            $orderStmt = $pdo->prepare('
+                INSERT INTO orders (
+                    pharmacy_id, order_number, customer_id, status, payment_method,
+                    total_amount, down_payment, notes, paymongo_intent_id, prescription_path, pickup_proof_path
+                ) VALUES (?, ?, ?, "pending", ?, ?, ?, ?, ?, ?, ?)
+            ');
+            $orderStmt->execute([
+                $pharmacyId,
+                $orderNumber,
+                $customerId,
+                trim((string) ($options['payment_method'] ?? 'gcash')),
+                $total,
+                $downPayment,
+                $notes,
+                $intentId !== '' ? $intentId : null,
+                $orderPrescriptionPath,
+                $options['payment_proof_path'] ?? null,
+            ]);
+        }
 
         $orderId = (int) $pdo->lastInsertId();
 
