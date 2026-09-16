@@ -543,6 +543,7 @@ function pharmacy_order_items_summary(array $items): string
 function pharmacy_order_tabs(): array
 {
     return [
+        ['status' => 'all', 'label' => 'All'],
         ['status' => 'pending', 'label' => 'Pending'],
         ['status' => 'confirmed', 'label' => 'Confirmed'],
         ['status' => 'preparing', 'label' => 'Preparing'],
@@ -550,6 +551,20 @@ function pharmacy_order_tabs(): array
         ['status' => 'delivered', 'label' => 'Completed'],
         ['status' => 'cancelled', 'label' => 'Cancelled'],
     ];
+}
+
+function pharmacy_order_avatar_tone(int $index): array
+{
+    $tones = [
+        ['bg' => '#e8f1ff', 'fg' => '#2563eb'],
+        ['bg' => '#e6f7f1', 'fg' => '#0d9488'],
+        ['bg' => '#fde8ef', 'fg' => '#e11d48'],
+        ['bg' => '#fff1e6', 'fg' => '#d97706'],
+        ['bg' => '#f3e8ff', 'fg' => '#7c3aed'],
+        ['bg' => '#ecfdf3', 'fg' => '#16a34a'],
+    ];
+
+    return $tones[$index % count($tones)];
 }
 
 function pharmacy_orders_url(string $status = 'pending', int $orderId = 0): string

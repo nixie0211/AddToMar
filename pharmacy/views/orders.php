@@ -1,13 +1,15 @@
 <!-- ================= ORDERS VIEW ================= -->
 <?php
-$allowedStatuses = array_keys(pharmacy_order_status_map());
+$allowedStatuses = array_merge(['all'], array_keys(pharmacy_order_status_map()));
 $activeStatus = trim((string) ($_GET['status'] ?? 'pending'));
 if (!in_array($activeStatus, $allowedStatuses, true)) {
     $activeStatus = 'pending';
 }
 
 $selectedOrderId = isset($_GET['order_id']) ? (int) $_GET['order_id'] : 0;
-$filteredOrders = pharmacy_get_orders(300, $activeStatus);
+$filteredOrders = $activeStatus === 'all'
+    ? pharmacy_get_orders(300)
+    : pharmacy_get_orders(300, $activeStatus);
 
 $orderItemsCache = [];
 foreach ($filteredOrders as $order) {
@@ -29,6 +31,10 @@ if ($panelOrder === null) {
 
 $panelOrderId = (int) ($panelOrder['id'] ?? 0);
 $statusCounts = $orderStatusCounts ?? [];
+$totalOrdersCount = (int) array_sum($statusCounts);
+$completedOrdersCount = (int) ($statusCounts['delivered'] ?? 0);
+$pendingOrdersCount = (int) ($statusCounts['pending'] ?? 0);
+$cancelledOrdersCount = (int) ($statusCounts['cancelled'] ?? 0);
 
 $overviewItems = $panelOrder ? ($orderItemsCache[$panelOrderId] ?? pharmacy_get_order_items($panelOrderId)) : [];
 $overviewOrder = $panelOrder ?? [
@@ -84,6 +90,24 @@ $overviewPickupProofKind = $overviewPickupProofExt === 'pdf' ? 'pdf' : ($overvie
       <section class="<?= pharmacy_view_class('orders', $activeView) ?>" id="view-orders" data-live-region="pharmacy-orders" data-live-keys="orders">
         <div class="grid-2 orders-layout">
           <div class="orders-main">
+            <div class="orders-stats">
+              <div class="orders-stat">
+                <strong><?= number_format($totalOrdersCount) ?></strong>
+                <span>Total Orders</span>
+              </div>
+              <div class="orders-stat is-delivered">
+                <strong><?= number_format($completedOrdersCount) ?></strong>
+                <span>Total Completed</span>
+              </div>
+              <div class="orders-stat is-pending">
+                <strong><?= number_format($pendingOrdersCount) ?></strong>
+                <span>Pending Orders</span>
+              </div>
+              <div class="orders-stat is-cancelled">
+                <strong><?= number_format($cancelledOrdersCount) ?></strong>
+                <span>Cancelled</span>
+              </div>
+            </div>
             <div class="orders-tabs-row">
               <div class="tabs">
                 <?php foreach (pharmacy_order_tabs() as $tab): ?>
@@ -91,18 +115,32 @@ $overviewPickupProofKind = $overviewPickupProofExt === 'pdf' ? 'pdf' : ($overvie
                 <a
                   href="<?= htmlspecialchars(pharmacy_orders_url($tabStatus), ENT_QUOTES, 'UTF-8') ?>"
                   class="tab-btn<?= $activeStatus === $tabStatus ? ' active' : '' ?>"
-                ><?= htmlspecialchars((string) $tab['label'], ENT_QUOTES, 'UTF-8') ?> <span class="count"><?= number_format((int) ($statusCounts[$tabStatus] ?? 0)) ?></span></a>
+                ><?= htmlspecialchars((string) $tab['label'], ENT_QUOTES, 'UTF-8') ?> <span class="count"><?= number_format($tabStatus === 'all' ? $totalOrdersCount : (int) ($statusCounts[$tabStatus] ?? 0)) ?></span></a>
                 <?php endforeach; ?>
               </div>
             </div>
-            <div class="orders-list">
+            <div class="orders-table-card">
             <?php if ($filteredOrders === []): ?>
             <div class="orders-empty">
-              <p class="orders-empty-title">No <?= htmlspecialchars(pharmacy_order_status_map()[$activeStatus]['t'] ?? ucfirst($activeStatus), ENT_QUOTES, 'UTF-8') ?> orders</p>
+              <p class="orders-empty-title"><?= $activeStatus === 'all' ? 'No orders yet' : 'No ' . htmlspecialchars(pharmacy_order_status_map()[$activeStatus]['t'] ?? ucfirst($activeStatus), ENT_QUOTES, 'UTF-8') . ' orders' ?></p>
               <p class="orders-empty-copy">Orders in this status will appear here.</p>
             </div>
             <?php else: ?>
-            <?php foreach ($filteredOrders as $order): ?>
+            <div class="orders-table-wrap">
+              <table class="orders-table">
+                <thead>
+                  <tr>
+                    <th>Customer</th>
+                    <th>Order</th>
+                    <th>Medicines</th>
+                    <th>Order Date</th>
+                    <th>Order Time</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+            <?php foreach ($filteredOrders as $orderIndex => $order): ?>
             <?php
             $orderId = (int) ($order['id'] ?? 0);
             $orderItems = $orderItemsCache[$orderId] ?? [];
@@ -110,23 +148,39 @@ $overviewPickupProofKind = $overviewPickupProofExt === 'pdf' ? 'pdf' : ($overvie
             $orderNumber = (string) ($order['order_number'] ?? 'ORD-0000');
             $isActiveCard = $panelOrderId === $orderId;
             $orderCancellationReason = trim((string) ($order['cancellation_reason'] ?? ''));
+            $orderStatus = (string) ($order['status'] ?? $activeStatus);
+            $orderStatusMeta = pharmacy_order_status_map()[$orderStatus] ?? ['c' => 'badge-gray', 't' => ucfirst($orderStatus)];
+            $createdAt = strtotime((string) ($order['created_at'] ?? '')) ?: time();
+            $avatarTone = pharmacy_order_avatar_tone($orderIndex);
+            $medicinesSummary = pharmacy_order_items_summary($orderItems);
+            if ($orderStatus === 'cancelled' && $orderCancellationReason !== '') {
+                $medicinesSummary .= ' · ' . $orderCancellationReason;
+            }
             ?>
-            <a
-              href="<?= htmlspecialchars(pharmacy_orders_url($activeStatus, $orderId), ENT_QUOTES, 'UTF-8') ?>"
-              class="order-card<?= $isActiveCard ? ' is-active' : '' ?>"
-            >
-              <div class="list-icon" style="background:var(--teal-soft);color:var(--teal);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2l1.5 3h9L18 2M3 6h18l-1.5 13a2 2 0 0 1-2 1.8H6.5a2 2 0 0 1-2-1.8L3 6z"/></svg></div>
-              <div>
-                <div class="order-id">#<?= htmlspecialchars($orderNumber, ENT_QUOTES, 'UTF-8') ?></div>
-                <div class="cust"><?= htmlspecialchars($orderCustomer, ENT_QUOTES, 'UTF-8') ?></div>
-                <div class="meds"><?= htmlspecialchars(pharmacy_order_items_summary($orderItems), ENT_QUOTES, 'UTF-8') ?><?= $activeStatus === 'cancelled' && $orderCancellationReason !== '' ? ' · ' . htmlspecialchars($orderCancellationReason, ENT_QUOTES, 'UTF-8') : '' ?></div>
-              </div>
-              <div class="right-block">
-                <div class="amount"><?= pharmacy_format_money((float) ($order['total_amount'] ?? 0)) ?></div>
-                <div class="time"><?= htmlspecialchars(pharmacy_time_ago($order['created_at'] ?? null), ENT_QUOTES, 'UTF-8') ?></div>
-              </div>
-            </a>
+                  <tr class="orders-table-row<?= $isActiveCard ? ' is-active' : '' ?>">
+                    <td>
+                      <a class="orders-table-link" href="<?= htmlspecialchars(pharmacy_orders_url($activeStatus, $orderId), ENT_QUOTES, 'UTF-8') ?>">
+                        <span class="ot-customer">
+                          <span class="ot-avatar" style="background:<?= htmlspecialchars($avatarTone['bg'], ENT_QUOTES, 'UTF-8') ?>;color:<?= htmlspecialchars($avatarTone['fg'], ENT_QUOTES, 'UTF-8') ?>;"><?= htmlspecialchars(pharmacy_initials($orderCustomer), ENT_QUOTES, 'UTF-8') ?></span>
+                          <span class="ot-customer-name"><?= htmlspecialchars($orderCustomer, ENT_QUOTES, 'UTF-8') ?></span>
+                        </span>
+                      </a>
+                    </td>
+                    <td><a class="orders-table-link" href="<?= htmlspecialchars(pharmacy_orders_url($activeStatus, $orderId), ENT_QUOTES, 'UTF-8') ?>"><span class="ot-order">#<?= htmlspecialchars($orderNumber, ENT_QUOTES, 'UTF-8') ?></span></a></td>
+                    <td><a class="orders-table-link" href="<?= htmlspecialchars(pharmacy_orders_url($activeStatus, $orderId), ENT_QUOTES, 'UTF-8') ?>"><span class="ot-meds"><?= htmlspecialchars($medicinesSummary, ENT_QUOTES, 'UTF-8') ?></span></a></td>
+                    <td><a class="orders-table-link" href="<?= htmlspecialchars(pharmacy_orders_url($activeStatus, $orderId), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars(date('d/m/Y', $createdAt), ENT_QUOTES, 'UTF-8') ?></a></td>
+                    <td><a class="orders-table-link" href="<?= htmlspecialchars(pharmacy_orders_url($activeStatus, $orderId), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars(date('g:i a', $createdAt), ENT_QUOTES, 'UTF-8') ?></a></td>
+                    <td><a class="orders-table-link" href="<?= htmlspecialchars(pharmacy_orders_url($activeStatus, $orderId), ENT_QUOTES, 'UTF-8') ?>"><span class="ot-amount"><?= pharmacy_format_money((float) ($order['total_amount'] ?? 0)) ?></span></a></td>
+                    <td>
+                      <a class="orders-table-link" href="<?= htmlspecialchars(pharmacy_orders_url($activeStatus, $orderId), ENT_QUOTES, 'UTF-8') ?>">
+                        <span class="ot-pill ot-pill--<?= htmlspecialchars($orderStatus, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($orderStatusMeta['t'], ENT_QUOTES, 'UTF-8') ?></span>
+                      </a>
+                    </td>
+                  </tr>
             <?php endforeach; ?>
+                </tbody>
+              </table>
+            </div>
             <?php endif; ?>
             </div>
           </div>
