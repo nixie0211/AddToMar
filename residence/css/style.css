@@ -1052,6 +1052,11 @@ input.field-input:focus-visible, select.field-input:focus-visible, textarea.fiel
   padding-left:0;
   padding-right:0;
 }
+.page[data-page="checkout"].active{
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
 .page[data-page="dashboard"].active{
   display:flex;
   flex-direction:column;
@@ -4587,9 +4592,9 @@ article.med-card--rx:hover .med-card-frame--rx{
 .checkout-side .upload-box{ min-height:130px; border-color:#20a47c; background:#fcfffe; }
 
 /* Checkout refresh: compact dark payment workspace */
-[data-page="checkout"]{background:var(--white); color:var(--ink); padding:28px clamp(18px,3vw,46px) 28px; overflow:auto;}
-[data-page="checkout"] .checkout-page{max-width:1120px;margin:0 auto;display:flex;flex-direction:column;min-height:100%;}
-[data-page="checkout"] .checkout-layout{grid-template-columns:minmax(300px,1fr) minmax(390px,.94fr);gap:20px;align-items:stretch;}
+[data-page="checkout"]{background:var(--white); color:var(--ink); padding:28px clamp(18px,3vw,46px) 18px; overflow:hidden; min-height:0; height:100%;}
+[data-page="checkout"] .checkout-page{max-width:1120px;margin:0 auto;display:flex;flex-direction:column;flex:1;min-height:0;height:100%;overflow:hidden;}
+[data-page="checkout"] .checkout-layout{flex:1;min-height:0;grid-template-columns:minmax(300px,1fr) minmax(390px,.94fr);grid-template-rows:minmax(0,1fr);gap:20px;align-items:stretch;overflow:hidden;}
 [data-page="checkout"] .checkout-summary-card{grid-column:1;grid-row:1;}
 [data-page="checkout"] .checkout-payment-card{grid-column:2;grid-row:1;}
 [data-page="checkout"] .checkout-payment-card{height:100%;}
@@ -4660,10 +4665,27 @@ article.med-card--rx:hover .med-card-frame--rx{
   color:var(--ink);
   font-size:15px;
 }
-[data-page="checkout"] .checkout-price-breakdown{display:block;}
-[data-page="checkout"] .checkout-summary-card{max-height:none;overflow:visible;}
-[data-page="checkout"] .checkout-page.no-prescription .checkout-summary-card{max-height:none;}
-[data-page="checkout"] .checkout-summary-card #checkout-summary-lines{min-height:0;overflow-y:auto;padding-right:5px;}
+[data-page="checkout"] .checkout-price-breakdown{display:block;flex-shrink:0;}
+[data-page="checkout"] .checkout-summary-card{
+  display:flex;
+  flex-direction:column;
+  height:100%;
+  max-height:100%;
+  min-height:0;
+  overflow:hidden;
+}
+[data-page="checkout"] .checkout-page.no-prescription .checkout-summary-card{max-height:100%;}
+[data-page="checkout"] .checkout-summary-title{flex-shrink:0;}
+[data-page="checkout"] .checkout-summary-card .summary-row.total{flex-shrink:0;}
+[data-page="checkout"] .checkout-summary-card #checkout-summary-lines{
+  flex:1 1 auto;
+  min-height:0;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  padding-right:6px;
+  scrollbar-gutter:stable;
+}
+[data-page="checkout"] .checkout-payment-card{min-height:0;max-height:100%;overflow:hidden;}
 [data-page="checkout"] .prescription-upload-row{display:block;}
 [data-page="checkout"] .prescription-upload-card{width:100%;min-height:0;padding:12px;gap:5px;border-width:1px;border-radius:8px;}
 [data-page="checkout"] .prescription-upload-preview{width:42px;height:42px;margin-top:0;}
@@ -4704,7 +4726,17 @@ article.med-card--rx:hover .med-card-frame--rx{
 .order-receipt-qr img{width:88px;height:88px;padding:5px;border:1px solid var(--border);border-radius:7px;background:#fff;}
 [data-page="checkout"] .payment-details-grid input::placeholder{color:#64748b;opacity:1;}
 [data-page="checkout"] #checkout-payment-status{background:#292f52;color:#b9c2e6;}
-@media(max-width:760px){[data-page="checkout"] .checkout-layout{grid-template-columns:1fr;}[data-page="checkout"] .checkout-summary-card,[data-page="checkout"] .checkout-payment-card{grid-column:1;grid-row:auto;}[data-page="checkout"]{padding:18px 12px 20px;}[data-page="checkout"] .checkout-privacy-note{margin-top:16px;padding:14px 4px 0;}[data-page="checkout"] .checkout-summary-item.has-rx .checkout-summary-item-copy > strong,[data-page="checkout"] .checkout-summary-item.has-rx .checkout-summary-item-copy > span{padding-right:146px;}}
+@media(max-width:760px){
+  .page[data-page="checkout"].active,[data-page="checkout"]{overflow:auto;}
+  [data-page="checkout"] .checkout-page{height:auto;overflow:visible;}
+  [data-page="checkout"] .checkout-layout{grid-template-columns:1fr;grid-template-rows:auto;height:auto;overflow:visible;flex:none;}
+  [data-page="checkout"] .checkout-summary-card,[data-page="checkout"] .checkout-payment-card{grid-column:1;grid-row:auto;height:auto;max-height:none;overflow:visible;}
+  [data-page="checkout"] .checkout-summary-card{max-height:min(62vh, 560px);}
+  [data-page="checkout"] .checkout-summary-card #checkout-summary-lines{max-height:none;}
+  [data-page="checkout"]{padding:18px 12px 20px;}
+  [data-page="checkout"] .checkout-privacy-note{margin-top:16px;padding:14px 4px 0;}
+  [data-page="checkout"] .checkout-summary-item.has-rx .checkout-summary-item-copy > strong,[data-page="checkout"] .checkout-summary-item.has-rx .checkout-summary-item-copy > span{padding-right:146px;}
+}
 @media (max-width:1100px){
   .checkout-layout{ grid-template-columns:1fr; }
   .checkout-box{ min-height:0; }
