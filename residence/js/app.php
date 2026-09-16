@@ -3028,6 +3028,12 @@ function renderOrderDetail(id){
       </div>
     `).join('');
     const subtotal = (store.items || []).reduce((sum, item) => sum + Number(item.line_total || 0), 0) || Number(store.total_amount || 0);
+    const storeTrackHtml = storeCount > 1
+      ? `<div class="mo-store-track">
+          <div class="od-timeline mo-store-timeline">${orderTimelineHtml(store.status, `${store.date_label || data.date_label} • ${store.time_label || data.time_label}`)}</div>
+        </div>
+        <button type="button" class="mo-store-track-btn" data-mo-track>View tracking details</button>`
+      : '';
     return `
       <article class="mo-store-card">
         <header class="mo-store-head">
@@ -3043,10 +3049,7 @@ function renderOrderDetail(id){
           <span>Store Subtotal</span>
           <b>${peso(store.total_amount || subtotal)}</b>
         </div>
-        <div class="mo-store-track">
-          <div class="od-timeline mo-store-timeline">${orderTimelineHtml(store.status, `${store.date_label || data.date_label} • ${store.time_label || data.time_label}`)}</div>
-        </div>
-        <button type="button" class="mo-store-track-btn" data-mo-track>View tracking details</button>
+        ${storeTrackHtml}
       </article>`;
   }).join('');
 
