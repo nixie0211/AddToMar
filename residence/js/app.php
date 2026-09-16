@@ -2739,7 +2739,9 @@ function renderResidenceOrders(){
     root.classList.add('is-empty');
     root.innerHTML = hasQuery
       ? '<p class="orders-empty">No orders match that number.</p>'
-      : '<p class="orders-empty">No orders yet. Medicines you check out will appear here and at the pharmacy.</p>';
+      : (tab === 'cancelled'
+        ? '<p class="orders-empty">No cancelled orders.</p>'
+        : '<p class="orders-empty">No orders yet. Medicines you check out will appear here and at the pharmacy.</p>');
     return;
   }
   root.classList.remove('is-empty');

@@ -20,6 +20,7 @@
               <button type="button" data-order-tab="preparing">Preparing</button>
               <button type="button" data-order-tab="ready">Ready for pick up</button>
               <button type="button" data-order-tab="completed">Completed</button>
+              <button type="button" data-order-tab="cancelled">Cancelled</button>
             </div>
             <div class="orders-reference-actions">
               <label>
