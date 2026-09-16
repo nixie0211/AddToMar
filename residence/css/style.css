@@ -6012,6 +6012,11 @@ body.is-pharmacy-empty.is-pharmacy-profile-page .page[data-page="pharmacy-profil
   cursor:pointer;
 }
 .od-rx-link:hover{text-decoration:underline;}
+.mo-store-item .od-rx-link{
+  display:inline-block;
+  margin-top:2px;
+  font-size:12px;
+}
 .order-rx-viewer{
   position:fixed;
   inset:0;

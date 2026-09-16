@@ -2588,7 +2588,7 @@ function presentResidenceOrder(order, options = {}){
       unit_price: unitPrice,
       line_total: unitPrice * quantity,
       prescription_required: !!item.prescription_required,
-      prescription_url: String(item.prescription_url || ''),
+      prescription_url: String(item.prescription_url || order.prescription_url || ''),
       item_note: String(item.item_note || item.note || '').trim(),
       image: item.image || item.image_url || '',
       pharmacy_id: String(item.pharmacy_id || order.pharmacy_id || ''),
@@ -3043,17 +3043,26 @@ function renderOrderDetail(id){
     const logoHtml = logo
       ? `<img src="${escHtml(logo)}" alt="" onerror="this.style.display='none'">`
       : `<span>${escHtml(String(store.pharmacy_name || 'P').slice(0, 1))}</span>`;
-    const itemsHtml = (store.items || []).map(item => `
+    const itemsHtml = (store.items || []).map(item => {
+      const rxUrl = item.prescription_url || store.prescription_url || data.prescription_url || '';
+      const rxHtml = item.prescription_required
+        ? (rxUrl
+          ? `<small><button type="button" class="od-rx-link" data-rx-url="${escHtml(rxUrl)}">Rx required · see prescription ›</button></small>`
+          : `<small>Rx required</small>`)
+        : '';
+      return `
       <div class="mo-store-item">
         <img src="${escapeHtml(item.image || fallbackImage)}" alt="" onerror="this.onerror=null;this.src='${fallbackImage}'">
         <div>
           <b>${escapeHtml(item.name)}</b>
           <small>Qty: ${item.quantity}</small>
+          ${rxHtml}
           ${item.item_note ? `<small class="mo-item-note">Note: ${escapeHtml(item.item_note)}</small>` : ''}
         </div>
         <strong>${peso(item.line_total)}</strong>
       </div>
-    `).join('');
+    `;
+    }).join('');
     const subtotal = (store.items || []).reduce((sum, item) => sum + Number(item.line_total || 0), 0) || Number(store.total_amount || 0);
     const storeTrackHtml = storeCount > 1
       ? `<div class="mo-store-track">
