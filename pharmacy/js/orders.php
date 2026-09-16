@@ -224,10 +224,71 @@ function closeCancelOrderModal() {
   syncModalOpenState();
 }
 
+function ordersViewUrl(href) {
+  try {
+    const url = new URL(href, window.location.href);
+    return url.pathname + url.search;
+  } catch (error) {
+    return href || '';
+  }
+}
+
+async function loadOrdersView(href, options) {
+  options = options || {};
+  const nextUrl = ordersViewUrl(href);
+  if (!nextUrl) return;
+  if (!options.force && !options.skipHistory && (window.location.pathname + window.location.search) === nextUrl) {
+    return;
+  }
+  if (loadOrdersView.inFlight) return;
+  loadOrdersView.inFlight = true;
+
+  try {
+    const response = await fetch(nextUrl, {
+      credentials: 'same-origin',
+      cache: 'no-store',
+      headers: {
+        'X-Live-Sync': '1',
+        Accept: 'text/html',
+      },
+    });
+    if (!response.ok) throw new Error('load');
+
+    const html = await response.text();
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const incoming = doc.getElementById('view-orders');
+    const current = document.getElementById('view-orders');
+    if (!incoming || !current) {
+      window.location.href = nextUrl;
+      return;
+    }
+
+    incoming.classList.toggle('active', current.classList.contains('active'));
+    current.replaceWith(incoming);
+
+    if (!options.skipHistory) {
+      const currentUrl = window.location.pathname + window.location.search;
+      if (currentUrl !== nextUrl) {
+        const state = { view: 'orders' };
+        if (options.replace) history.replaceState(state, '', nextUrl);
+        else history.pushState(state, '', nextUrl);
+      }
+    }
+
+    const view = document.getElementById('view-orders');
+    if (view) delete view.dataset.orderUiBound;
+    initPharmacyOrderUi();
+  } catch (error) {
+    window.location.href = nextUrl;
+  } finally {
+    loadOrdersView.inFlight = false;
+  }
+}
+
 function navigateOrdersLink(link) {
   const href = link.getAttribute('href');
   if (!href) return;
-  window.location.href = href;
+  loadOrdersView(href);
 }
 
 async function submitOrderStatusAdvance(button) {
@@ -261,7 +322,7 @@ async function submitOrderStatusAdvance(button) {
     }
 
     const status = result.status || nextStatus;
-    window.location.href = 'index.php?view=orders&status=' + encodeURIComponent(status) + '&order_id=' + orderId;
+    loadOrdersView('index.php?view=orders&status=' + encodeURIComponent(status) + '&order_id=' + orderId, { replace: true, force: true });
   } catch (error) {
     window.alert('Could not update order status. Please try again.');
     button.disabled = false;
@@ -287,7 +348,7 @@ async function completeOrder(orderId) {
     throw new Error(result.message || 'Could not complete this order.');
   }
 
-  window.location.href = 'index.php?view=orders&status=delivered&order_id=' + orderId;
+  loadOrdersView('index.php?view=orders&status=delivered&order_id=' + orderId, { replace: true, force: true });
 }
 
 async function uploadPickupProof(orderId, file) {
@@ -402,7 +463,7 @@ function initPharmacyOrderUi() {
           return;
         }
 
-        window.location.href = 'index.php?view=orders&status=cancelled&order_id=' + orderId;
+        loadOrdersView('index.php?view=orders&status=cancelled&order_id=' + orderId, { replace: true, force: true });
       } catch (error) {
         setCancelOrderError('Could not cancel order. Please try again.');
         cancelOrderSubmitBtn.disabled = false;
@@ -553,4 +614,9 @@ document.addEventListener('livesync:applied', function () {
   const view = document.getElementById('view-orders');
   if (view) delete view.dataset.orderUiBound;
   initPharmacyOrderUi();
+});
+window.addEventListener('popstate', function () {
+  const params = new URLSearchParams(window.location.search);
+  if ((params.get('view') || '') !== 'orders') return;
+  loadOrdersView(window.location.pathname + window.location.search, { skipHistory: true });
 });
