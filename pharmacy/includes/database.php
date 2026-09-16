@@ -113,6 +113,7 @@ function pharmacy_run_migrations(PDO $pdo): void
             is_active TINYINT(1) NOT NULL DEFAULT 1,
             image_path VARCHAR(255) NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            listed_at DATETIME NULL,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             UNIQUE KEY uniq_medicine_code (medicine_code)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
@@ -205,6 +206,11 @@ function pharmacy_run_migrations(PDO $pdo): void
 
     pharmacy_ensure_column($pdo, 'medicines', 'pharmacy_id', 'VARCHAR(32) NULL AFTER id');
     pharmacy_ensure_column($pdo, 'medicines', 'is_featured', 'TINYINT(1) NOT NULL DEFAULT 0 AFTER is_active');
+    pharmacy_ensure_column($pdo, 'medicines', 'listed_at', 'DATETIME NULL AFTER created_at');
+    try {
+        $pdo->exec('UPDATE medicines SET listed_at = created_at WHERE listed_at IS NULL AND created_at IS NOT NULL');
+    } catch (Throwable) {
+    }
     pharmacy_ensure_column($pdo, 'orders', 'pharmacy_id', 'VARCHAR(32) NULL AFTER id');
     pharmacy_ensure_column($pdo, 'customers', 'pharmacy_id', 'VARCHAR(32) NULL AFTER id');
     pharmacy_ensure_column($pdo, 'suppliers', 'pharmacy_id', 'VARCHAR(32) NULL AFTER id');

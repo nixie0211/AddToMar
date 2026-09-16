@@ -143,9 +143,6 @@ function applyInventoryMedicineCard(card){
 
   const existing = grid.querySelector('.med-card[data-medicine-id="' + card.id + '"]');
   const featured = existing ? existing.dataset.featured === '1' : false;
-  if (existing && !card.is_new && existing.querySelector('.med-card-new')) {
-    card.is_new = true;
-  }
 
   const html = buildInventoryCardHtml(card, featured);
   const wrap = document.createElement('div');

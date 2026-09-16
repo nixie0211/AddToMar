@@ -152,12 +152,25 @@ try {
     }
 
     $imageUrl = null;
+    if (function_exists('pharmacy_ensure_column')) {
+        try {
+            pharmacy_ensure_column($pdo, 'medicines', 'listed_at', 'DATETIME NULL AFTER created_at');
+        } catch (Throwable) {
+        }
+    }
+
     if ($medicineId > 0) {
         if ($imageUpload !== null) {
             pharmacy_medicine_store_image($medicineId, $imageUpload['filename'], $imageUpload['mime'], $imageUpload['content']);
             $imagePath = 'medicine-image.php?id=' . $medicineId;
             $imageUrl = pharmacy_saved_medicine_image_url($medicineId);
         }
+
+        $previous = $pdo->prepare('SELECT is_active, listed_at, created_at FROM medicines WHERE id = ? AND ' . pharmacy_scope_sql() . ' LIMIT 1');
+        $previous->execute([$medicineId]);
+        $previousRow = $previous->fetch() ?: [];
+        $wasInactive = (int) ($previousRow['is_active'] ?? 1) === 0;
+        $relisted = $wasInactive && (int) $fields['is_active'] === 1;
 
         $sql = '
             UPDATE medicines SET
@@ -190,6 +203,10 @@ try {
             $sql .= ', image_path = ?';
             $params[] = $imagePath;
         }
+        if ($relisted) {
+            $sql .= ', listed_at = ?';
+            $params[] = date('Y-m-d H:i:s');
+        }
         $sql .= ' WHERE id = ? AND ' . pharmacy_scope_sql();
         $params[] = $medicineId;
 
@@ -205,7 +222,10 @@ try {
             }
         }
 
-        $payload = pharmacy_medicine_save_client_payload($medicineId, $fields, $imageUrl, false);
+        $saved = $pdo->prepare('SELECT * FROM medicines WHERE id = ? AND ' . pharmacy_scope_sql() . ' LIMIT 1');
+        $saved->execute([$medicineId]);
+        $savedRow = $saved->fetch() ?: [];
+        $payload = pharmacy_medicine_save_client_payload($medicineId, array_merge($fields, $savedRow), $imageUrl, false);
         echo json_encode([
             'success' => true,
             'message' => 'Medicine updated successfully',
@@ -218,31 +238,67 @@ try {
         INSERT INTO medicines (
             pharmacy_id, name, generic_name, brand, dosage_form, strength, unit, category, dosage,
             description, ingredients, batch_number, expiration_date, stock_quantity, minimum_stock,
-            unit_price, selling_price, prescription_required, is_active, image_path
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?)
+            unit_price, selling_price, prescription_required, is_active, image_path, listed_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?)
     ');
 
-    $stmt->execute([
-        $pharmacyId,
-        $name,
-        $genericName,
-        $brand,
-        $dosageForm,
-        $strength,
-        $unit,
-        $category,
-        $dosageSummary,
-        $description,
-        $ingredients,
-        $batchNumber,
-        $expiration,
-        $stockQuantity,
-        $unitPrice,
-        $sellingPrice,
-        isset($_POST['prescription_required']) ? 1 : 0,
-        isset($_POST['is_active']) ? 1 : 0,
-        $imagePath,
-    ]);
+    $listedAt = date('Y-m-d H:i:s');
+    try {
+        $stmt->execute([
+            $pharmacyId,
+            $name,
+            $genericName,
+            $brand,
+            $dosageForm,
+            $strength,
+            $unit,
+            $category,
+            $dosageSummary,
+            $description,
+            $ingredients,
+            $batchNumber,
+            $expiration,
+            $stockQuantity,
+            $unitPrice,
+            $sellingPrice,
+            isset($_POST['prescription_required']) ? 1 : 0,
+            isset($_POST['is_active']) ? 1 : 0,
+            $imagePath,
+            $listedAt,
+        ]);
+    } catch (Throwable $insertError) {
+        if (!str_contains($insertError->getMessage(), 'listed_at')) {
+            throw $insertError;
+        }
+        $stmt = $pdo->prepare('
+            INSERT INTO medicines (
+                pharmacy_id, name, generic_name, brand, dosage_form, strength, unit, category, dosage,
+                description, ingredients, batch_number, expiration_date, stock_quantity, minimum_stock,
+                unit_price, selling_price, prescription_required, is_active, image_path
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?)
+        ');
+        $stmt->execute([
+            $pharmacyId,
+            $name,
+            $genericName,
+            $brand,
+            $dosageForm,
+            $strength,
+            $unit,
+            $category,
+            $dosageSummary,
+            $description,
+            $ingredients,
+            $batchNumber,
+            $expiration,
+            $stockQuantity,
+            $unitPrice,
+            $sellingPrice,
+            isset($_POST['prescription_required']) ? 1 : 0,
+            isset($_POST['is_active']) ? 1 : 0,
+            $imagePath,
+        ]);
+    }
 
     $medicineId = (int) $pdo->lastInsertId();
     if ($imageUpload !== null && $medicineId > 0) {
@@ -252,7 +308,10 @@ try {
         $imageUrl = pharmacy_saved_medicine_image_url($medicineId);
     }
 
-    $payload = pharmacy_medicine_save_client_payload($medicineId, $fields, $imageUrl, true);
+    $saved = $pdo->prepare('SELECT * FROM medicines WHERE id = ? AND ' . pharmacy_scope_sql() . ' LIMIT 1');
+    $saved->execute([$medicineId]);
+    $savedRow = $saved->fetch() ?: ['listed_at' => $listedAt ?? date('Y-m-d H:i:s'), 'created_at' => date('Y-m-d H:i:s')];
+    $payload = pharmacy_medicine_save_client_payload($medicineId, array_merge($fields, $savedRow), $imageUrl, true);
     echo json_encode([
         'success' => true,
         'message' => 'Medicine saved successfully',

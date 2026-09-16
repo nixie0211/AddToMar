@@ -228,7 +228,7 @@ function pharmacy_medicine_save_client_payload(int $id, array $fields, ?string $
             'expiration_display' => $expiration === '' ? '—' : pharmacy_expiration_display($expiration),
             'batch_number' => trim((string) ($row['batch_number'] ?? '')) !== '' ? (string) $row['batch_number'] : '—',
             'image_url' => $imageUrl,
-            'is_new' => $createdNow,
+            'is_new' => pharmacy_medicine_is_new($row),
             'requires_rx' => !empty($row['prescription_required']),
             'search' => strtolower(trim(implode(' ', array_filter([
                 (string) ($row['name'] ?? ''),
@@ -1093,25 +1093,26 @@ function pharmacy_medicine_image_url(array $medicine): ?string
 
 function pharmacy_medicine_is_new(array $medicine): bool
 {
-    $raw = trim((string) ($medicine['created_at'] ?? ''));
+    $raw = trim((string) ($medicine['listed_at'] ?? $medicine['created_at'] ?? ''));
     if ($raw === '') {
         return false;
     }
 
     $timezone = function_exists('app_timezone') ? app_timezone() : new DateTimeZone('Asia/Manila');
     try {
-        $created = new DateTimeImmutable($raw, $timezone);
+        $listed = new DateTimeImmutable($raw, $timezone);
     } catch (Exception) {
         $timestamp = strtotime($raw);
         if ($timestamp === false) {
             return false;
         }
-        $created = (new DateTimeImmutable('@' . $timestamp))->setTimezone($timezone);
+        $listed = (new DateTimeImmutable('@' . $timestamp))->setTimezone($timezone);
     }
 
-    $today = new DateTimeImmutable('now', $timezone);
+    $now = new DateTimeImmutable('now', $timezone);
+    $expires = $listed->add(new DateInterval('P7D'));
 
-    return $created->format('Y-m-d') === $today->format('Y-m-d');
+    return $now < $expires;
 }
 
 function pharmacy_medicine_requires_prescription(array $medicine): bool
