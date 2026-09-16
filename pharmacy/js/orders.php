@@ -233,12 +233,7 @@ function navigateOrdersLink(link) {
 async function submitOrderStatusAdvance(button) {
   const orderId = parseInt(button.dataset.orderId || '0', 10);
   const nextStatus = button.dataset.nextStatus || '';
-  const nextLabel = button.dataset.nextLabel || 'the next status';
   if (!orderId || !nextStatus) return;
-
-  if (!window.confirm('Move this order to ' + nextLabel + '?')) {
-    return;
-  }
 
   const originalLabel = button.textContent;
   button.disabled = true;
