@@ -20,7 +20,7 @@
           foreach ($catalogMedicines as $medicine):
               $spotlightBadge = residence_catalog_product_badge($medicine, $topSellerIds);
               $isTopSeller = isset($topSellerIds[(int) ($medicine['id'] ?? 0)]);
-              $showAddButton = true;
+              $showAddButton = false;
               $cardClass = '';
               include RESIDENCE_ROOT . '/partials/medicine-card.php';
           endforeach;
