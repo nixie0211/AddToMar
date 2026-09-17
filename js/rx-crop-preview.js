@@ -1,4 +1,49 @@
 (function () {
+  const rxPreviewCache = Object.create(null);
+
+  function preloadRxPreview(url) {
+    const src = String(url || '').trim();
+    if (!src || rxPreviewCache[src]) return rxPreviewCache[src];
+    const entry = { objectUrl: '', type: '' };
+    entry.promise = fetch(src, { credentials: 'same-origin', cache: 'force-cache' })
+      .then(function (response) {
+        if (!response.ok) throw new Error('rx');
+        entry.type = response.headers.get('content-type') || '';
+        return response.blob();
+      })
+      .then(function (blob) {
+        entry.type = entry.type || blob.type || '';
+        entry.objectUrl = URL.createObjectURL(blob);
+        return entry;
+      })
+      .catch(function () {
+        delete rxPreviewCache[src];
+        return null;
+      });
+    rxPreviewCache[src] = entry;
+    return entry;
+  }
+
+  function rxPreviewReadyUrl(url) {
+    const src = String(url || '').trim();
+    const entry = rxPreviewCache[src];
+    return entry && entry.objectUrl ? entry.objectUrl : '';
+  }
+
+  function rxPreviewLooksPdf(url) {
+    const src = String(url || '').trim();
+    if (/\.pdf($|\?)/i.test(src)) return true;
+    const entry = rxPreviewCache[src];
+    return !!(entry && /pdf/i.test(entry.type || ''));
+  }
+
+  window.preloadRxPreview = preloadRxPreview;
+  window.rxPreviewReadyUrl = rxPreviewReadyUrl;
+  window.rxPreviewLooksPdf = rxPreviewLooksPdf;
+  window.preloadRxPreviewList = function (urls) {
+    (urls || []).forEach(function (url) { preloadRxPreview(url); });
+  };
+
   function bindRxCropPreview(root) {
     if (!root || root.dataset.cropBound === '1') return;
     const stage = root.querySelector('.rx-crop-stage');

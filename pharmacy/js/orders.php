@@ -57,11 +57,9 @@ function openPrescriptionViewer(url) {
   const showMissing = function (message) {
     if (image) {
       image.hidden = true;
-      image.removeAttribute('src');
     }
     if (frame) {
       frame.hidden = true;
-      frame.src = '';
     }
     if (missing) {
       missing.textContent = message || 'The uploaded prescription could not be loaded.';
@@ -78,27 +76,47 @@ function openPrescriptionViewer(url) {
   }
 
   if (missing) missing.hidden = true;
-  const looksPdf = /\.pdf($|\?)/i.test(src);
+  const entry = typeof window.preloadRxPreview === 'function' ? window.preloadRxPreview(src) : null;
+  const ready = typeof window.rxPreviewReadyUrl === 'function' ? window.rxPreviewReadyUrl(src) : '';
+  const looksPdf = typeof window.rxPreviewLooksPdf === 'function'
+    ? window.rxPreviewLooksPdf(src)
+    : /\.pdf($|\?)/i.test(src);
+  const displaySrc = ready || src;
   resetRxCropZoom(viewer, { pdf: looksPdf, empty: false });
   if (image) {
     image.onload = function () { if (missing) missing.hidden = true; };
     image.onerror = function () {
-      if (!frame) {
+      if (ready || !frame) {
         showMissing();
         return;
       }
       image.hidden = true;
       frame.hidden = false;
-      frame.src = src;
+      frame.src = displaySrc;
       resetRxCropZoom(viewer, { pdf: true, empty: false });
     };
     image.hidden = looksPdf;
-    if (!looksPdf) image.src = src;
-    else image.removeAttribute('src');
+    if (!looksPdf) image.src = displaySrc;
   }
   if (frame) {
     frame.hidden = !looksPdf;
-    frame.src = looksPdf ? src : '';
+    if (looksPdf) frame.src = displaySrc;
+  }
+  if (entry && entry.promise && !ready) {
+    entry.promise.then(function (result) {
+      if (!result || !result.objectUrl) return;
+      const isPdf = /pdf/i.test(result.type || '');
+      if (isPdf) {
+        if (image) image.hidden = true;
+        if (frame) {
+          frame.hidden = false;
+          frame.src = result.objectUrl;
+        }
+        resetRxCropZoom(viewer, { pdf: true, empty: false });
+      } else if (image && !image.hidden) {
+        image.src = result.objectUrl;
+      }
+    });
   }
   viewer.hidden = false;
   syncModalOpenState();
@@ -106,13 +124,7 @@ function openPrescriptionViewer(url) {
 
 function closePrescriptionViewer() {
   const viewer = document.getElementById('prescription-viewer');
-  const image = document.getElementById('prescription-viewer-image');
-  const frame = document.getElementById('prescription-viewer-frame');
-  if (image) image.removeAttribute('src');
-  if (frame) frame.src = '';
-  resetRxCropZoom(viewer, { empty: false, pdf: false });
   if (!viewer) return;
-
   viewer.hidden = true;
   syncModalOpenState();
 }
@@ -587,6 +599,11 @@ function renderOrderDrawerDetail(detail) {
   drawer.hidden = false;
   drawer.classList.remove('is-loading');
   drawer.setAttribute('data-order-id', String(detail.id || 0));
+  if (typeof window.preloadRxPreviewList === 'function') {
+    const urls = (detail.items || []).map(function (item) { return item.prescription_url; }).filter(Boolean);
+    if (detail.prescription_url) urls.push(detail.prescription_url);
+    window.preloadRxPreviewList(urls);
+  }
 }
 
 function syncOrdersHistory(nextUrl, options) {

@@ -2858,8 +2858,8 @@ function openOrderPrescription(url){
   if(!modal) return;
   bindResidenceRxCropZoom(modal);
   if(!src){
-    if(image){ image.hidden = true; image.src = ''; }
-    if(frame){ frame.hidden = true; frame.src = ''; }
+    if(image) image.hidden = true;
+    if(frame) frame.hidden = true;
     if(missing){
       missing.hidden = false;
       missing.textContent = 'No prescription file is available.';
@@ -2868,27 +2868,41 @@ function openOrderPrescription(url){
     modal.hidden = false;
     return;
   }
-  const isPdf = /\.pdf($|\?)/i.test(src);
+  const entry = typeof window.preloadRxPreview === 'function' ? window.preloadRxPreview(src) : null;
+  const ready = typeof window.rxPreviewReadyUrl === 'function' ? window.rxPreviewReadyUrl(src) : '';
+  const isPdf = typeof window.rxPreviewLooksPdf === 'function' ? window.rxPreviewLooksPdf(src) : /\.pdf($|\?)/i.test(src);
+  const displaySrc = ready || src;
   resetResidenceRxCropZoom(modal, { pdf:isPdf, empty:false });
   if(image){
     image.hidden = isPdf;
-    image.src = isPdf ? '' : src;
+    if(!isPdf) image.src = displaySrc;
   }
   if(frame){
     frame.hidden = !isPdf;
-    frame.src = isPdf ? src : '';
+    if(isPdf) frame.src = displaySrc;
   }
   if(missing) missing.hidden = true;
+  if(entry && entry.promise && !ready){
+    entry.promise.then(function(result){
+      if(!result || !result.objectUrl) return;
+      const pdf = /pdf/i.test(result.type || '');
+      if(pdf){
+        if(image) image.hidden = true;
+        if(frame){
+          frame.hidden = false;
+          frame.src = result.objectUrl;
+        }
+        resetResidenceRxCropZoom(modal, { pdf:true, empty:false });
+      }else if(image && !image.hidden){
+        image.src = result.objectUrl;
+      }
+    });
+  }
   modal.hidden = false;
 }
 
 function closeOrderPrescription(){
   const modal = document.getElementById('order-rx-viewer');
-  const image = document.getElementById('order-rx-viewer-image');
-  const frame = document.getElementById('order-rx-viewer-frame');
-  if(image) image.src = '';
-  if(frame) frame.src = '';
-  resetResidenceRxCropZoom(modal, { pdf:false, empty:false });
   if(modal) modal.hidden = true;
 }
 window.openOrderPrescription = openOrderPrescription;
@@ -3170,6 +3184,17 @@ function renderOrderDetail(id){
       </aside>
     </div>`;
   bindGroupedOrderDetail(root);
+  if(typeof window.preloadRxPreviewList === 'function'){
+    const rxUrls = [];
+    stores.forEach(store => {
+      if(store.prescription_url) rxUrls.push(store.prescription_url);
+      (store.items || []).forEach(item => {
+        if(item.prescription_url) rxUrls.push(item.prescription_url);
+      });
+    });
+    if(data.prescription_url) rxUrls.push(data.prescription_url);
+    window.preloadRxPreviewList(rxUrls);
+  }
 }
 
 function renderReferenceOrderDetail(id){
