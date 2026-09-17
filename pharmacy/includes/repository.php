@@ -138,6 +138,80 @@ function pharmacy_order_status_map(): array
     ];
 }
 
+function pharmacy_order_progress_index(string $status): int
+{
+    return match (strtolower(trim($status))) {
+        'cancelled' => 0,
+        'confirmed' => 2,
+        'preparing' => 3,
+        'ready' => 4,
+        'picked_up', 'pickedup', 'delivered', 'completed' => 5,
+        default => 1,
+    };
+}
+
+function pharmacy_order_progress_stamp(?string $createdAt): string
+{
+    $timestamp = strtotime((string) $createdAt);
+    if ($timestamp === false) {
+        return '';
+    }
+
+    return date('M j, Y • g:i A', $timestamp);
+}
+
+function pharmacy_order_progress_icon(string $name): string
+{
+    $paths = [
+        'check' => '<path d="m5 13 4 4L19 7"/>',
+        'clock' => '<circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/>',
+        'capsule' => '<path d="m8 5 11 11a3.5 3.5 0 0 1-5 5L3 10a3.5 3.5 0 0 1 5-5Z"/><path d="m7 14 7-7"/>',
+        'store' => '<path d="M3 10h18l-1.2-5H4.2z"/><path d="M4 10v10h16V10M9 20v-6h6v6"/>',
+    ];
+    $body = $paths[$name] ?? $paths['check'];
+
+    return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . $body . '</svg>';
+}
+
+function pharmacy_order_progress_html(string $status, string $stamp): string
+{
+    $current = pharmacy_order_progress_index($status);
+    $cancelled = strtolower(trim($status)) === 'cancelled';
+    $steps = [
+        ['name' => 'Order placed', 'icon' => 'check'],
+        ['name' => 'Pending', 'icon' => 'clock'],
+        ['name' => 'Confirmed', 'icon' => 'check'],
+        ['name' => 'Preparing', 'icon' => 'capsule'],
+        ['name' => 'Ready for pick up', 'icon' => 'store'],
+        ['name' => 'Completed', 'icon' => 'check'],
+    ];
+    $html = '<section class="order-progress" aria-label="Order progress">';
+    foreach ($steps as $index => $step) {
+        if ($cancelled && $index > 0) {
+            $state = 'is-muted';
+        } elseif ($index < $current) {
+            $state = 'is-done';
+        } elseif ($index === $current) {
+            $state = 'is-current';
+        } else {
+            $state = 'is-muted';
+        }
+        $icon = ($state === 'is-done' || ($state === 'is-current' && $index === 5)) ? 'check' : $step['icon'];
+        $time = $state !== 'is-muted' ? $stamp : '';
+        $html .= '<div class="order-progress-step ' . $state . ($time !== '' ? ' is-dated' : '') . '">';
+        $html .= '<span class="order-progress-node">' . pharmacy_order_progress_icon($icon) . '</span>';
+        $html .= '<strong>' . htmlspecialchars($step['name'], ENT_QUOTES, 'UTF-8') . '</strong>';
+        $html .= '<small>' . ($time !== '' ? htmlspecialchars($time, ENT_QUOTES, 'UTF-8') : '&nbsp;') . '</small>';
+        $html .= '</div>';
+        if ($index < count($steps) - 1) {
+            $html .= '<span class="order-progress-rail' . ($index < $current ? ' is-done' : '') . '"></span>';
+        }
+    }
+    $html .= '</section>';
+
+    return $html;
+}
+
 function pharmacy_get_medicines(): array
 {
     $rows = pharmacy_db()->query('SELECT * FROM medicines WHERE ' . pharmacy_scope_sql() . ' ORDER BY created_at DESC, id DESC')->fetchAll();
@@ -761,6 +835,7 @@ function pharmacy_order_detail_from_row(array $order, array $items): array
         'pharmacy_name' => (string) ($order['pharmacy_name'] ?? 'Pharmacy'),
         'items' => $itemRows,
         'created_label' => pharmacy_format_date((string) ($order['created_at'] ?? '')),
+        'created_stamp' => pharmacy_order_progress_stamp((string) ($order['created_at'] ?? '')),
         'total_label' => pharmacy_format_money($total),
         'paid_label' => pharmacy_format_money($isCompleted ? $total : $down),
         'paid_percent' => $isCompleted ? 100 : $percent,

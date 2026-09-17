@@ -528,6 +528,50 @@ function hydratePharmacyOrders() {
   } catch (error) {}
 }
 
+function orderProgressIndex(status) {
+  const key = String(status || '').toLowerCase();
+  if (key === 'cancelled') return 0;
+  if (key === 'confirmed') return 2;
+  if (key === 'preparing') return 3;
+  if (key === 'ready') return 4;
+  if (['picked_up', 'pickedup', 'delivered', 'completed'].indexOf(key) !== -1) return 5;
+  return 1;
+}
+
+function orderProgressIcon(name) {
+  const paths = {
+    check: '<path d="m5 13 4 4L19 7"/>',
+    clock: '<circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/>',
+    capsule: '<path d="m8 5 11 11a3.5 3.5 0 0 1-5 5L3 10a3.5 3.5 0 0 1 5-5Z"/><path d="m7 14 7-7"/>',
+    store: '<path d="M3 10h18l-1.2-5H4.2z"/><path d="M4 10v10h16V10M9 20v-6h6v6"/>'
+  };
+  return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (paths[name] || paths.check) + '</svg>';
+}
+
+function orderProgressHtml(status, stamp) {
+  const current = orderProgressIndex(status);
+  const cancelled = String(status || '').toLowerCase() === 'cancelled';
+  const steps = [
+    { name: 'Order placed', icon: 'check' },
+    { name: 'Pending', icon: 'clock' },
+    { name: 'Confirmed', icon: 'check' },
+    { name: 'Preparing', icon: 'capsule' },
+    { name: 'Ready for pick up', icon: 'store' },
+    { name: 'Completed', icon: 'check' }
+  ];
+  return '<section class="order-progress" aria-label="Order progress">' + steps.map(function (step, index) {
+    const state = cancelled && index > 0
+      ? 'is-muted'
+      : (index < current ? 'is-done' : index === current ? 'is-current' : 'is-muted');
+    const icon = (state === 'is-done' || (state === 'is-current' && index === 5)) ? 'check' : step.icon;
+    const time = state !== 'is-muted' ? stamp : '';
+    const rail = index < steps.length - 1
+      ? '<span class="order-progress-rail' + (index < current ? ' is-done' : '') + '"></span>'
+      : '';
+    return '<div class="order-progress-step ' + state + (time ? ' is-dated' : '') + '"><span class="order-progress-node">' + orderProgressIcon(icon) + '</span><strong>' + escapeHtml(step.name) + '</strong><small>' + (time ? escapeHtml(time) : '&nbsp;') + '</small></div>' + rail;
+  }).join('') + '</section>';
+}
+
 function renderOrderDrawerDetail(detail) {
   const drawer = document.getElementById('order-drawer');
   if (!drawer || !detail) return;
@@ -584,6 +628,7 @@ function renderOrderDrawerDetail(detail) {
     '<div class="panel-head"><div><h3 id="order-drawer-title">Order #' + escapeHtml(detail.order_number) + '</h3></div>' +
     '<span class="badge ' + escapeHtml(detail.status_class || '') + '">' + escapeHtml(detail.status_label || '') + '</span>' +
     '<a class="order-drawer-close-btn" id="order-drawer-close-btn" href="' + closeHref + '" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></a></div>' +
+    orderProgressHtml(detail.status, detail.created_stamp || detail.created_label || '') +
     '<div class="order-overview-body">' +
     '<div class="order-overview-main">' +
     '<div class="order-section-label">Customer</div>' +

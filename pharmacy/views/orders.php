@@ -228,6 +228,7 @@ $overviewPickupProofKind = $overviewPickupProofExt === 'pdf' ? 'pdf' : ($overvie
             <?php if (!$hasPanelOrder): ?>
             <p class="order-empty-panel">Select an order from the list to view details.</p>
             <?php else: ?>
+            <?= pharmacy_order_progress_html($overviewStatus, pharmacy_order_progress_stamp((string) ($overviewOrder['created_at'] ?? ''))) ?>
             <div class="order-overview-body">
             <div class="order-overview-main">
 
