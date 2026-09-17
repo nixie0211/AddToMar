@@ -2574,6 +2574,20 @@ function rememberResidenceOrder(order){
   renderResidenceOrders();
 }
 
+function residenceOrderVatBreakdown(items, totalAmount, storedVat, storedSubtotal){
+  const itemSubtotal = roundMoney((items || []).reduce((sum, item) => sum + Number(item.line_total || 0), 0));
+  let subtotal = roundMoney(storedSubtotal);
+  let vat = roundMoney(storedVat);
+  const total = roundMoney(totalAmount);
+  if(subtotal <= 0) subtotal = itemSubtotal;
+  if(vat <= 0){
+    vat = (subtotal > 0 && total >= subtotal)
+      ? roundMoney(total - subtotal)
+      : roundMoney(subtotal * CHECKOUT_VAT_RATE);
+  }
+  return { subtotal, vat, total };
+}
+
 function presentResidenceOrder(order, options = {}){
   const status = String(order.status || 'pending');
   const meta = residenceOrderStatusMeta(status);
@@ -2599,6 +2613,12 @@ function presentResidenceOrder(order, options = {}){
   const stores = !options.skipStores && Array.isArray(order.stores) && order.stores.length
     ? order.stores.map(store => presentResidenceOrder(store, { skipStores:true }))
     : [];
+  const prices = residenceOrderVatBreakdown(
+    items,
+    Number(order.total_amount ?? order.total ?? 0),
+    order.vat,
+    order.subtotal
+  );
   const presented = {
     id: Number(order.id) || 0,
     order_number: String(order.order_number || ''),
@@ -2611,7 +2631,9 @@ function presentResidenceOrder(order, options = {}){
     status_tab: order.status_tab || meta.tab,
     status_class: order.status_class || meta.className,
     status_label: order.status_label || meta.label,
-    total_amount: Number(order.total_amount ?? order.total ?? 0),
+    total_amount: prices.total,
+    subtotal: prices.subtotal,
+    vat: prices.vat,
     down_payment: roundMoney(Number(order.down_payment) > 0 ? order.down_payment : Number(order.total_amount ?? order.total ?? 0) * CHECKOUT_DOWN_RATE),
     payment_method: order.payment_method || 'gcash',
     created_at: order.created_at || '',
@@ -2641,6 +2663,12 @@ function presentResidenceOrder(order, options = {}){
   }
   presented.store_count = presented.stores.length || 1;
   presented.is_group = presented.store_count > 1;
+  if(presented.is_group){
+    const storeVat = presented.stores.reduce((sum, store) => sum + Number(store.vat || 0), 0);
+    const storeSubtotal = presented.stores.reduce((sum, store) => sum + Number(store.subtotal || 0), 0);
+    if(storeVat > 0) presented.vat = roundMoney(storeVat);
+    if(storeSubtotal > 0) presented.subtotal = roundMoney(storeSubtotal);
+  }
   if(presented.can_cancel !== true){
     const stores = presented.stores.length ? presented.stores : [presented];
     presented.can_cancel = stores.every(store => ['pending','processing'].includes(String(store.status || '').toLowerCase()));
@@ -3109,7 +3137,9 @@ function renderOrderDetail(id){
       </div>
     `;
     }).join('');
-    const subtotal = (store.items || []).reduce((sum, item) => sum + Number(item.line_total || 0), 0) || Number(store.total_amount || 0);
+    const itemSubtotal = (store.items || []).reduce((sum, item) => sum + Number(item.line_total || 0), 0);
+    const storePrices = residenceOrderVatBreakdown(store.items || [], store.total_amount || itemSubtotal, store.vat, store.subtotal);
+    const vatPercent = Math.round(CHECKOUT_VAT_RATE * 100);
     const storeTrackHtml = storeCount > 1
       ? `<div class="mo-store-track">
           <div class="od-timeline mo-store-timeline">${orderTimelineHtml(store.status, `${store.date_label || data.date_label} • ${store.time_label || data.time_label}`)}</div>
@@ -3128,8 +3158,8 @@ function renderOrderDetail(id){
         </header>
         <div class="mo-store-items">${itemsHtml}</div>
         <div class="mo-store-foot">
-          <span>Store Subtotal</span>
-          <b>${peso(store.total_amount || subtotal)}</b>
+          <div class="mo-store-foot-row"><span>VAT (${vatPercent}%)</span><b>${peso(storePrices.vat)}</b></div>
+          <div class="mo-store-foot-row"><span>Store Subtotal</span><b>${peso(store.total_amount || storePrices.total || storePrices.subtotal)}</b></div>
         </div>
         ${storeTrackHtml}
       </article>`;
@@ -3172,6 +3202,7 @@ function renderOrderDetail(id){
         <section class="od-card od-summary">
           <h3><span class="od-icon">${odIcon('receipt')}</span><span>Payment Summary<small>Payment details and transaction breakdown</small></span></h3>
           <div class="od-payment-summary-card"><div class="od-payment-summary-method"><span class="od-gcash">G</span><b>GCash<br>${peso(data.down_payment)}</b></div><div class="od-payment-summary-info"><small>${confirmed ? 'Payment confirmed via PayMongo' : 'Payment pending'}</small>${confirmed ? `<small>${escHtml(data.date_label)} • ${escHtml(data.time_label)}</small>` : ''}</div><span class="od-paid-badge">✓ Paid</span></div>
+          <div class="od-sum"><span>VAT (${Math.round(CHECKOUT_VAT_RATE * 100)}%)</span><b>${peso(data.vat)}</b></div>
           <div class="od-sum"><span>Total Amount</span><b>${peso(data.total_amount)}</b></div>
           <div class="od-sum"><span>${fullyPaid ? 'Paid (100%)' : 'Paid (60%)'}<small>60% · paid via GCash</small></span><b class="is-paid">${peso(fullyPaid ? data.total_amount : data.down_payment)}</b></div>
           <div class="od-sum od-sum-balance">

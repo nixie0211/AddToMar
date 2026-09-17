@@ -899,6 +899,23 @@ function residence_present_order(array $order, array $directory = []): array
         ];
     }
 
+    $itemSubtotal = 0.0;
+    foreach ($items as $item) {
+        $itemSubtotal += (float) ($item['line_total'] ?? 0);
+    }
+    $itemSubtotal = round($itemSubtotal, 2);
+    $totalAmount = (float) ($order['total_amount'] ?? 0);
+    $subtotal = (float) ($order['subtotal'] ?? 0);
+    $vat = (float) ($order['vat'] ?? 0);
+    if ($subtotal <= 0) {
+        $subtotal = $itemSubtotal;
+    }
+    if ($vat <= 0) {
+        $vat = ($subtotal > 0 && $totalAmount >= $subtotal)
+            ? round($totalAmount - $subtotal, 2)
+            : (float) residence_apply_vat($subtotal)['vat'];
+    }
+
     return [
         'id' => (int) ($order['id'] ?? 0),
         'order_number' => (string) ($order['order_number'] ?? ''),
@@ -911,7 +928,9 @@ function residence_present_order(array $order, array $directory = []): array
         'status_tab' => $meta['tab'],
         'status_class' => $meta['class'],
         'status_label' => $meta['label'],
-        'total_amount' => (float) ($order['total_amount'] ?? 0),
+        'total_amount' => $totalAmount,
+        'subtotal' => round($subtotal, 2),
+        'vat' => round($vat, 2),
         'down_payment' => ((float) ($order['down_payment'] ?? 0) > 0)
             ? round((float) $order['down_payment'], 2)
             : round((float) ($order['total_amount'] ?? 0) * residence_down_payment_rate(), 2),

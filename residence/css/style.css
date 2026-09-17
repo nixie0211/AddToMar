@@ -7211,7 +7211,9 @@ body.is-pharmacy-empty.is-pharmacy-profile-page .page[data-page="pharmacy-profil
 .mo-store-item b{display:block;color:#163948;font-size:13px;}
 .mo-store-item small{color:#6b8290;font-size:12px;}
 .mo-item-note{display:block;margin-top:4px;color:#3d5a52;font-size:12px;line-height:1.4;white-space:pre-wrap;}
-.mo-store-foot{display:flex;justify-content:space-between;padding-top:10px;border-top:1px dashed #e2eeea;color:#526779;font-size:13px;}
+.mo-store-foot{display:grid;gap:8px;padding-top:10px;border-top:1px dashed #e2eeea;color:#526779;font-size:13px;}
+.mo-store-foot-row{display:flex;justify-content:space-between;gap:12px;}
+.mo-store-foot-row b{color:#163948;}
 .mo-store-track{display:none;margin-top:12px;}
 .mo-store-card.is-open .mo-store-track{display:block;}
 .mo-store-track-btn{
