@@ -27,8 +27,11 @@ window.initSettingsBusinessMap = function initSettingsBusinessMap() {
 };
 
 function showSettingsPane(name, el) {
-  document.querySelectorAll('.settings-nav button').forEach(b => b.classList.remove('active'));
-  el.classList.add('active');
+  document.querySelectorAll('.settings-profile-tab').forEach(function (tab) {
+    const on = tab === el;
+    tab.classList.toggle('active', on);
+    tab.setAttribute('aria-selected', on ? 'true' : 'false');
+  });
   document.querySelectorAll('.settings-pane').forEach(p => p.classList.remove('active'));
   document.getElementById('pane-' + name).classList.add('active');
 
@@ -274,6 +277,23 @@ function hideSettingsAlert() {
       if (data.account?.pharmacy_name) {
         const topbarName = document.querySelector('.topbar-profile .name');
         if (topbarName) topbarName.textContent = data.account.pharmacy_name;
+        const displayName = document.getElementById('settings-display-name');
+        if (displayName) displayName.textContent = data.account.pharmacy_name;
+        const initials = document.getElementById('settings-logo-initials');
+        if (initials) {
+          const parts = String(data.account.pharmacy_name).trim().split(/\s+/);
+          initials.textContent = parts.slice(0, 2).map(function (part) { return part.charAt(0).toUpperCase(); }).join('') || 'P';
+        }
+      }
+
+      if (data.account?.contact_number) {
+        const contactLine = document.getElementById('settings-display-contact');
+        if (contactLine) {
+          const svg = contactLine.querySelector('svg');
+          contactLine.textContent = '';
+          if (svg) contactLine.appendChild(svg);
+          contactLine.appendChild(document.createTextNode(data.account.contact_number));
+        }
       }
 
       if (data.account?.logo_url) {

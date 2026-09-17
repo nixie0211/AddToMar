@@ -32,6 +32,7 @@ echo json_encode([
     'message' => 'Pharmacy profile updated.',
     'account' => [
         'pharmacy_name' => $account['pharmacy_name'] ?? '',
+        'contact_number' => $account['contact_number'] ?? '',
         'logo_url' => $logoUrl,
     ],
 ]);

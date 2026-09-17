@@ -7,6 +7,7 @@ $profileContact = (string) ($pharmacyAccount['contact_number'] ?? '');
 $profileAddress = (string) ($pharmacyAccount['address'] ?? '');
 $profileLatitude = $pharmacyAccount['latitude'] ?? '';
 $profileLongitude = $pharmacyAccount['longitude'] ?? '';
+$profileInitials = pharmacy_initials($pharmacyName);
 $profileDocFields = [
     ['name' => 'business_permit', 'label' => 'Business permit'],
     ['name' => 'pharmacy_license', 'label' => 'Pharmacy license'],
@@ -14,38 +15,37 @@ $profileDocFields = [
 ];
 ?>
 <section class="<?= pharmacy_view_class('settings', $activeView) ?>" id="view-settings" data-live-region="pharmacy-settings" data-live-keys="account" data-live-skip="1">
-        <div class="settings-layout">
-          <aside class="settings-nav-card">
-            <nav class="settings-nav" aria-label="Settings sections">
-              <button type="button" class="active" onclick="showSettingsPane('business', this)">
-                <span class="settings-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9.5 12 4l9 5.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1V9.5z"/></svg></span>
-                Business information
-              </button>
-              <button type="button" onclick="showSettingsPane('security', this)">
-                <span class="settings-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
-                Login credentials
-              </button>
-            </nav>
-          </aside>
+        <div class="settings-profile-page">
+          <div class="settings-profile-head">
+            <label class="settings-logo<?= $pharmacyLogoUrl !== '' ? ' has-image' : '' ?>" for="settings-pharmacy-logo" id="settings-logo-preview" aria-label="Change pharmacy logo">
+              <span class="settings-logo-plus" aria-hidden="true">+</span>
+              <span class="settings-logo-initials" id="settings-logo-initials"><?= htmlspecialchars($profileInitials, ENT_QUOTES, 'UTF-8') ?></span>
+              <?php if ($pharmacyLogoUrl !== ''): ?>
+              <img id="settings-logo-preview-img" src="<?= htmlspecialchars($pharmacyLogoUrl, ENT_QUOTES, 'UTF-8') ?>" alt="">
+              <?php else: ?>
+              <img id="settings-logo-preview-img" alt="" hidden>
+              <?php endif; ?>
+              <input id="settings-pharmacy-logo" class="settings-logo-input" name="logo" type="file" accept=".jpg,.jpeg,.png,.webp,.svg,image/*" form="settings-business-form">
+            </label>
+            <div>
+              <h2 id="settings-display-name"><?= htmlspecialchars($pharmacyName, ENT_QUOTES, 'UTF-8') ?></h2>
+              <div class="settings-contact-line">
+                <span id="settings-display-email"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6.5A2.5 2.5 0 0 1 5.5 4h13A2.5 2.5 0 0 1 21 6.5v11a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5z"/><path d="m4 6 8 6 8-6"/></svg><?= htmlspecialchars($profileEmail !== '' ? $profileEmail : 'No email on file', ENT_QUOTES, 'UTF-8') ?></span>
+                <i aria-hidden="true">·</i>
+                <span id="settings-display-contact"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h3l2 5-2 1.5a15 15 0 0 0 5.5 5.5L15 14l5 2v3a2 2 0 0 1-2 2C10.3 21 3 13.7 3 6a2 2 0 0 1 2-2Z"/></svg><?= htmlspecialchars($profileContact !== '' ? $profileContact : '—', ENT_QUOTES, 'UTF-8') ?></span>
+              </div>
+            </div>
+          </div>
 
-          <div class="settings-main">
-            <div class="settings-pane active" id="pane-business">
+          <div class="settings-profile-tabs" role="tablist" aria-label="Profile settings">
+            <button type="button" class="settings-profile-tab active" role="tab" aria-selected="true" onclick="showSettingsPane('business', this)">Business information</button>
+            <button type="button" class="settings-profile-tab" role="tab" aria-selected="false" onclick="showSettingsPane('security', this)">Login credentials</button>
+          </div>
+
+          <div class="settings-pane active" id="pane-business">
               <form class="settings-panel settings-business-form" id="settings-business-form" enctype="multipart/form-data" novalidate>
                 <div class="settings-business-body">
                 <div class="settings-section">
-                  <div class="settings-logo-block">
-                    <label class="settings-logo<?= $pharmacyLogoUrl !== '' ? ' has-image' : '' ?>" for="settings-pharmacy-logo" id="settings-logo-preview" aria-label="Change pharmacy logo">
-                      <span class="settings-logo-plus" aria-hidden="true">+</span>
-                      <span class="settings-logo-text">Add logo</span>
-                      <?php if ($pharmacyLogoUrl !== ''): ?>
-                      <img id="settings-logo-preview-img" src="<?= htmlspecialchars($pharmacyLogoUrl, ENT_QUOTES, 'UTF-8') ?>" alt="">
-                      <?php else: ?>
-                      <img id="settings-logo-preview-img" alt="" hidden>
-                      <?php endif; ?>
-                      <input id="settings-pharmacy-logo" class="settings-logo-input" name="logo" type="file" accept=".jpg,.jpeg,.png,.webp,.svg,image/*">
-                    </label>
-                  </div>
-
                   <div class="form-grid settings-details-grid">
                     <div class="field">
                       <label for="settings-pharmacy-name">Pharmacy name</label>
@@ -182,48 +182,26 @@ $profileDocFields = [
                 <div class="settings-alert" id="settings-business-alert" hidden role="alert"></div>
 
                 <div class="settings-panel-foot">
-                  <button type="submit" class="btn btn-accent" id="settings-business-save">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6L9 17l-5-5"/></svg>
-                    <span>Save changes</span>
-                  </button>
+                  <button type="submit" class="btn btn-accent" id="settings-business-save"><span>Save changes</span></button>
                 </div>
               </form>
             </div>
 
             <div class="settings-pane" id="pane-security">
               <div class="settings-panel">
-                <div class="settings-panel-head">
-                  <div>
-                    <h3>Login credentials</h3>
-                    <p>Manage the email and password used to sign in.</p>
-                  </div>
-                </div>
-
-                <div class="settings-section">
-                  <div class="settings-section-title">Login email</div>
-                  <div class="field">
-                    <label for="settings-login-email">Account email</label>
-                    <input id="settings-login-email" type="email" value="<?= htmlspecialchars($profileEmail, ENT_QUOTES, 'UTF-8') ?>" readonly>
-                  </div>
-                </div>
-
-                <div class="settings-section">
-                  <div class="settings-section-title">Change password</div>
+                <div class="settings-section settings-section--flush">
                   <div class="form-grid">
-                    <div class="field field-span-2"><label for="settings-current-password">Current password</label><input id="settings-current-password" type="password" placeholder="Enter current password"></div>
-                    <div class="field"><label for="settings-new-password">New password</label><input id="settings-new-password" type="password" placeholder="Enter new password"></div>
-                    <div class="field"><label for="settings-confirm-password">Confirm new password</label><input id="settings-confirm-password" type="password" placeholder="Re-enter new password"></div>
+                    <div class="field"><label for="settings-login-email">Email address</label><input id="settings-login-email" type="email" value="<?= htmlspecialchars($profileEmail, ENT_QUOTES, 'UTF-8') ?>" readonly autocomplete="email"></div>
+                    <div class="field"><label for="settings-current-password">Current password</label><input id="settings-current-password" type="password" placeholder="Current password" autocomplete="current-password"></div>
+                    <div class="field"><label for="settings-new-password">New password</label><input id="settings-new-password" type="password" placeholder="New password" autocomplete="new-password"></div>
+                    <div class="field"><label for="settings-confirm-password">Confirm new password</label><input id="settings-confirm-password" type="password" placeholder="Confirm new password" autocomplete="new-password"></div>
                   </div>
                 </div>
-
+                <div class="settings-alert" id="settings-security-alert" hidden role="alert"></div>
                 <div class="settings-panel-foot">
-                  <button type="button" class="btn btn-accent">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6L9 17l-5-5"/></svg>
-                    Save changes
-                  </button>
+                  <button type="button" class="btn btn-accent" id="settings-security-save">Save changes</button>
                 </div>
               </div>
             </div>
-          </div>
         </div>
       </section>
