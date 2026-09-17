@@ -585,16 +585,18 @@ function renderOrderDrawerDetail(detail) {
     '<span class="badge ' + escapeHtml(detail.status_class || '') + '">' + escapeHtml(detail.status_label || '') + '</span>' +
     '<a class="order-drawer-close-btn" id="order-drawer-close-btn" href="' + closeHref + '" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></a></div>' +
     '<div class="order-overview-body">' +
+    '<div class="order-overview-main">' +
     '<div class="order-section-label">Customer</div>' +
     '<div class="list-row order-list-row"><div class="avatar" style="width:36px;height:36px;font-size:12px;">' + escapeHtml(detail.customer_initials) + '</div>' +
     '<div class="list-body"><div class="t1">' + escapeHtml(detail.customer_name) + '</div><div class="t2">' + escapeHtml(detail.customer_line) + '</div></div></div>' +
-    '<div class="order-section-label">Medicines</div>' + itemsHtml +
-    '<div class="order-payment-card"><h3 class="payment-summary-title"><span>Payment Summary<small>Payment details and transaction breakdown</small></span></h3>' +
+    '<div class="order-section-label">Medicines</div>' + itemsHtml + extra +
+    '</div>' +
+    '<div class="order-overview-side"><div class="order-payment-card"><h3 class="payment-summary-title"><span>Payment Summary<small>Payment details and transaction breakdown</small></span></h3>' +
     '<div class="payment-summary-method"><b class="payment-gcash-icon">G</b><span class="payment-summary-details"><strong>GCash</strong><b>' + escapeHtml(detail.paid_label) + '</b></span><small class="payment-summary-meta">Payment confirmed via PayMongo<br>' + escapeHtml(detail.created_label) + '</small><span class="payment-summary-confirmed">✓ Paid</span></div>' +
     '<div class="order-payment-row"><span>Total Amount</span><span class="mono">' + escapeHtml(detail.total_label) + '</span></div>' +
     '<div class="order-payment-row order-payment-row--paid"><span>Paid (' + Number(detail.paid_percent || 0) + '%)<small>' + Number(detail.paid_note_percent || 0) + '% · paid via GCash</small></span><span class="mono">' + escapeHtml(detail.paid_label) + '</span></div>' +
     '<div class="order-payment-row order-payment-row--due"><span>Remaining Balance (' + Number(detail.balance_percent || 0) + '%)</span><span class="mono">' + escapeHtml(detail.balance_label) + '</span></div>' +
-    '<p class="order-payment-note">' + escapeHtml(detail.payment_note) + '</p></div>' + extra +
+    '<p class="order-payment-note">' + escapeHtml(detail.payment_note) + '</p></div></div>' +
     '</div>' + actions;
   drawer.hidden = false;
   drawer.classList.remove('is-loading');

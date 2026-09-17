@@ -229,6 +229,7 @@ $overviewPickupProofKind = $overviewPickupProofExt === 'pdf' ? 'pdf' : ($overvie
             <p class="order-empty-panel">Select an order from the list to view details.</p>
             <?php else: ?>
             <div class="order-overview-body">
+            <div class="order-overview-main">
 
             <div class="order-section-label">Customer</div>
             <div class="list-row order-list-row">
@@ -310,27 +311,6 @@ $overviewPickupProofKind = $overviewPickupProofExt === 'pdf' ? 'pdf' : ($overvie
             </div>
             <?php endif; ?>
 
-            <div class="order-payment-card">
-              <h3 class="payment-summary-title"><span class="payment-summary-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M6 3.5h12v17l-2.2-1.4-2.2 1.4-2.2-1.4-2.2 1.4L6 20.5v-17Z"/><path d="M9 8h6M9 11.5h6M9 15h3"/></svg></span><span>Payment Summary<small>Payment details and transaction breakdown</small></span></h3>
-              <div class="payment-summary-method"><b class="payment-gcash-icon">G</b><span class="payment-summary-details"><strong>GCash</strong><b><?= pharmacy_format_money($overviewDownPayment) ?></b></span><small class="payment-summary-meta">Payment confirmed via PayMongo<br><?= htmlspecialchars($overviewPrescriptionDate, ENT_QUOTES, 'UTF-8') ?></small><span class="payment-summary-confirmed">✓ Paid</span></div>
-              <div class="order-payment-row">
-                <span>Total Amount</span>
-                <span class="mono"><?= pharmacy_format_money($overviewTotalAmount) ?></span>
-              </div>
-              <div class="order-payment-row order-payment-row--paid">
-                <span>
-                  Paid (<?= $isCompletedOverview ? '100' : $overviewDownPaymentPercent ?>%)
-                  <small><?= $overviewDownPaymentPercent ?>% · paid via GCash</small>
-                </span>
-                <span class="mono"><?= pharmacy_format_money($isCompletedOverview ? $overviewTotalAmount : $overviewDownPayment) ?></span>
-              </div>
-              <div class="order-payment-row order-payment-row--due">
-                <span>Remaining Balance (<?= $isCompletedOverview ? 0 : max(0, 100 - (int) $overviewDownPaymentPercent) ?>%)</span>
-                <span class="mono"><?= pharmacy_format_money($isCompletedOverview ? 0 : $overviewBalanceDue) ?></span>
-              </div>
-              <p class="order-payment-note"><?= $isCompletedOverview ? '✓ All payments have been settled. Your order is fully paid.' : 'Customer pays the remaining balance when collecting this order at the pharmacy.' ?></p>
-            </div>
-
             <?php if ($isCompletedOverview && $hasPickupProof): ?>
             <div class="order-rx-docs-block">
               <h3 class="order-rx-docs-title">Proof of pickup</h3>
@@ -363,6 +343,30 @@ $overviewPickupProofKind = $overviewPickupProofExt === 'pdf' ? 'pdf' : ($overvie
               <p class="order-cancellation-text"><?= htmlspecialchars($overviewCancellationReason !== '' ? $overviewCancellationReason : 'No reason recorded.', ENT_QUOTES, 'UTF-8') ?></p>
             </div>
             <?php endif; ?>
+
+            </div>
+            <div class="order-overview-side">
+            <div class="order-payment-card">
+              <h3 class="payment-summary-title"><span class="payment-summary-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M6 3.5h12v17l-2.2-1.4-2.2 1.4-2.2-1.4-2.2 1.4L6 20.5v-17Z"/><path d="M9 8h6M9 11.5h6M9 15h3"/></svg></span><span>Payment Summary<small>Payment details and transaction breakdown</small></span></h3>
+              <div class="payment-summary-method"><b class="payment-gcash-icon">G</b><span class="payment-summary-details"><strong>GCash</strong><b><?= pharmacy_format_money($overviewDownPayment) ?></b></span><small class="payment-summary-meta">Payment confirmed via PayMongo<br><?= htmlspecialchars($overviewPrescriptionDate, ENT_QUOTES, 'UTF-8') ?></small><span class="payment-summary-confirmed">✓ Paid</span></div>
+              <div class="order-payment-row">
+                <span>Total Amount</span>
+                <span class="mono"><?= pharmacy_format_money($overviewTotalAmount) ?></span>
+              </div>
+              <div class="order-payment-row order-payment-row--paid">
+                <span>
+                  Paid (<?= $isCompletedOverview ? '100' : $overviewDownPaymentPercent ?>%)
+                  <small><?= $overviewDownPaymentPercent ?>% · paid via GCash</small>
+                </span>
+                <span class="mono"><?= pharmacy_format_money($isCompletedOverview ? $overviewTotalAmount : $overviewDownPayment) ?></span>
+              </div>
+              <div class="order-payment-row order-payment-row--due">
+                <span>Remaining Balance (<?= $isCompletedOverview ? 0 : max(0, 100 - (int) $overviewDownPaymentPercent) ?>%)</span>
+                <span class="mono"><?= pharmacy_format_money($isCompletedOverview ? 0 : $overviewBalanceDue) ?></span>
+              </div>
+              <p class="order-payment-note"><?= $isCompletedOverview ? '✓ All payments have been settled. Your order is fully paid.' : 'Customer pays the remaining balance when collecting this order at the pharmacy.' ?></p>
+            </div>
+            </div>
             </div>
 
             <?php if ($isPendingOverview || $canAdvanceStatus || $isReadyOverview): ?>
