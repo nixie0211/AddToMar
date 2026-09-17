@@ -92,44 +92,45 @@ $profileDocFields = [
                   <?php
                     $settingsDocuments = pharmacy_accounts_settings_documents($pharmacyAccount);
                   ?>
-                  <?php foreach ($profileDocFields as $doc): ?>
-                  <?php
-                    $docCards = $settingsDocuments[(string) $doc['name']] ?? [];
-                  ?>
-                  <div class="settings-doc" data-doc="<?= htmlspecialchars($doc['name'], ENT_QUOTES, 'UTF-8') ?>" data-doc-label="<?= htmlspecialchars($doc['label'], ENT_QUOTES, 'UTF-8') ?>">
-                    <span class="settings-doc-title"><?= htmlspecialchars($doc['label'], ENT_QUOTES, 'UTF-8') ?></span>
+                  <div class="settings-doc">
                     <div class="settings-doc-grid">
-                      <?php foreach ($docCards as $docCard): ?>
                       <?php
-                        $docUrl = (string) ($docCard['url'] ?? '');
-                        $docKind = (string) ($docCard['kind'] ?? 'img');
-                        $docLabel = (string) ($docCard['label'] ?? $doc['label']);
-                        $docFilename = (string) ($docCard['filename'] ?? '');
+                        $allDocCards = [];
+                        foreach ($profileDocFields as $doc) {
+                          foreach ($settingsDocuments[(string) $doc['name']] ?? [] as $docCard) {
+                            $allDocCards[] = [
+                              'url' => (string) ($docCard['url'] ?? ''),
+                              'kind' => (string) ($docCard['kind'] ?? 'img'),
+                              'label' => (string) ($docCard['label'] ?? $doc['label']),
+                              'filename' => (string) ($docCard['filename'] ?? ''),
+                            ];
+                          }
+                        }
                       ?>
-                      <a class="settings-doc-card" href="<?= htmlspecialchars($docUrl, ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener">
-                        <span class="settings-doc-icon settings-doc-icon--<?= htmlspecialchars($docKind, ENT_QUOTES, 'UTF-8') ?>" aria-hidden="true">
-                          <?php if ($docKind === 'pdf'): ?>
+                      <?php foreach ($allDocCards as $docCard): ?>
+                      <a class="settings-doc-card" href="<?= htmlspecialchars($docCard['url'], ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener">
+                        <span class="settings-doc-icon settings-doc-icon--<?= htmlspecialchars($docCard['kind'], ENT_QUOTES, 'UTF-8') ?>" aria-hidden="true">
+                          <?php if ($docCard['kind'] === 'pdf'): ?>
                           <svg width="52" height="60" viewBox="0 0 52 60" fill="none">
                             <path d="M8 0h24l16 16v36a8 8 0 0 1-8 8H8a8 8 0 0 1-8-8V8a8 8 0 0 1 8-8Z" fill="#E2574C"/>
                             <path d="M32 0v12a4 4 0 0 0 4 4h16L32 0Z" fill="#fff" fill-opacity=".35"/>
                             <text x="26" y="42" text-anchor="middle" fill="#fff" font-size="13" font-weight="800" font-family="Manrope, sans-serif">PDF</text>
                           </svg>
                           <?php else: ?>
-                          <img src="<?= htmlspecialchars($docUrl, ENT_QUOTES, 'UTF-8') ?>" alt="">
+                          <img src="<?= htmlspecialchars($docCard['url'], ENT_QUOTES, 'UTF-8') ?>" alt="">
                           <?php endif; ?>
                         </span>
                         <span class="settings-doc-meta">
-                          <strong><?= htmlspecialchars($docLabel, ENT_QUOTES, 'UTF-8') ?></strong>
-                          <small><?= htmlspecialchars($docFilename, ENT_QUOTES, 'UTF-8') ?></small>
+                          <strong><?= htmlspecialchars($docCard['label'], ENT_QUOTES, 'UTF-8') ?></strong>
+                          <small><?= htmlspecialchars($docCard['filename'], ENT_QUOTES, 'UTF-8') ?></small>
                         </span>
                       </a>
                       <?php endforeach; ?>
-                      <?php if ($docCards === []): ?>
+                      <?php if ($allDocCards === []): ?>
                       <p class="settings-doc-empty">No document on file</p>
                       <?php endif; ?>
                     </div>
                   </div>
-                  <?php endforeach; ?>
                 </div>
                 </div>
 

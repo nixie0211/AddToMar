@@ -400,7 +400,7 @@
 }
 
 .settings-doc{
-  margin-bottom:20px;
+  margin-bottom:8px;
 }
 
 .settings-doc-title{
@@ -413,9 +413,10 @@
 
 .settings-doc-grid{
   display:flex;
-  flex-wrap:wrap;
+  flex-wrap:nowrap;
   gap:12px;
   align-items:stretch;
+  overflow-x:auto;
 }
 
 .settings-doc-empty{
@@ -430,6 +431,7 @@
   position:relative;
   display:flex;
   flex-direction:column;
+  flex:0 0 148px;
   width:148px;
   min-height:148px;
   padding:8px 10px 10px;
