@@ -93,14 +93,6 @@
   gap:12px;
   padding:6px 22px 4px;
 }
-.rx-crop-zoom-icon{
-  width:22px;
-  height:16px;
-  flex:0 0 auto;
-  color:#8b959e;
-}
-.rx-crop-zoom-icon.is-large{width:28px;height:20px;}
-.rx-crop-zoom-icon svg{display:block;width:100%;height:100%;}
 .rx-crop-zoom{
   flex:1;
   height:4px;

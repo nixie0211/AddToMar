@@ -504,9 +504,7 @@ $overviewPickupProofKind = $overviewPickupProofExt === 'pdf' ? 'pdf' : ($overvie
               <p class="rx-crop-missing" id="prescription-viewer-missing" hidden>The uploaded prescription could not be loaded.</p>
             </div>
             <div class="rx-crop-zoombar">
-              <span class="rx-crop-zoom-icon is-small" aria-hidden="true"><svg viewBox="0 0 22 16" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="4" width="14" height="8" rx="1.2"/></svg></span>
               <input type="range" class="rx-crop-zoom" id="prescription-viewer-zoom" min="1" max="2.4" step="0.02" value="1" aria-label="Zoom prescription preview">
-              <span class="rx-crop-zoom-icon is-large" aria-hidden="true"><svg viewBox="0 0 28 20" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="22" height="14" rx="1.4"/></svg></span>
             </div>
             <footer class="rx-crop-foot">
               <button type="button" class="rx-crop-cancel" id="prescription-viewer-close-btn">Cancel</button>
