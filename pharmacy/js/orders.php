@@ -583,7 +583,7 @@ function renderOrderDrawerDetail(detail) {
     const rx = item.prescription_required
       ? (canViewRx && rxUrl
         ? ' · <button type="button" class="order-prescription-inline view-prescription-trigger" data-prescription-url="' + escapeHtml(rxUrl) + '">Rx required · see prescription ›</button>'
-        : ' · Rx required')
+        : ' · <span class="order-prescription-inline">Rx required</span>')
       : '';
     const note = item.note ? '<div class="t2 order-item-note">Note: ' + escapeHtml(item.note) + '</div>' : '';
     const thumb = item.image_url

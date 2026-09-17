@@ -478,6 +478,7 @@
 .order-rx-docs-block{
   margin:4px 0 8px;
 }
+.list-body .t2 .order-prescription-inline,
 .order-prescription-inline{
   display:inline;
   margin:0;
@@ -485,10 +486,12 @@
   border:0;
   background:transparent;
   color:#1d5fa8;
-  font:800 12px inherit;
-  cursor:pointer;
+  font-family:inherit;
+  font-size:12px;
+  font-weight:800;
 }
-.order-prescription-inline:hover{text-decoration:underline;}
+button.order-prescription-inline{cursor:pointer;}
+button.order-prescription-inline:hover{text-decoration:underline;}
 .order-rx-docs-title{
   margin:18px 0 4px;
   font-size:15px;
