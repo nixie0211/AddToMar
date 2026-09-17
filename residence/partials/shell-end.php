@@ -156,10 +156,6 @@
         <img id="order-rx-viewer-image" alt="Uploaded prescription" hidden>
         <iframe id="order-rx-viewer-frame" title="Uploaded prescription" hidden></iframe>
       </div>
-      <div class="rx-crop-frame" aria-hidden="true">
-        <span class="h-n"></span><span class="h-s"></span><span class="h-e"></span><span class="h-w"></span>
-        <span class="h-ne"></span><span class="h-nw"></span><span class="h-se"></span><span class="h-sw"></span>
-      </div>
       <p class="rx-crop-missing" id="order-rx-viewer-missing" hidden>No prescription file is available.</p>
     </div>
     <div class="rx-crop-zoombar">
