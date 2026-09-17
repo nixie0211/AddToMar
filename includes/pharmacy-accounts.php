@@ -321,6 +321,12 @@ function pharmacy_accounts_store_upload(array $file, string $accountId, string $
 
     $filename = $basename . '.' . $extension;
     $absolute = $dir . '/' . $filename;
+    $suffix = 2;
+    while (is_file($absolute)) {
+        $filename = $basename . '-' . $suffix . '.' . $extension;
+        $absolute = $dir . '/' . $filename;
+        $suffix++;
+    }
     if (!move_uploaded_file($tmp, $absolute)) {
         return null;
     }
@@ -459,38 +465,47 @@ function pharmacy_accounts_settings_documents(array $account): array
     $cards = [];
     foreach ($labels as $docKey => $docLabel) {
         $cards[$docKey] = [];
-        $copies = $docsByKey[$docKey] ?? [];
-        if ($copies !== []) {
-            foreach ($copies as $index => $copy) {
-                $filename = (string) ($copy['filename'] ?? 'document');
-                $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-                $cards[$docKey][] = [
-                    'id' => (int) ($copy['id'] ?? 0),
-                    'label' => count($copies) > 1 ? $docLabel . ' ' . ($index + 1) : $docLabel,
-                    'url' => pharmacy_accounts_document_view_url((int) ($copy['id'] ?? 0)),
-                    'kind' => $ext === 'pdf' ? 'pdf' : 'img',
-                    'filename' => $filename,
-                ];
-            }
-            continue;
+        $seen = [];
+        foreach ($docsByKey[$docKey] ?? [] as $copy) {
+            $filename = (string) ($copy['filename'] ?? 'document');
+            $seen[strtolower($filename)] = true;
+            $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+            $cards[$docKey][] = [
+                'id' => (int) ($copy['id'] ?? 0),
+                'label' => $docLabel,
+                'url' => pharmacy_accounts_document_view_url((int) ($copy['id'] ?? 0)),
+                'kind' => $ext === 'pdf' ? 'pdf' : 'img',
+                'filename' => $filename,
+            ];
         }
 
-        foreach (pharmacy_accounts_document_paths($account, $docKey) as $index => $path) {
+        foreach (pharmacy_accounts_document_paths($account, $docKey) as $path) {
+            $filename = basename((string) $path);
+            if ($filename === '' || isset($seen[strtolower($filename)])) {
+                continue;
+            }
             $absolute = dirname(__DIR__) . '/' . ltrim((string) $path, '/');
             if (!is_file($absolute)) {
                 continue;
             }
-            $filename = basename((string) $path);
+            $seen[strtolower($filename)] = true;
             $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-            $paths = pharmacy_accounts_document_paths($account, $docKey);
             $cards[$docKey][] = [
                 'id' => 0,
                 'path' => (string) $path,
-                'label' => count($paths) > 1 ? $docLabel . ' ' . ($index + 1) : $docLabel,
+                'label' => $docLabel,
                 'url' => app_url((string) $path),
                 'kind' => $ext === 'pdf' ? 'pdf' : 'img',
                 'filename' => $filename,
             ];
+        }
+
+        $total = count($cards[$docKey]);
+        if ($total > 1) {
+            foreach ($cards[$docKey] as $index => &$card) {
+                $card['label'] = $docLabel . ' ' . ($index + 1);
+            }
+            unset($card);
         }
     }
 
@@ -619,24 +634,56 @@ function pharmacy_accounts_get_document(int $documentId): ?array
 function pharmacy_accounts_backfill_documents(array $account): void
 {
     $pharmacyId = trim((string) ($account['id'] ?? ''));
-    if ($pharmacyId === '' || pharmacy_accounts_list_documents($pharmacyId) !== []) {
+    if ($pharmacyId === '') {
         return;
     }
 
+    $existingNames = [];
+    foreach (pharmacy_accounts_list_documents($pharmacyId) as $storedDoc) {
+        $filename = strtolower(basename((string) ($storedDoc['filename'] ?? '')));
+        if ($filename !== '') {
+            $existingNames[$filename] = true;
+        }
+    }
+
     $root = dirname(__DIR__);
+    $candidates = [];
     $keys = ['logo' => 'logo', 'business_permit' => 'business_permit', 'pharmacy_license' => 'pharmacy_license', 'bir_certificate' => 'bir_certificate'];
     foreach ($keys as $key => $basename) {
         $paths = $key === 'logo'
             ? array_values(array_filter([(string) ($account['logo_path'] ?? '')]))
             : pharmacy_accounts_document_paths($account, $key);
         foreach ($paths as $index => $relative) {
-            $absolute = $root . '/' . ltrim($relative, '/');
-            if (!is_file($absolute)) {
+            $name = $index === 0 ? $basename : $basename . '-' . ($index + 1);
+            $candidates[] = [$name, (string) $relative];
+        }
+    }
+
+    $dir = pharmacy_accounts_uploads_root() . '/' . $pharmacyId;
+    if (is_dir($dir)) {
+        foreach (scandir($dir) ?: [] as $file) {
+            if ($file === '.' || $file === '..') {
                 continue;
             }
-            $name = $index === 0 ? $basename : $basename . '-' . ($index + 1);
-            pharmacy_accounts_persist_document_file($pharmacyId, $name, $relative, $absolute);
+            $docKey = pharmacy_accounts_doc_key_from_filename($file);
+            if (!isset($keys[$docKey])) {
+                continue;
+            }
+            $candidates[] = [$docKey, 'data/uploads/pharmacies/' . $pharmacyId . '/' . $file];
         }
+    }
+
+    foreach ($candidates as [$basename, $relative]) {
+        $filename = strtolower(basename($relative));
+        if ($filename === '' || isset($existingNames[$filename])) {
+            continue;
+        }
+        $absolute = $root . '/' . ltrim($relative, '/');
+        if (!is_file($absolute)) {
+            continue;
+        }
+        pharmacy_accounts_persist_document_file($pharmacyId, $basename, $relative, $absolute);
+        $existingNames[$filename] = true;
     }
 }
 

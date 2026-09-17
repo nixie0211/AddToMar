@@ -442,31 +442,48 @@ require __DIR__ . '/partials/shell-start.php';
       'bir_certificate' => 'BIR certificate',
   ] as $docKey => $docLabel) {
       $copies = $docsByKey[$docKey] ?? [];
-      if ($copies !== []) {
-          foreach ($copies as $index => $copy) {
-              $pharmacyDocs[] = [
-                  'label' => count($copies) > 1 ? $docLabel . ' ' . ($index + 1) : $docLabel,
-                  'path' => '',
-                  'doc_id' => (int) ($copy['id'] ?? 0),
-                  'filename' => (string) ($copy['filename'] ?? ''),
-              ];
+      $seen = [];
+      $keyDocs = [];
+      foreach ($copies as $copy) {
+          $filename = (string) ($copy['filename'] ?? '');
+          if ($filename !== '') {
+              $seen[strtolower($filename)] = true;
           }
-          continue;
+          $keyDocs[] = [
+              'label' => $docLabel,
+              'path' => '',
+              'doc_id' => (int) ($copy['id'] ?? 0),
+              'filename' => $filename,
+          ];
       }
-
-      $paths = pharmacy_accounts_document_paths($viewPharmacy, $docKey);
-      if ($paths === []) {
+      foreach (pharmacy_accounts_document_paths($viewPharmacy, $docKey) as $path) {
+          $filename = basename((string) $path);
+          if ($filename === '' || isset($seen[strtolower($filename)])) {
+              continue;
+          }
+          $absolute = dirname(__DIR__) . '/' . ltrim((string) $path, '/');
+          if (!is_file($absolute)) {
+              continue;
+          }
+          $seen[strtolower($filename)] = true;
+          $keyDocs[] = [
+              'label' => $docLabel,
+              'path' => $path,
+              'doc_id' => 0,
+              'filename' => $filename,
+          ];
+      }
+      if ($keyDocs === []) {
           $pharmacyDocs[] = ['label' => $docLabel, 'path' => '', 'doc_id' => 0, 'filename' => ''];
           continue;
       }
-      foreach ($paths as $index => $path) {
-          $pharmacyDocs[] = [
-              'label' => count($paths) > 1 ? $docLabel . ' ' . ($index + 1) : $docLabel,
-              'path' => $path,
-              'doc_id' => 0,
-              'filename' => basename($path),
-          ];
+      if (count($keyDocs) > 1) {
+          foreach ($keyDocs as $index => &$keyDoc) {
+              $keyDoc['label'] = $docLabel . ' ' . ($index + 1);
+          }
+          unset($keyDoc);
       }
+      array_push($pharmacyDocs, ...$keyDocs);
   }
   $logoDocs = $docsByKey['logo'] ?? [];
   if ($logoDocs !== [] && !$logoExists) {
