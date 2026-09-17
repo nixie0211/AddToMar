@@ -25,12 +25,36 @@ function syncModalOpenState() {
   }
 }
 
+function bindRxCropZoom(root) {
+  if (!root || root.dataset.zoomBound === '1') return;
+  const slider = root.querySelector('.rx-crop-zoom');
+  const media = root.querySelector('.rx-crop-media');
+  if (!slider || !media) return;
+  root.dataset.zoomBound = '1';
+  slider.addEventListener('input', function () {
+    media.style.transform = 'scale(' + slider.value + ')';
+  });
+}
+
+function resetRxCropZoom(root, flags) {
+  const stage = root?.querySelector('.rx-crop-stage');
+  const media = root?.querySelector('.rx-crop-media');
+  const slider = root?.querySelector('.rx-crop-zoom');
+  if (stage) {
+    stage.classList.toggle('is-pdf', !!flags?.pdf);
+    stage.classList.toggle('is-empty', !!flags?.empty);
+  }
+  if (slider) slider.value = '1';
+  if (media) media.style.transform = 'scale(1)';
+}
+
 function openPrescriptionViewer(url) {
   const viewer = document.getElementById('prescription-viewer');
   const image = document.getElementById('prescription-viewer-image');
   const frame = document.getElementById('prescription-viewer-frame');
   const missing = document.getElementById('prescription-viewer-missing');
   if (!viewer) return;
+  bindRxCropZoom(viewer);
 
   const src = String(url || '').trim();
   const showMissing = function (message) {
@@ -46,6 +70,7 @@ function openPrescriptionViewer(url) {
       missing.textContent = message || 'The uploaded prescription could not be loaded.';
       missing.hidden = false;
     }
+    resetRxCropZoom(viewer, { empty: true });
   };
 
   if (!src) {
@@ -57,6 +82,7 @@ function openPrescriptionViewer(url) {
 
   if (missing) missing.hidden = true;
   const looksPdf = /\.pdf($|\?)/i.test(src);
+  resetRxCropZoom(viewer, { pdf: looksPdf, empty: false });
   if (image) {
     image.onload = function () { if (missing) missing.hidden = true; };
     image.onerror = function () {
@@ -67,6 +93,7 @@ function openPrescriptionViewer(url) {
       image.hidden = true;
       frame.hidden = false;
       frame.src = src;
+      resetRxCropZoom(viewer, { pdf: true, empty: false });
     };
     image.hidden = looksPdf;
     if (!looksPdf) image.src = src;
@@ -86,6 +113,7 @@ function closePrescriptionViewer() {
   const frame = document.getElementById('prescription-viewer-frame');
   if (image) image.removeAttribute('src');
   if (frame) frame.src = '';
+  resetRxCropZoom(viewer, { empty: false, pdf: false });
   if (!viewer) return;
 
   viewer.hidden = true;

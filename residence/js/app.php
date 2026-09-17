@@ -2829,18 +2829,50 @@ function bindResidenceOrdersTools(){
   }
 }
 
+function bindResidenceRxCropZoom(root){
+  if(!root || root.dataset.zoomBound === '1') return;
+  const slider = root.querySelector('.rx-crop-zoom');
+  const media = root.querySelector('.rx-crop-media');
+  if(!slider || !media) return;
+  root.dataset.zoomBound = '1';
+  slider.addEventListener('input', function(){
+    media.style.transform = 'scale(' + slider.value + ')';
+  });
+}
+
+function resetResidenceRxCropZoom(root, flags){
+  const stage = root?.querySelector('.rx-crop-stage');
+  const media = root?.querySelector('.rx-crop-media');
+  const slider = root?.querySelector('.rx-crop-zoom');
+  if(stage){
+    stage.classList.toggle('is-pdf', !!flags?.pdf);
+    stage.classList.toggle('is-empty', !!flags?.empty);
+  }
+  if(slider) slider.value = '1';
+  if(media) media.style.transform = 'scale(1)';
+}
+
 function openOrderPrescription(url){
   const src = String(url || '').trim();
-  if(!src){
-    toast('No prescription was uploaded for this order.');
-    return;
-  }
   const modal = document.getElementById('order-rx-viewer');
   const image = document.getElementById('order-rx-viewer-image');
   const frame = document.getElementById('order-rx-viewer-frame');
   const missing = document.getElementById('order-rx-viewer-missing');
   if(!modal) return;
+  bindResidenceRxCropZoom(modal);
+  if(!src){
+    if(image){ image.hidden = true; image.src = ''; }
+    if(frame){ frame.hidden = true; frame.src = ''; }
+    if(missing){
+      missing.hidden = false;
+      missing.textContent = 'No prescription file is available.';
+    }
+    resetResidenceRxCropZoom(modal, { empty:true });
+    modal.hidden = false;
+    return;
+  }
   const isPdf = /\.pdf($|\?)/i.test(src);
+  resetResidenceRxCropZoom(modal, { pdf:isPdf, empty:false });
   if(image){
     image.hidden = isPdf;
     image.src = isPdf ? '' : src;
@@ -2859,6 +2891,7 @@ function closeOrderPrescription(){
   const frame = document.getElementById('order-rx-viewer-frame');
   if(image) image.src = '';
   if(frame) frame.src = '';
+  resetResidenceRxCropZoom(modal, { pdf:false, empty:false });
   if(modal) modal.hidden = true;
 }
 window.openOrderPrescription = openOrderPrescription;

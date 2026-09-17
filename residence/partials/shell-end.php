@@ -145,21 +145,31 @@
   </div>
 </div>
 
-<div class="order-rx-viewer" id="order-rx-viewer" hidden>
-  <button type="button" class="order-rx-viewer-backdrop" onclick="closeOrderPrescription()" aria-label="Close prescription viewer"></button>
-  <section class="order-rx-viewer-sheet" role="dialog" aria-modal="true" aria-labelledby="order-rx-viewer-title">
-    <header class="order-rx-viewer-head">
-      <div>
-        <span class="order-rx-viewer-kicker">Uploaded prescription</span>
-        <h3 id="order-rx-viewer-title">Prescription</h3>
-      </div>
-      <button type="button" class="order-rx-viewer-close" onclick="closeOrderPrescription()" aria-label="Close">×</button>
+<div class="order-rx-viewer rx-crop-modal" id="order-rx-viewer" hidden>
+  <button type="button" class="rx-crop-backdrop" onclick="closeOrderPrescription()" aria-label="Close prescription preview"></button>
+  <section class="rx-crop-sheet" role="dialog" aria-modal="true" aria-labelledby="order-rx-viewer-title">
+    <header class="rx-crop-head">
+      <h3 id="order-rx-viewer-title">Prescription preview</h3>
     </header>
-    <div class="order-rx-viewer-body">
-      <img id="order-rx-viewer-image" alt="Uploaded prescription" hidden>
-      <iframe id="order-rx-viewer-frame" title="Uploaded prescription" hidden></iframe>
-      <p class="order-rx-viewer-missing" id="order-rx-viewer-missing" hidden>No prescription file is available.</p>
+    <div class="rx-crop-stage" id="order-rx-viewer-stage">
+      <div class="rx-crop-media" id="order-rx-viewer-media">
+        <img id="order-rx-viewer-image" alt="Uploaded prescription" hidden>
+        <iframe id="order-rx-viewer-frame" title="Uploaded prescription" hidden></iframe>
+      </div>
+      <div class="rx-crop-frame" aria-hidden="true">
+        <span class="h-n"></span><span class="h-s"></span><span class="h-e"></span><span class="h-w"></span>
+        <span class="h-ne"></span><span class="h-nw"></span><span class="h-se"></span><span class="h-sw"></span>
+      </div>
+      <p class="rx-crop-missing" id="order-rx-viewer-missing" hidden>No prescription file is available.</p>
     </div>
+    <div class="rx-crop-zoombar">
+      <span class="rx-crop-zoom-icon is-small" aria-hidden="true"><svg viewBox="0 0 22 16" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="4" width="14" height="8" rx="1.2"/></svg></span>
+      <input type="range" class="rx-crop-zoom" id="order-rx-viewer-zoom" min="1" max="2.4" step="0.02" value="1" aria-label="Zoom prescription preview">
+      <span class="rx-crop-zoom-icon is-large" aria-hidden="true"><svg viewBox="0 0 28 20" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="22" height="14" rx="1.4"/></svg></span>
+    </div>
+    <footer class="rx-crop-foot">
+      <button type="button" class="rx-crop-cancel" onclick="closeOrderPrescription()">Cancel</button>
+    </footer>
   </section>
 </div>
 

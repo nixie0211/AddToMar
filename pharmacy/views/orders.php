@@ -490,25 +490,31 @@ $overviewPickupProofKind = $overviewPickupProofExt === 'pdf' ? 'pdf' : ($overvie
           </div>
         </div>
 
-        <div class="rx-viewer" id="prescription-viewer" hidden>
-          <button type="button" class="rx-viewer-backdrop" id="prescription-viewer-close" aria-label="Close prescription viewer"></button>
-          <div class="rx-viewer-sheet" role="dialog" aria-modal="true" aria-labelledby="prescription-viewer-title">
-            <div class="rx-viewer-head">
-              <div class="rx-viewer-head-copy">
-                <span class="rx-viewer-eyebrow">Prescription review</span>
-                <h3 id="prescription-viewer-title"><?= htmlspecialchars($overviewCustomer, ENT_QUOTES, 'UTF-8') ?> · Order #<?= htmlspecialchars($overviewOrderNumber, ENT_QUOTES, 'UTF-8') ?></h3>
-              </div>
-              <button type="button" class="rx-viewer-close" id="prescription-viewer-close-btn" aria-label="Close">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
-              </button>
-            </div>
-            <div class="rx-viewer-body">
-              <div class="rx-viewer-canvas">
+        <div class="rx-viewer rx-crop-modal" id="prescription-viewer" hidden>
+          <button type="button" class="rx-crop-backdrop" id="prescription-viewer-close" aria-label="Close prescription preview"></button>
+          <div class="rx-crop-sheet" role="dialog" aria-modal="true" aria-labelledby="prescription-viewer-title">
+            <header class="rx-crop-head">
+              <h3 id="prescription-viewer-title">Prescription preview</h3>
+            </header>
+            <div class="rx-crop-stage" id="prescription-viewer-stage">
+              <div class="rx-crop-media" id="prescription-viewer-media">
                 <img id="prescription-viewer-image" src="" alt="Uploaded prescription">
                 <iframe id="prescription-viewer-frame" title="Uploaded prescription" hidden></iframe>
-                <p class="rx-viewer-missing" id="prescription-viewer-missing" hidden>The uploaded prescription could not be loaded.</p>
               </div>
+              <div class="rx-crop-frame" aria-hidden="true">
+                <span class="h-n"></span><span class="h-s"></span><span class="h-e"></span><span class="h-w"></span>
+                <span class="h-ne"></span><span class="h-nw"></span><span class="h-se"></span><span class="h-sw"></span>
+              </div>
+              <p class="rx-crop-missing" id="prescription-viewer-missing" hidden>The uploaded prescription could not be loaded.</p>
             </div>
+            <div class="rx-crop-zoombar">
+              <span class="rx-crop-zoom-icon is-small" aria-hidden="true"><svg viewBox="0 0 22 16" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="4" width="14" height="8" rx="1.2"/></svg></span>
+              <input type="range" class="rx-crop-zoom" id="prescription-viewer-zoom" min="1" max="2.4" step="0.02" value="1" aria-label="Zoom prescription preview">
+              <span class="rx-crop-zoom-icon is-large" aria-hidden="true"><svg viewBox="0 0 28 20" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="22" height="14" rx="1.4"/></svg></span>
+            </div>
+            <footer class="rx-crop-foot">
+              <button type="button" class="rx-crop-cancel" id="prescription-viewer-close-btn">Cancel</button>
+            </footer>
           </div>
         </div>
 <?php endif; ?>
