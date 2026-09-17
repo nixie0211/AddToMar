@@ -15,9 +15,29 @@
   flex:1;
   min-width:0;
 }
+.settings-profile-tabs{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  border-bottom:1.5px solid var(--border);
+  margin-bottom:22px;
+}
+.settings-profile-tab{
+  padding:12px 18px;
+  border:0;
+  border-bottom:2.5px solid transparent;
+  margin-bottom:-1.5px;
+  background:transparent;
+  color:var(--text-faint);
+  font-size:14px;
+  font-weight:700;
+}
 .settings-edit-btn{
   margin-left:auto;
+  margin-bottom:8px;
   min-width:88px;
+  height:36px;
+  padding:0 16px;
   border:1.5px solid var(--border);
   background:#fff;
   color:var(--navy);
@@ -62,22 +82,6 @@
 .settings-contact-line i{
   font-style:normal;
   color:var(--text-faint);
-}
-.settings-profile-tabs{
-  display:flex;
-  gap:6px;
-  border-bottom:1.5px solid var(--border);
-  margin-bottom:22px;
-}
-.settings-profile-tab{
-  padding:12px 18px;
-  border:0;
-  border-bottom:2.5px solid transparent;
-  margin-bottom:-1.5px;
-  background:transparent;
-  color:var(--text-faint);
-  font-size:14px;
-  font-weight:700;
 }
 .settings-profile-tab.active{
   color:var(--teal);

@@ -35,12 +35,12 @@ $profileDocFields = [
                 <span id="settings-display-contact"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h3l2 5-2 1.5a15 15 0 0 0 5.5 5.5L15 14l5 2v3a2 2 0 0 1-2 2C10.3 21 3 13.7 3 6a2 2 0 0 1 2-2Z"/></svg><?= htmlspecialchars($profileContact !== '' ? $profileContact : '—', ENT_QUOTES, 'UTF-8') ?></span>
               </div>
             </div>
-            <button type="button" class="btn settings-edit-btn" id="settings-profile-edit">Edit</button>
           </div>
 
           <div class="settings-profile-tabs" role="tablist" aria-label="Profile settings">
             <button type="button" class="settings-profile-tab active" role="tab" aria-selected="true" onclick="showSettingsPane('business', this)">Business information</button>
             <button type="button" class="settings-profile-tab" role="tab" aria-selected="false" onclick="showSettingsPane('security', this)">Login credentials</button>
+            <button type="button" class="btn settings-edit-btn" id="settings-profile-edit">Edit</button>
           </div>
 
           <div class="settings-pane active" id="pane-business">
