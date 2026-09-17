@@ -2,7 +2,7 @@
 
 .settings-profile-page{
   width:100%;
-  max-width:920px;
+  max-width:1240px;
   margin:0 auto;
 }
 .settings-profile-head{
@@ -193,6 +193,27 @@
   flex:0 0 auto;
   min-height:auto;
   overflow:visible;
+}
+
+.settings-business-split{
+  display:grid;
+  grid-template-columns:minmax(0, 1.05fr) minmax(340px, .95fr);
+  gap:8px 12px;
+  align-items:start;
+}
+
+.settings-business-main,
+.settings-business-side{
+  min-width:0;
+}
+
+.settings-business-side{
+  position:sticky;
+  top:12px;
+}
+
+.settings-business-side .settings-section{
+  padding-left:16px;
 }
 
 .settings-business-form .settings-alert{
@@ -716,14 +737,14 @@
   border:1px solid #d7e8e3;
   background:#e8eef2;
   box-shadow:inset 0 1px 0 rgba(255,255,255,0.7);
-  min-height:320px;
+  min-height:380px;
 }
 
 .settings-map,
 #view-settings #settings-pharmacy-map,
 #view-settings .settings-map-frame .leaflet-container{
   width:100%;
-  min-height:320px;
+  min-height:380px;
   height:320px;
 }
 
@@ -803,6 +824,18 @@
   background:#f8fafc;
   color:var(--text-soft);
   cursor:default;
+}
+
+@media (max-width: 980px){
+  .settings-business-split{
+    grid-template-columns:1fr;
+  }
+  .settings-business-side{
+    position:static;
+  }
+  .settings-business-side .settings-section{
+    padding-left:24px;
+  }
 }
 
 @media (max-width: 900px){

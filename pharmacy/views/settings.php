@@ -45,6 +45,8 @@ $profileDocFields = [
           <div class="settings-pane active" id="pane-business">
               <form class="settings-panel settings-business-form" id="settings-business-form" enctype="multipart/form-data" novalidate>
                 <div class="settings-business-body">
+                <div class="settings-business-split">
+                <div class="settings-business-main">
                 <div class="settings-section">
                   <div class="form-grid settings-details-grid">
                     <div class="field">
@@ -136,7 +138,9 @@ $profileDocFields = [
                   </div>
                   <?php endforeach; ?>
                 </div>
+                </div>
 
+                <div class="settings-business-side">
                 <div class="settings-section">
                   <div class="settings-section-title">Pharmacy location</div>
                   <p class="settings-hint">Update your address and pin your pharmacy on the map.</p>
@@ -176,6 +180,8 @@ $profileDocFields = [
                       </div>
                     </div>
                   </div>
+                </div>
+                </div>
                 </div>
                 </div>
 
