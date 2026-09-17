@@ -106,12 +106,7 @@ $profileDocFields = [
                         $docLabel = (string) ($docCard['label'] ?? $doc['label']);
                         $docFilename = (string) ($docCard['filename'] ?? '');
                       ?>
-                      <a class="settings-doc-card" href="<?= htmlspecialchars($docUrl, ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener" data-doc-id="<?= (int) ($docCard['id'] ?? 0) ?>">
-                        <?php if ((int) ($docCard['id'] ?? 0) > 0): ?>
-                        <button type="button" class="settings-doc-remove" aria-label="Remove <?= htmlspecialchars($docLabel, ENT_QUOTES, 'UTF-8') ?>">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg>
-                        </button>
-                        <?php endif; ?>
+                      <a class="settings-doc-card" href="<?= htmlspecialchars($docUrl, ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener">
                         <span class="settings-doc-icon settings-doc-icon--<?= htmlspecialchars($docKind, ENT_QUOTES, 'UTF-8') ?>" aria-hidden="true">
                           <?php if ($docKind === 'pdf'): ?>
                           <svg width="52" height="60" viewBox="0 0 52 60" fill="none">
