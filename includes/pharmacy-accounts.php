@@ -425,6 +425,75 @@ function pharmacy_accounts_list_documents(string $pharmacyId, ?string $docKey = 
     }
 }
 
+function pharmacy_accounts_document_view_url(int $documentId): string
+{
+    if ($documentId <= 0) {
+        return '';
+    }
+
+    return app_url('pharmacy-document.php?id=' . $documentId);
+}
+
+/**
+ * @return array<string, list<array{label:string,url:string,kind:string,filename:string}>>
+ */
+function pharmacy_accounts_settings_documents(array $account): array
+{
+    $pharmacyId = trim((string) ($account['id'] ?? ''));
+    pharmacy_accounts_backfill_documents($account);
+    $storedDocs = pharmacy_accounts_list_documents($pharmacyId);
+    $docsByKey = [];
+    foreach ($storedDocs as $storedDoc) {
+        $key = (string) ($storedDoc['doc_key'] ?? '');
+        if ($key === '' || $key === 'logo') {
+            continue;
+        }
+        $docsByKey[$key][] = $storedDoc;
+    }
+
+    $labels = [
+        'business_permit' => 'Business permit',
+        'pharmacy_license' => 'Pharmacy license',
+        'bir_certificate' => 'BIR certificate',
+    ];
+    $cards = [];
+    foreach ($labels as $docKey => $docLabel) {
+        $cards[$docKey] = [];
+        $copies = $docsByKey[$docKey] ?? [];
+        if ($copies !== []) {
+            foreach ($copies as $index => $copy) {
+                $filename = (string) ($copy['filename'] ?? 'document');
+                $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+                $cards[$docKey][] = [
+                    'label' => count($copies) > 1 ? $docLabel . ' ' . ($index + 1) : $docLabel,
+                    'url' => pharmacy_accounts_document_view_url((int) ($copy['id'] ?? 0)),
+                    'kind' => $ext === 'pdf' ? 'pdf' : 'img',
+                    'filename' => $filename,
+                ];
+            }
+            continue;
+        }
+
+        foreach (pharmacy_accounts_document_paths($account, $docKey) as $index => $path) {
+            $absolute = dirname(__DIR__) . '/' . ltrim((string) $path, '/');
+            if (!is_file($absolute)) {
+                continue;
+            }
+            $filename = basename((string) $path);
+            $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+            $paths = pharmacy_accounts_document_paths($account, $docKey);
+            $cards[$docKey][] = [
+                'label' => count($paths) > 1 ? $docLabel . ' ' . ($index + 1) : $docLabel,
+                'url' => app_url((string) $path),
+                'kind' => $ext === 'pdf' ? 'pdf' : 'img',
+                'filename' => $filename,
+            ];
+        }
+    }
+
+    return $cards;
+}
+
 function pharmacy_accounts_latest_logo_document_id(string $pharmacyId): int
 {
     if ($pharmacyId === '') {

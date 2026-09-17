@@ -89,23 +89,23 @@ $profileDocFields = [
                 <div class="settings-section">
                   <div class="settings-section-title">Documents</div>
                   <p class="settings-hint">Business permit, pharmacy license, and BIR certificate.</p>
+                  <?php
+                    $settingsDocuments = pharmacy_accounts_settings_documents($pharmacyAccount);
+                  ?>
                   <?php foreach ($profileDocFields as $doc): ?>
                   <?php
-                    $docPaths = pharmacy_accounts_document_paths($pharmacyAccount, (string) $doc['name']);
+                    $docCards = $settingsDocuments[(string) $doc['name']] ?? [];
                   ?>
                   <div class="settings-doc" data-doc="<?= htmlspecialchars($doc['name'], ENT_QUOTES, 'UTF-8') ?>" data-doc-label="<?= htmlspecialchars($doc['label'], ENT_QUOTES, 'UTF-8') ?>">
                     <span class="settings-doc-title"><?= htmlspecialchars($doc['label'], ENT_QUOTES, 'UTF-8') ?></span>
                     <div class="settings-doc-grid">
-                      <?php foreach ($docPaths as $docPath): ?>
+                      <?php foreach ($docCards as $docCard): ?>
                       <?php
-                        $docAbs = dirname(PHARMACY_ROOT) . '/' . $docPath;
-                        $docExists = is_file($docAbs);
-                        $docUrl = $docExists ? app_url($docPath) : '';
-                        $docExt = $docExists ? strtolower(pathinfo($docPath, PATHINFO_EXTENSION)) : '';
-                        $docKind = $docExt === 'pdf' ? 'pdf' : ($docExists ? 'img' : 'empty');
-                        $docDate = $docExists ? date('M j, Y', (int) filemtime($docAbs)) : '';
+                        $docUrl = (string) ($docCard['url'] ?? '');
+                        $docKind = (string) ($docCard['kind'] ?? 'img');
+                        $docLabel = (string) ($docCard['label'] ?? $doc['label']);
+                        $docFilename = (string) ($docCard['filename'] ?? '');
                       ?>
-                      <?php if ($docUrl !== ''): ?>
                       <a class="settings-doc-card" href="<?= htmlspecialchars($docUrl, ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener">
                         <span class="settings-doc-icon settings-doc-icon--<?= htmlspecialchars($docKind, ENT_QUOTES, 'UTF-8') ?>" aria-hidden="true">
                           <?php if ($docKind === 'pdf'): ?>
@@ -119,11 +119,10 @@ $profileDocFields = [
                           <?php endif; ?>
                         </span>
                         <span class="settings-doc-meta">
-                          <strong><?= htmlspecialchars($doc['label'], ENT_QUOTES, 'UTF-8') ?></strong>
-                          <small><?= htmlspecialchars($docDate, ENT_QUOTES, 'UTF-8') ?></small>
+                          <strong><?= htmlspecialchars($docLabel, ENT_QUOTES, 'UTF-8') ?></strong>
+                          <small><?= htmlspecialchars($docFilename, ENT_QUOTES, 'UTF-8') ?></small>
                         </span>
                       </a>
-                      <?php endif; ?>
                       <?php endforeach; ?>
 
                       <label class="settings-doc-upload">
