@@ -206,6 +206,7 @@ function hideSettingsAlert() {
     input.addEventListener('change', () => {
       addFiles(widget, Array.from(input.files || []));
       input.value = '';
+      syncInput(widget);
     });
 
     uploadBox.addEventListener('dragover', (event) => {
@@ -262,9 +263,17 @@ function hideSettingsAlert() {
     if (saveLabel) saveLabel.textContent = 'Saving...';
 
     try {
+      const body = new FormData(form);
+      form.querySelectorAll('.settings-doc').forEach((widget) => {
+        const input = widget.querySelector('.settings-doc-input');
+        if (!input) return;
+        body.delete(input.name);
+        (widget._files || []).forEach((file) => body.append(input.name, file));
+      });
+
       const response = await fetch('api/save-profile.php', {
         method: 'POST',
-        body: new FormData(form),
+        body,
       });
       const data = await response.json();
       if (!response.ok || !data.ok) {

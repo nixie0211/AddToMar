@@ -295,28 +295,61 @@ function pharmacy_accounts_document_paths(array $account, string $key): array
 
 function pharmacy_accounts_store_upload(array $file, string $accountId, string $basename, array $allowedExtensions): ?string
 {
-    if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
-        return null;
+    $stored = pharmacy_accounts_store_upload_result($file, $accountId, $basename, $allowedExtensions);
+
+    return $stored['ok'] ? (string) $stored['path'] : null;
+}
+
+function pharmacy_accounts_store_upload_result(array $file, string $accountId, string $basename, array $allowedExtensions): array
+{
+    $error = (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE);
+    if ($error === UPLOAD_ERR_NO_FILE) {
+        return ['ok' => false, 'path' => '', 'error' => ''];
+    }
+    if ($error === UPLOAD_ERR_INI_SIZE || $error === UPLOAD_ERR_FORM_SIZE) {
+        return ['ok' => false, 'path' => '', 'error' => 'That file is too large to upload.'];
+    }
+    if ($error !== UPLOAD_ERR_OK) {
+        return ['ok' => false, 'path' => '', 'error' => 'Could not upload that file. Please try again.'];
     }
 
     $tmp = $file['tmp_name'] ?? '';
     if ($tmp === '' || !is_uploaded_file($tmp)) {
-        return null;
+        return ['ok' => false, 'path' => '', 'error' => 'Could not upload that file. Please try again.'];
     }
 
     if (($file['size'] ?? 0) < 1) {
-        return null;
+        return ['ok' => false, 'path' => '', 'error' => 'That file is empty.'];
     }
 
     $original = (string) ($file['name'] ?? '');
     $extension = strtolower(pathinfo($original, PATHINFO_EXTENSION));
+    $mime = strtolower((string) ($file['type'] ?? ''));
+    if ($extension === '' || !in_array($extension, $allowedExtensions, true)) {
+        $fromMime = match (true) {
+            str_contains($mime, 'png') => 'png',
+            str_contains($mime, 'jpeg'), str_contains($mime, 'jpg') => 'jpg',
+            str_contains($mime, 'pdf') => 'pdf',
+            str_contains($mime, 'webp') => 'webp',
+            str_contains($mime, 'svg') => 'svg',
+            default => '',
+        };
+        if (in_array($fromMime, $allowedExtensions, true)) {
+            $extension = $fromMime;
+        }
+    }
     if (!in_array($extension, $allowedExtensions, true)) {
-        return null;
+        $labels = [];
+        foreach ($allowedExtensions as $ext) {
+            $labels[] = strtoupper($ext === 'jpeg' ? 'JPG' : $ext);
+        }
+        $labels = array_values(array_unique($labels));
+        return ['ok' => false, 'path' => '', 'error' => 'Use ' . implode(', ', $labels) . '.'];
     }
 
     $dir = pharmacy_accounts_uploads_root() . '/' . $accountId;
     if (!is_dir($dir) && !mkdir($dir, 0775, true) && !is_dir($dir)) {
-        return null;
+        return ['ok' => false, 'path' => '', 'error' => 'Could not save that file. Please try again.'];
     }
 
     $filename = $basename . '.' . $extension;
@@ -328,13 +361,13 @@ function pharmacy_accounts_store_upload(array $file, string $accountId, string $
         $suffix++;
     }
     if (!move_uploaded_file($tmp, $absolute)) {
-        return null;
+        return ['ok' => false, 'path' => '', 'error' => 'Could not save that file. Please try again.'];
     }
 
     $relative = 'data/uploads/pharmacies/' . $accountId . '/' . $filename;
     pharmacy_accounts_persist_document_file($accountId, $basename, $relative, $absolute);
 
-    return $relative;
+    return ['ok' => true, 'path' => $relative, 'error' => ''];
 }
 
 function pharmacy_accounts_mime_for_extension(string $extension): string
@@ -804,11 +837,11 @@ function pharmacy_accounts_register(array $input, array $files): array
 
     foreach ($requiredFiles as $key => $meta) {
         if ($key === 'logo') {
-            $path = pharmacy_accounts_store_upload($files[$key], $accountId, $key, $meta['ext']);
-            if ($path === null) {
-                return ['ok' => false, 'error' => 'Could not upload ' . $meta['label'] . '. Use JPG, PNG, WEBP, or SVG.'];
+            $stored = pharmacy_accounts_store_upload_result($files[$key], $accountId, $key, $meta['ext']);
+            if (!$stored['ok']) {
+                return ['ok' => false, 'error' => 'Could not upload ' . $meta['label'] . '. ' . ($stored['error'] !== '' ? $stored['error'] : 'Use JPG, PNG, WEBP, or SVG.')];
             }
-            $storedFiles[$key . '_path'] = $path;
+            $storedFiles[$key . '_path'] = $stored['path'];
             continue;
         }
 
@@ -828,11 +861,11 @@ function pharmacy_accounts_register(array $input, array $files): array
         $paths = [];
         foreach ($uploaded as $index => $file) {
             $basename = $index === 0 ? $key : $key . '-' . ($index + 1);
-            $path = pharmacy_accounts_store_upload($file, $accountId, $basename, $meta['ext']);
-            if ($path === null) {
-                return ['ok' => false, 'error' => 'Could not upload ' . $meta['label'] . '. Use JPG, PNG, or PDF.'];
+            $stored = pharmacy_accounts_store_upload_result($file, $accountId, $basename, $meta['ext']);
+            if (!$stored['ok']) {
+                return ['ok' => false, 'error' => 'Could not upload ' . $meta['label'] . '. ' . ($stored['error'] !== '' ? $stored['error'] : 'Use JPG, PNG, or PDF.')];
             }
-            $paths[] = $path;
+            $paths[] = $stored['path'];
         }
 
         $storedFiles[$key . '_path'] = $paths[0];
@@ -1295,11 +1328,11 @@ function pharmacy_accounts_update_profile(string $email, array $input, array $fi
     }
 
     if (isset($files['logo']) && ($files['logo']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
-        $logoPath = pharmacy_accounts_store_upload($files['logo'], $accountId, 'logo', ['jpg', 'jpeg', 'png', 'webp', 'svg']);
-        if ($logoPath === null) {
-            return ['ok' => false, 'error' => 'Could not upload pharmacy logo. Use JPG, PNG, WEBP, or SVG.'];
+        $storedLogo = pharmacy_accounts_store_upload_result($files['logo'], $accountId, 'logo', ['jpg', 'jpeg', 'png', 'webp', 'svg']);
+        if (!$storedLogo['ok']) {
+            return ['ok' => false, 'error' => 'Could not upload pharmacy logo. ' . ($storedLogo['error'] !== '' ? $storedLogo['error'] : 'Use JPG, PNG, WEBP, or SVG.')];
         }
-        $account['logo_path'] = $logoPath;
+        $account['logo_path'] = $storedLogo['path'];
     }
 
     $optionalDocs = [
@@ -1309,7 +1342,10 @@ function pharmacy_accounts_update_profile(string $email, array $input, array $fi
     ];
 
     foreach ($optionalDocs as $key => $meta) {
-        $uploaded = pharmacy_accounts_files_from_upload($files, $key);
+        $uploaded = array_values(array_filter(
+            pharmacy_accounts_files_from_upload($files, $key),
+            static fn(array $file): bool => (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK
+        ));
         if ($uploaded === []) {
             continue;
         }
@@ -1317,11 +1353,11 @@ function pharmacy_accounts_update_profile(string $email, array $input, array $fi
         $paths = pharmacy_accounts_document_paths($account, $key);
         foreach ($uploaded as $index => $file) {
             $basename = $paths === [] && $index === 0 ? $key : $key . '-' . (count($paths) + $index + 1);
-            $path = pharmacy_accounts_store_upload($file, $accountId, $basename, $meta['ext']);
-            if ($path === null) {
-                return ['ok' => false, 'error' => 'Could not upload ' . $meta['label'] . '. Use JPG, PNG, or PDF.'];
+            $stored = pharmacy_accounts_store_upload_result($file, $accountId, $basename, $meta['ext']);
+            if (!$stored['ok']) {
+                return ['ok' => false, 'error' => 'Could not upload ' . $meta['label'] . '. ' . ($stored['error'] !== '' ? $stored['error'] : 'Use JPG, PNG, or PDF.')];
             }
-            $paths[] = $path;
+            $paths[] = $stored['path'];
         }
 
         $account[$key . '_path'] = $paths[0];
