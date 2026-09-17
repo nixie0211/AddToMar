@@ -2830,17 +2830,14 @@ function bindResidenceOrdersTools(){
 }
 
 function bindResidenceRxCropZoom(root){
-  if(!root || root.dataset.zoomBound === '1') return;
-  const slider = root.querySelector('.rx-crop-zoom');
-  const media = root.querySelector('.rx-crop-media');
-  if(!slider || !media) return;
-  root.dataset.zoomBound = '1';
-  slider.addEventListener('input', function(){
-    media.style.transform = 'scale(' + slider.value + ')';
-  });
+  if(typeof window.bindRxCropPreview === 'function') window.bindRxCropPreview(root);
 }
 
 function resetResidenceRxCropZoom(root, flags){
+  if(typeof window.resetRxCropPreview === 'function'){
+    window.resetRxCropPreview(root, flags);
+    return;
+  }
   const stage = root?.querySelector('.rx-crop-stage');
   const media = root?.querySelector('.rx-crop-media');
   const slider = root?.querySelector('.rx-crop-zoom');
@@ -2849,7 +2846,7 @@ function resetResidenceRxCropZoom(root, flags){
     stage.classList.toggle('is-empty', !!flags?.empty);
   }
   if(slider) slider.value = '1';
-  if(media) media.style.transform = 'scale(1)';
+  if(media) media.style.transform = 'translate(0px, 0px) scale(1)';
 }
 
 function openOrderPrescription(url){

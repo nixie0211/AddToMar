@@ -51,15 +51,23 @@
   overflow:hidden;
   border:1px solid #d7dee4;
   background:#dfe5ea;
+  touch-action:none;
 }
+.rx-crop-stage.is-zoomable{cursor:grab;}
+.rx-crop-stage.is-panning{cursor:grabbing;}
 .rx-crop-media{
   position:absolute;
   inset:0;
   display:grid;
   place-items:center;
-  transform:scale(1);
+  transform:translate(0, 0) scale(1);
   transform-origin:center center;
   transition:transform .08s linear;
+  user-select:none;
+}
+.rx-crop-media img{
+  -webkit-user-drag:none;
+  pointer-events:none;
 }
 .rx-crop-media img,
 .rx-crop-media iframe{
@@ -75,6 +83,7 @@
 .rx-crop-media iframe{
   width:100%;
   height:100%;
+  pointer-events:none;
 }
 .rx-crop-missing{
   position:relative;
