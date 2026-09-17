@@ -192,6 +192,14 @@
   border-radius:0 0 var(--radius) var(--radius);
 }
 
+.settings-profile-page:not(.is-editing) .settings-panel-foot{
+  display:none;
+}
+
+.settings-panel-foot .btn[hidden]{
+  display:none !important;
+}
+
 .settings-panel-foot .btn-accent{
   min-width:148px;
   background:linear-gradient(135deg, #4ec4b4, #219e82);
