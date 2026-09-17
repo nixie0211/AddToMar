@@ -259,7 +259,6 @@ $overviewPickupProofKind = $overviewPickupProofExt === 'pdf' ? 'pdf' : ($overvie
                 <div class="t1 order-med-title">
                   <?= htmlspecialchars((string) ($item['medicine_name'] ?? 'Medicine'), ENT_QUOTES, 'UTF-8') ?>
                 </div>
-                <div class="t2 order-med-pharmacy"><?= htmlspecialchars((string) ($overviewOrder['pharmacy_name'] ?? 'Pharmacy'), ENT_QUOTES, 'UTF-8') ?></div>
                 <div class="t2">Qty <?= (int) ($item['quantity'] ?? 1) ?><?php if ($itemRequiresRx && $itemPrescriptionUrl): ?> · <button type="button" class="order-prescription-inline view-prescription-trigger" data-prescription-url="<?= htmlspecialchars($itemPrescriptionUrl, ENT_QUOTES, 'UTF-8') ?>">Rx required · see prescription ›</button><?php elseif ($itemRequiresRx): ?> · Rx required<?php endif; ?></div>
                 <?php if ($itemNote !== ''): ?>
                 <div class="t2 order-item-note">Note: <?= htmlspecialchars($itemNote, ENT_QUOTES, 'UTF-8') ?></div>

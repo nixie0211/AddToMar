@@ -591,7 +591,6 @@ function renderOrderDrawerDetail(detail) {
       : '<div class="med-thumb' + (item.prescription_required ? ' med-thumb--rx' : '') + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7L12 3 4 7v10l8 4 8-4V7z"/></svg></div>';
     return '<div class="list-row order-list-row order-med-row">' + thumb +
       '<div class="list-body"><div class="t1 order-med-title">' + escapeHtml(item.name || 'Medicine') + '</div>' +
-      '<div class="t2 order-med-pharmacy">' + escapeHtml(detail.pharmacy_name || 'Pharmacy') + '</div>' +
       '<div class="t2">Qty ' + Number(item.quantity || 1) + rx + '</div>' + note + '</div>' +
       '<div class="list-meta mono">' + escapeHtml(item.line_total_label || '') + '</div></div>';
   }).join('');
