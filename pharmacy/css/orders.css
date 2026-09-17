@@ -449,6 +449,7 @@
   gap:8px;
   flex-wrap:wrap;
 }
+.list-body .t2.order-item-note,
 .order-item-note{
   margin-top:4px;
   color:#d92d20;
