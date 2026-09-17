@@ -625,8 +625,12 @@ button.order-rx-doc-card{
   color:var(--text);
   white-space:nowrap;
 }
-.order-payment-row--paid .mono{
-  color:var(--teal-dark);
+.order-payment-row--total{
+  font-weight:800;
+  color:var(--text);
+}
+.order-payment-row--total .mono{
+  font-size:15px;
 }
 .order-payment-row--due{
   padding-top:10px;

@@ -808,6 +808,7 @@ function pharmacy_order_detail_from_row(array $order, array $items): array
     $isCompleted = $status === 'delivered';
     $pickupUrl = pharmacy_pickup_proof_url($order);
     $percent = pharmacy_order_down_payment_percent($order);
+    $prices = pharmacy_order_vat_breakdown($order, $items);
     $itemRows = [];
     foreach ($items as $item) {
         $qty = (int) ($item['quantity'] ?? 1);
@@ -836,7 +837,10 @@ function pharmacy_order_detail_from_row(array $order, array $items): array
         'items' => $itemRows,
         'created_label' => pharmacy_format_date((string) ($order['created_at'] ?? '')),
         'created_stamp' => pharmacy_order_progress_stamp((string) ($order['created_at'] ?? '')),
-        'total_label' => pharmacy_format_money($total),
+        'subtotal_label' => $prices['subtotal_label'],
+        'vat_label' => $prices['vat_label'],
+        'vat_percent' => $prices['vat_percent'],
+        'total_label' => $prices['total_label'],
         'paid_label' => pharmacy_format_money($isCompleted ? $total : $down),
         'paid_percent' => $isCompleted ? 100 : $percent,
         'paid_note_percent' => $percent,
@@ -1318,6 +1322,50 @@ function pharmacy_order_requires_prescription(array $order, array $items = []): 
     }
 
     return false;
+}
+
+function pharmacy_vat_rate(): float
+{
+    return 0.15;
+}
+
+function pharmacy_order_vat_breakdown(array $order, array $items = []): array
+{
+    $rate = pharmacy_vat_rate();
+    $percent = (int) round($rate * 100);
+    $total = round(max(0, (float) ($order['total_amount'] ?? 0)), 2);
+    $subtotal = 0.0;
+    foreach ($items as $item) {
+        if (!is_array($item)) {
+            continue;
+        }
+        $subtotal += (float) ($item['unit_price'] ?? $item['price'] ?? 0) * max(1, (int) ($item['quantity'] ?? 1));
+    }
+    $subtotal = round($subtotal, 2);
+    $vat = round((float) ($order['vat'] ?? 0), 2);
+    if ($vat <= 0) {
+        if ($subtotal > 0 && $total >= $subtotal) {
+            $vat = round($total - $subtotal, 2);
+        } elseif ($subtotal > 0) {
+            $vat = round($subtotal * $rate, 2);
+            $total = round($subtotal + $vat, 2);
+        } elseif ($total > 0) {
+            $vat = round($total - ($total / (1 + $rate)), 2);
+            $subtotal = round($total - $vat, 2);
+        }
+    } elseif ($subtotal <= 0) {
+        $subtotal = round(max(0, $total - $vat), 2);
+    }
+
+    return [
+        'subtotal' => max(0, $subtotal),
+        'vat' => max(0, $vat),
+        'total' => $total,
+        'vat_percent' => $percent,
+        'subtotal_label' => pharmacy_format_money(max(0, $subtotal)),
+        'vat_label' => pharmacy_format_money(max(0, $vat)),
+        'total_label' => pharmacy_format_money($total),
+    ];
 }
 
 function pharmacy_order_down_payment(array $order, float $defaultPercent = 60): float

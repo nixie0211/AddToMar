@@ -636,7 +636,9 @@ function renderOrderDrawerDetail(detail) {
     '</div>' +
     '<div class="order-overview-side"><div class="order-payment-card"><h3 class="payment-summary-title"><span>Payment Summary<small>Payment details and transaction breakdown</small></span></h3>' +
     '<div class="payment-summary-method"><b class="payment-gcash-icon">G</b><span class="payment-summary-details"><strong>GCash</strong><b>' + escapeHtml(detail.paid_label) + '</b></span><small class="payment-summary-meta">Payment confirmed via PayMongo<br>' + escapeHtml(detail.created_label) + '</small><span class="payment-summary-confirmed">✓ Paid</span></div>' +
-    '<div class="order-payment-row"><span>Total Amount</span><span class="mono">' + escapeHtml(detail.total_label) + '</span></div>' +
+    '<div class="order-payment-row"><span>Subtotal</span><span class="mono">' + escapeHtml(detail.subtotal_label || '') + '</span></div>' +
+    '<div class="order-payment-row"><span>VAT (' + Number(detail.vat_percent || 15) + '%)</span><span class="mono">' + escapeHtml(detail.vat_label || '') + '</span></div>' +
+    '<div class="order-payment-row order-payment-row--total"><span>Total</span><span class="mono">' + escapeHtml(detail.total_label) + '</span></div>' +
     '<div class="order-payment-row order-payment-row--paid"><span>Paid (' + Number(detail.paid_percent || 0) + '%)<small>' + Number(detail.paid_note_percent || 0) + '% · paid via GCash</small></span><span class="mono">' + escapeHtml(detail.paid_label) + '</span></div>' +
     '<div class="order-payment-row order-payment-row--due"><span>Remaining Balance (' + Number(detail.balance_percent || 0) + '%)</span><span class="mono">' + escapeHtml(detail.balance_label) + '</span></div>' +
     '<p class="order-payment-note">' + escapeHtml(detail.payment_note) + '</p></div></div>' +

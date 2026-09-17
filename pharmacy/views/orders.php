@@ -90,6 +90,7 @@ $overviewTotalAmount = max(0, (float) ($overviewOrder['total_amount'] ?? 0));
 $overviewDownPayment = pharmacy_order_down_payment($overviewOrder);
 $overviewBalanceDue = pharmacy_order_balance_on_pickup($overviewOrder);
 $overviewDownPaymentPercent = pharmacy_order_down_payment_percent($overviewOrder);
+$overviewPrices = pharmacy_order_vat_breakdown($overviewOrder, $overviewItems);
 $overviewPaymentMethod = trim((string) ($overviewOrder['payment_method'] ?? 'GCash'));
 $isPendingOverview = ($overviewOrder['status'] ?? '') === 'pending';
 $hasPanelOrder = $panelOrder !== null;
@@ -348,8 +349,16 @@ $overviewPickupProofKind = $overviewPickupProofExt === 'pdf' ? 'pdf' : ($overvie
               <h3 class="payment-summary-title"><span class="payment-summary-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M6 3.5h12v17l-2.2-1.4-2.2 1.4-2.2-1.4-2.2 1.4L6 20.5v-17Z"/><path d="M9 8h6M9 11.5h6M9 15h3"/></svg></span><span>Payment Summary<small>Payment details and transaction breakdown</small></span></h3>
               <div class="payment-summary-method"><b class="payment-gcash-icon">G</b><span class="payment-summary-details"><strong>GCash</strong><b><?= pharmacy_format_money($overviewDownPayment) ?></b></span><small class="payment-summary-meta">Payment confirmed via PayMongo<br><?= htmlspecialchars($overviewPrescriptionDate, ENT_QUOTES, 'UTF-8') ?></small><span class="payment-summary-confirmed">✓ Paid</span></div>
               <div class="order-payment-row">
-                <span>Total Amount</span>
-                <span class="mono"><?= pharmacy_format_money($overviewTotalAmount) ?></span>
+                <span>Subtotal</span>
+                <span class="mono"><?= htmlspecialchars($overviewPrices['subtotal_label'], ENT_QUOTES, 'UTF-8') ?></span>
+              </div>
+              <div class="order-payment-row">
+                <span>VAT (<?= (int) $overviewPrices['vat_percent'] ?>%)</span>
+                <span class="mono"><?= htmlspecialchars($overviewPrices['vat_label'], ENT_QUOTES, 'UTF-8') ?></span>
+              </div>
+              <div class="order-payment-row order-payment-row--total">
+                <span>Total</span>
+                <span class="mono"><?= htmlspecialchars($overviewPrices['total_label'], ENT_QUOTES, 'UTF-8') ?></span>
               </div>
               <div class="order-payment-row order-payment-row--paid">
                 <span>
