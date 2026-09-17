@@ -465,6 +465,7 @@ function pharmacy_accounts_settings_documents(array $account): array
                 $filename = (string) ($copy['filename'] ?? 'document');
                 $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
                 $cards[$docKey][] = [
+                    'id' => (int) ($copy['id'] ?? 0),
                     'label' => count($copies) > 1 ? $docLabel . ' ' . ($index + 1) : $docLabel,
                     'url' => pharmacy_accounts_document_view_url((int) ($copy['id'] ?? 0)),
                     'kind' => $ext === 'pdf' ? 'pdf' : 'img',
@@ -483,6 +484,8 @@ function pharmacy_accounts_settings_documents(array $account): array
             $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
             $paths = pharmacy_accounts_document_paths($account, $docKey);
             $cards[$docKey][] = [
+                'id' => 0,
+                'path' => (string) $path,
                 'label' => count($paths) > 1 ? $docLabel . ' ' . ($index + 1) : $docLabel,
                 'url' => app_url((string) $path),
                 'kind' => $ext === 'pdf' ? 'pdf' : 'img',
@@ -492,6 +495,61 @@ function pharmacy_accounts_settings_documents(array $account): array
     }
 
     return $cards;
+}
+
+function pharmacy_accounts_delete_owned_document(string $email, int $documentId): array
+{
+    $email = pharmacy_accounts_normalize_email($email);
+    $accounts = pharmacy_accounts_load_all();
+    if ($email === '' || !isset($accounts[$email])) {
+        return ['ok' => false, 'error' => 'Pharmacy account not found.'];
+    }
+
+    $account = $accounts[$email];
+    $pharmacyId = trim((string) ($account['id'] ?? ''));
+    if ($pharmacyId === '' || $documentId <= 0) {
+        return ['ok' => false, 'error' => 'Document not found.'];
+    }
+
+    $document = pharmacy_accounts_get_document($documentId);
+    if (!is_array($document) || (string) ($document['pharmacy_id'] ?? '') !== $pharmacyId) {
+        return ['ok' => false, 'error' => 'Document not found.'];
+    }
+
+    $docKey = (string) ($document['doc_key'] ?? '');
+    $filename = basename((string) ($document['filename'] ?? ''));
+
+    try {
+        require_once __DIR__ . '/database.php';
+        $stmt = caps_db()->prepare('DELETE FROM pharmacy_documents WHERE id = ? AND pharmacy_id = ? LIMIT 1');
+        $stmt->execute([$documentId, $pharmacyId]);
+    } catch (Throwable $e) {
+        return ['ok' => false, 'error' => 'Could not remove that document.'];
+    }
+
+    $root = dirname(__DIR__);
+    $uploads = pharmacy_accounts_uploads_root() . '/' . $pharmacyId;
+    if ($filename !== '') {
+        $disk = $uploads . '/' . $filename;
+        if (is_file($disk)) {
+            @unlink($disk);
+        }
+    }
+
+    if (in_array($docKey, ['business_permit', 'pharmacy_license', 'bir_certificate'], true)) {
+        $paths = array_values(array_filter(
+            pharmacy_accounts_document_paths($account, $docKey),
+            static fn(string $path): bool => basename($path) !== $filename
+        ));
+        $account[$docKey . '_paths'] = $paths;
+        $account[$docKey . '_path'] = $paths[0] ?? '';
+        $account['updated_at'] = date('c');
+        $accounts[$email] = $account;
+        pharmacy_accounts_save_all($accounts);
+        pharmacy_accounts_sync_database($account);
+    }
+
+    return ['ok' => true];
 }
 
 function pharmacy_accounts_latest_logo_document_id(string $pharmacyId): int

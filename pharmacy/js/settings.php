@@ -203,6 +203,31 @@ function hideSettingsAlert() {
 
     widget._files = [];
 
+    widget.addEventListener('click', async (event) => {
+      const removeBtn = event.target.closest('.settings-doc-remove');
+      if (!removeBtn) return;
+      event.preventDefault();
+      event.stopPropagation();
+      const card = removeBtn.closest('.settings-doc-card');
+      if (!card || card.classList.contains('is-pending')) return;
+      const documentId = Number(card.getAttribute('data-doc-id') || 0);
+      if (!documentId) return;
+      removeBtn.disabled = true;
+      try {
+        const body = new FormData();
+        body.set('document_id', String(documentId));
+        const response = await fetch('api/delete-document.php', { method: 'POST', body });
+        const data = await response.json();
+        if (!response.ok || !data.ok) {
+          throw new Error(data.error || 'Could not remove that document.');
+        }
+        card.remove();
+      } catch (error) {
+        removeBtn.disabled = false;
+        showSettingsAlert(error.message || 'Could not remove that document.', 'error');
+      }
+    });
+
     input.addEventListener('change', () => {
       addFiles(widget, Array.from(input.files || []));
       input.value = '';
