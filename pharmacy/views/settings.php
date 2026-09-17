@@ -88,7 +88,7 @@ $profileDocFields = [
 
                 <div class="settings-section">
                   <div class="settings-section-title">Documents</div>
-                  <p class="settings-hint">Business permit, pharmacy license, and BIR certificate.</p>
+                  <p class="settings-hint">Business permit, pharmacy license, and BIR certificate submitted at registration. These cannot be changed here.</p>
                   <?php
                     $settingsDocuments = pharmacy_accounts_settings_documents($pharmacyAccount);
                   ?>
@@ -124,15 +124,9 @@ $profileDocFields = [
                         </span>
                       </a>
                       <?php endforeach; ?>
-
-                      <label class="settings-doc-upload">
-                        <input class="settings-doc-input" name="<?= htmlspecialchars($doc['name'], ENT_QUOTES, 'UTF-8') ?>[]" type="file" accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf" multiple>
-                        <span class="settings-doc-upload-icon" aria-hidden="true">
-                          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-                        </span>
-                        <span class="settings-doc-upload-text">Upload file</span>
-                        <span class="settings-doc-upload-sub">JPEG, PNG, PDF</span>
-                      </label>
+                      <?php if ($docCards === []): ?>
+                      <p class="settings-doc-empty">No document on file</p>
+                      <?php endif; ?>
                     </div>
                   </div>
                   <?php endforeach; ?>

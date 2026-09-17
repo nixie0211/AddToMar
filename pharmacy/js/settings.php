@@ -114,114 +114,6 @@ function hideSettingsAlert() {
   });
 })();
 
-(function setupSettingsDocUploads() {
-  const allowed = ['pdf', 'jpg', 'jpeg', 'png'];
-  const pdfIcon = `<svg width="52" height="60" viewBox="0 0 52 60" fill="none">
-    <path d="M8 0h24l16 16v36a8 8 0 0 1-8 8H8a8 8 0 0 1-8-8V8a8 8 0 0 1 8-8Z" fill="#E2574C"/>
-    <path d="M32 0v12a4 4 0 0 0 4 4h16L32 0Z" fill="#fff" fill-opacity=".35"/>
-    <text x="26" y="42" text-anchor="middle" fill="#fff" font-size="13" font-weight="800" font-family="Manrope, sans-serif">PDF</text>
-  </svg>`;
-
-  function extOf(name) {
-    return (name.split('.').pop() || '').toLowerCase();
-  }
-
-  function isAllowed(file) {
-    return allowed.includes(extOf(file.name)) && file.size > 0;
-  }
-
-  function syncInput(widget) {
-    const input = widget.querySelector('.settings-doc-input');
-    if (!input) return;
-    const data = new DataTransfer();
-    (widget._files || []).forEach((file) => data.items.add(file));
-    input.files = data.files;
-  }
-
-  function renderList(widget) {
-    const grid = widget.querySelector('.settings-doc-grid');
-    const uploadBox = widget.querySelector('.settings-doc-upload');
-    if (!grid || !uploadBox) return;
-
-    grid.querySelectorAll('.settings-doc-card.is-pending').forEach((card) => card.remove());
-
-    const label = widget.dataset.docLabel || 'Document';
-
-    (widget._files || []).forEach((file) => {
-      const isPdf = extOf(file.name) === 'pdf';
-      const card = document.createElement('div');
-      card.className = 'settings-doc-card is-pending';
-      card.innerHTML = `
-        <button type="button" class="settings-doc-remove" aria-label="Remove file">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg>
-        </button>
-        <span class="settings-doc-icon settings-doc-icon--${isPdf ? 'pdf' : 'img'}" aria-hidden="true"></span>
-        <span class="settings-doc-meta">
-          <strong></strong>
-          <small></small>
-        </span>
-      `;
-
-      const iconWrap = card.querySelector('.settings-doc-icon');
-      if (isPdf) {
-        iconWrap.innerHTML = pdfIcon;
-      } else {
-        const img = document.createElement('img');
-        img.src = URL.createObjectURL(file);
-        img.alt = '';
-        iconWrap.appendChild(img);
-      }
-
-      card.querySelector('.settings-doc-meta strong').textContent = label;
-      card.querySelector('.settings-doc-meta small').textContent = 'Ready to upload';
-
-      card.querySelector('.settings-doc-remove').addEventListener('click', () => {
-        widget._files = (widget._files || []).filter((entry) => entry !== file);
-        syncInput(widget);
-        renderList(widget);
-      });
-
-      grid.insertBefore(card, uploadBox);
-    });
-  }
-
-  function addFiles(widget, files) {
-    widget._files = widget._files || [];
-    files.forEach((file) => {
-      if (!isAllowed(file)) return;
-      if (widget._files.some((entry) => entry.name === file.name && entry.size === file.size)) return;
-      widget._files.push(file);
-    });
-    syncInput(widget);
-    renderList(widget);
-  }
-
-  document.querySelectorAll('#settings-business-form .settings-doc').forEach((widget) => {
-    const input = widget.querySelector('.settings-doc-input');
-    const uploadBox = widget.querySelector('.settings-doc-upload');
-    if (!input || !uploadBox) return;
-
-    widget._files = [];
-
-    input.addEventListener('change', () => {
-      addFiles(widget, Array.from(input.files || []));
-      input.value = '';
-      syncInput(widget);
-    });
-
-    uploadBox.addEventListener('dragover', (event) => {
-      event.preventDefault();
-      uploadBox.classList.add('is-dragover');
-    });
-    uploadBox.addEventListener('dragleave', () => uploadBox.classList.remove('is-dragover'));
-    uploadBox.addEventListener('drop', (event) => {
-      event.preventDefault();
-      uploadBox.classList.remove('is-dragover');
-      addFiles(widget, Array.from(event.dataTransfer?.files || []));
-    });
-  });
-})();
-
 (function setupSettingsBusinessForm() {
   const form = document.getElementById('settings-business-form');
   if (!form) return;
@@ -263,17 +155,9 @@ function hideSettingsAlert() {
     if (saveLabel) saveLabel.textContent = 'Saving...';
 
     try {
-      const body = new FormData(form);
-      form.querySelectorAll('.settings-doc').forEach((widget) => {
-        const input = widget.querySelector('.settings-doc-input');
-        if (!input) return;
-        body.delete(input.name);
-        (widget._files || []).forEach((file) => body.append(input.name, file));
-      });
-
       const response = await fetch('api/save-profile.php', {
         method: 'POST',
-        body,
+        body: new FormData(form),
       });
       const data = await response.json();
       if (!response.ok || !data.ok) {

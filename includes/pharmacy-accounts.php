@@ -1335,35 +1335,6 @@ function pharmacy_accounts_update_profile(string $email, array $input, array $fi
         $account['logo_path'] = $storedLogo['path'];
     }
 
-    $optionalDocs = [
-        'business_permit' => ['label' => 'Business permit', 'ext' => ['jpg', 'jpeg', 'png', 'pdf']],
-        'pharmacy_license' => ['label' => 'Pharmacy license', 'ext' => ['jpg', 'jpeg', 'png', 'pdf']],
-        'bir_certificate' => ['label' => 'BIR certificate', 'ext' => ['jpg', 'jpeg', 'png', 'pdf']],
-    ];
-
-    foreach ($optionalDocs as $key => $meta) {
-        $uploaded = array_values(array_filter(
-            pharmacy_accounts_files_from_upload($files, $key),
-            static fn(array $file): bool => (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK
-        ));
-        if ($uploaded === []) {
-            continue;
-        }
-
-        $paths = pharmacy_accounts_document_paths($account, $key);
-        foreach ($uploaded as $index => $file) {
-            $basename = $paths === [] && $index === 0 ? $key : $key . '-' . (count($paths) + $index + 1);
-            $stored = pharmacy_accounts_store_upload_result($file, $accountId, $basename, $meta['ext']);
-            if (!$stored['ok']) {
-                return ['ok' => false, 'error' => 'Could not upload ' . $meta['label'] . '. ' . ($stored['error'] !== '' ? $stored['error'] : 'Use JPG, PNG, or PDF.')];
-            }
-            $paths[] = $stored['path'];
-        }
-
-        $account[$key . '_path'] = $paths[0];
-        $account[$key . '_paths'] = $paths;
-    }
-
     $account['pharmacy_name'] = $pharmacyName;
     $account['contact_number'] = $contact;
     $account['open_time'] = $schedule['open_time'];

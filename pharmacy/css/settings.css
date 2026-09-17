@@ -418,6 +418,13 @@
   align-items:stretch;
 }
 
+.settings-doc-empty{
+  margin:0;
+  font-size:13px;
+  color:var(--muted);
+  align-self:center;
+}
+
 .settings-doc-card,
 .settings-doc-upload{
   position:relative;
