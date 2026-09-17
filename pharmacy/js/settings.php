@@ -61,21 +61,26 @@ function hideSettingsAlert() {
   const rows = document.querySelectorAll('#settings-business-form .settings-hours-row');
   if (!rows.length) return;
 
-  function syncRow(row) {
-    const checked = !!row.querySelector('input[name="operation_days[]"]')?.checked;
-    row.classList.toggle('is-open', checked);
-    row.querySelectorAll('input[type="time"]').forEach((input) => {
-      input.disabled = !checked;
-      input.required = checked;
-      input.setCustomValidity('');
+  function syncRows(locked) {
+    const isLocked = locked === true || (locked !== false && !document.getElementById('settings-profile-page')?.classList.contains('is-editing'));
+    rows.forEach((row) => {
+      const checked = !!row.querySelector('input[name="operation_days[]"]')?.checked;
+      row.classList.toggle('is-open', checked);
+      row.querySelectorAll('input[type="time"]').forEach((input) => {
+        input.disabled = isLocked || !checked;
+        input.required = !isLocked && checked;
+        input.setCustomValidity('');
+      });
     });
   }
 
   rows.forEach((row) => {
     const checkbox = row.querySelector('input[name="operation_days[]"]');
-    checkbox?.addEventListener('change', () => syncRow(row));
-    syncRow(row);
+    checkbox?.addEventListener('change', () => syncRows(false));
   });
+
+  window.syncSettingsHoursRows = syncRows;
+  syncRows(true);
 })();
 
 (function setupSettingsLogo() {
@@ -112,6 +117,99 @@ function hideSettingsAlert() {
   contactInput?.addEventListener('input', () => {
     contactInput.value = contactInput.value.replace(/\D/g, '').slice(0, 11);
   });
+})();
+
+(function setupSettingsEditing() {
+  const page = document.getElementById('settings-profile-page');
+  const form = document.getElementById('settings-business-form');
+  const editBtn = document.getElementById('settings-profile-edit');
+  const cancelBtn = document.getElementById('settings-business-cancel');
+  const saveBtn = document.getElementById('settings-business-save');
+  const securityCancel = document.getElementById('settings-security-cancel');
+  const securitySave = document.getElementById('settings-security-save');
+  const logoInput = document.getElementById('settings-pharmacy-logo');
+  const logoPreview = document.getElementById('settings-logo-preview-img');
+  const logoBox = document.getElementById('settings-logo-preview');
+  if (!page || !form || !editBtn) return;
+
+  let logoOriginal = {
+    src: logoPreview?.getAttribute('src') || '',
+    hidden: !!logoPreview?.hidden,
+    hasImage: !!logoBox?.classList.contains('has-image'),
+  };
+
+  function setEditing(on) {
+    page.classList.toggle('is-editing', on);
+    form.querySelectorAll('#settings-pharmacy-name, #settings-contact-number, #settings-pharmacy-address').forEach((el) => {
+      el.readOnly = !on;
+    });
+    form.querySelectorAll('input[name="operation_days[]"]').forEach((el) => {
+      el.disabled = !on;
+    });
+    ['settings-pharmacy-map-search', 'settings-pharmacy-map-search-btn', 'settings-pharmacy-map-locate-btn'].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.disabled = !on;
+    });
+    if (logoInput) logoInput.disabled = !on;
+    if (typeof window.syncSettingsHoursRows === 'function') window.syncSettingsHoursRows(!on);
+    if (cancelBtn) cancelBtn.hidden = !on;
+    if (saveBtn) saveBtn.hidden = !on;
+    if (securityCancel) securityCancel.hidden = !on;
+    if (securitySave) securitySave.hidden = !on;
+    ['settings-current-password', 'settings-new-password', 'settings-confirm-password'].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.disabled = !on;
+    });
+  }
+
+  function restoreLogo() {
+    if (!logoPreview || !logoBox) return;
+    if (logoInput) logoInput.value = '';
+    if (logoOriginal.src) {
+      logoPreview.src = logoOriginal.src;
+      logoPreview.hidden = false;
+      logoBox.classList.add('has-image');
+      window.updatePharmacyRegisterMapLogo?.(logoOriginal.src);
+      return;
+    }
+    logoPreview.removeAttribute('src');
+    logoPreview.hidden = true;
+    logoBox.classList.remove('has-image');
+  }
+
+  function snapshotAfterSave() {
+    form.querySelectorAll('input, textarea').forEach((el) => {
+      if (el.type === 'checkbox') el.defaultChecked = el.checked;
+      else if (el.type !== 'file') el.defaultValue = el.value;
+    });
+    logoOriginal = {
+      src: logoPreview?.getAttribute('src') || '',
+      hidden: !!logoPreview?.hidden,
+      hasImage: !!logoBox?.classList.contains('has-image'),
+    };
+  }
+
+  function cancelEditing() {
+    form.reset();
+    restoreLogo();
+    hideSettingsAlert();
+    ['settings-current-password', 'settings-new-password', 'settings-confirm-password'].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+    setEditing(false);
+  }
+
+  editBtn.addEventListener('click', () => {
+    hideSettingsAlert();
+    setEditing(true);
+  });
+  cancelBtn?.addEventListener('click', cancelEditing);
+  securityCancel?.addEventListener('click', cancelEditing);
+
+  window.setSettingsEditing = setEditing;
+  window.snapshotSettingsForm = snapshotAfterSave;
+  setEditing(false);
 })();
 
 (function setupSettingsBusinessForm() {
@@ -212,6 +310,9 @@ function hideSettingsAlert() {
 
         window.updatePharmacyRegisterMapLogo?.(data.account.logo_url);
       }
+
+      if (typeof window.snapshotSettingsForm === 'function') window.snapshotSettingsForm();
+      if (typeof window.setSettingsEditing === 'function') window.setSettingsEditing(false);
     } catch (error) {
       showSettingsAlert(error.message || 'Could not save your pharmacy profile.', 'error');
     } finally {

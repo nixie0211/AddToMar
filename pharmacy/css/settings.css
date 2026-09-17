@@ -11,6 +11,26 @@
   gap:20px;
   margin-bottom:26px;
 }
+.settings-profile-head-copy{
+  flex:1;
+  min-width:0;
+}
+.settings-edit-btn{
+  margin-left:auto;
+  min-width:88px;
+  border:1.5px solid var(--border);
+  background:#fff;
+  color:var(--navy);
+  font-weight:700;
+}
+.settings-edit-btn:hover{
+  border-color:var(--teal);
+  color:var(--teal);
+  background:var(--teal-soft);
+}
+.settings-profile-page.is-editing .settings-edit-btn{
+  display:none;
+}
 .settings-profile-head h2{
   font-size:20px;
   font-weight:800;
@@ -161,6 +181,7 @@
 .settings-panel-foot{
   display:flex;
   justify-content:flex-end;
+  gap:10px;
   margin-top:8px;
   padding:8px 24px 22px;
   background:#fff;
@@ -270,6 +291,33 @@
   color:#4ec4b4;
   overflow:visible;
   cursor:pointer;
+}
+
+.settings-profile-page:not(.is-editing) .settings-logo{
+  cursor:default;
+  pointer-events:none;
+}
+
+.settings-profile-page:not(.is-editing) .settings-logo-plus{
+  display:none;
+}
+
+.settings-profile-page:not(.is-editing) .settings-business-form input:not([type="hidden"]):not(.settings-logo-input),
+.settings-profile-page:not(.is-editing) .settings-business-form textarea{
+  background:#f6f8f9;
+  color:var(--navy);
+  cursor:default;
+}
+
+.settings-profile-page:not(.is-editing) .settings-map-toolbar,
+.settings-profile-page:not(.is-editing) .settings-map-frame,
+.settings-profile-page:not(.is-editing) .settings-map-hint,
+.settings-profile-page:not(.is-editing) .settings-hours-list{
+  pointer-events:none;
+}
+
+.settings-profile-page:not(.is-editing) .settings-map-hint{
+  opacity:.72;
 }
 
 .settings-logo-initials{

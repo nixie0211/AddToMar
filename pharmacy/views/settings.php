@@ -15,7 +15,7 @@ $profileDocFields = [
 ];
 ?>
 <section class="<?= pharmacy_view_class('settings', $activeView) ?>" id="view-settings" data-live-region="pharmacy-settings" data-live-keys="account" data-live-skip="1">
-        <div class="settings-profile-page">
+        <div class="settings-profile-page" id="settings-profile-page">
           <div class="settings-profile-head">
             <label class="settings-logo<?= $pharmacyLogoUrl !== '' ? ' has-image' : '' ?>" for="settings-pharmacy-logo" id="settings-logo-preview" aria-label="Change pharmacy logo">
               <span class="settings-logo-plus" aria-hidden="true">+</span>
@@ -25,9 +25,9 @@ $profileDocFields = [
               <?php else: ?>
               <img id="settings-logo-preview-img" alt="" hidden>
               <?php endif; ?>
-              <input id="settings-pharmacy-logo" class="settings-logo-input" name="logo" type="file" accept=".jpg,.jpeg,.png,.webp,.svg,image/*" form="settings-business-form">
+              <input id="settings-pharmacy-logo" class="settings-logo-input" name="logo" type="file" accept=".jpg,.jpeg,.png,.webp,.svg,image/*" form="settings-business-form" disabled>
             </label>
-            <div>
+            <div class="settings-profile-head-copy">
               <h2 id="settings-display-name"><?= htmlspecialchars($pharmacyName, ENT_QUOTES, 'UTF-8') ?></h2>
               <div class="settings-contact-line">
                 <span id="settings-display-email"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6.5A2.5 2.5 0 0 1 5.5 4h13A2.5 2.5 0 0 1 21 6.5v11a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5z"/><path d="m4 6 8 6 8-6"/></svg><?= htmlspecialchars($profileEmail !== '' ? $profileEmail : 'No email on file', ENT_QUOTES, 'UTF-8') ?></span>
@@ -35,6 +35,7 @@ $profileDocFields = [
                 <span id="settings-display-contact"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h3l2 5-2 1.5a15 15 0 0 0 5.5 5.5L15 14l5 2v3a2 2 0 0 1-2 2C10.3 21 3 13.7 3 6a2 2 0 0 1 2-2Z"/></svg><?= htmlspecialchars($profileContact !== '' ? $profileContact : '—', ENT_QUOTES, 'UTF-8') ?></span>
               </div>
             </div>
+            <button type="button" class="btn settings-edit-btn" id="settings-profile-edit">Edit</button>
           </div>
 
           <div class="settings-profile-tabs" role="tablist" aria-label="Profile settings">
@@ -51,11 +52,11 @@ $profileDocFields = [
                   <div class="form-grid settings-details-grid">
                     <div class="field">
                       <label for="settings-pharmacy-name">Pharmacy name</label>
-                      <input id="settings-pharmacy-name" name="pharmacy_name" type="text" placeholder="e.g. Your pharmacy name" value="<?= htmlspecialchars($pharmacyName, ENT_QUOTES, 'UTF-8') ?>" required>
+                      <input id="settings-pharmacy-name" name="pharmacy_name" type="text" placeholder="e.g. Your pharmacy name" value="<?= htmlspecialchars($pharmacyName, ENT_QUOTES, 'UTF-8') ?>" required readonly>
                     </div>
                     <div class="field">
                       <label for="settings-contact-number">Contact number</label>
-                      <input id="settings-contact-number" name="contact_number" type="tel" inputmode="numeric" maxlength="11" pattern="\d{11}" placeholder="09171234567" value="<?= htmlspecialchars($profileContact, ENT_QUOTES, 'UTF-8') ?>" required autocomplete="tel">
+                      <input id="settings-contact-number" name="contact_number" type="tel" inputmode="numeric" maxlength="11" pattern="\d{11}" placeholder="09171234567" value="<?= htmlspecialchars($profileContact, ENT_QUOTES, 'UTF-8') ?>" required autocomplete="tel" readonly>
                       <p class="field-note">11-digit mobile number (e.g. 09171234567)</p>
                     </div>
                   </div>
@@ -143,7 +144,7 @@ $profileDocFields = [
                   <div class="settings-location-card">
                     <div class="field">
                       <label for="settings-pharmacy-address">Pharmacy address</label>
-                      <textarea id="settings-pharmacy-address" name="address" rows="3" placeholder="Street, barangay, city" required><?= htmlspecialchars($profileAddress, ENT_QUOTES, 'UTF-8') ?></textarea>
+                      <textarea id="settings-pharmacy-address" name="address" rows="3" placeholder="Street, barangay, city" required readonly><?= htmlspecialchars($profileAddress, ENT_QUOTES, 'UTF-8') ?></textarea>
                     </div>
 
                     <div class="settings-location-map">
@@ -154,11 +155,11 @@ $profileDocFields = [
 
                       <div class="settings-map-toolbar">
                         <div class="settings-map-search-wrap">
-                          <input type="search" id="settings-pharmacy-map-search" class="settings-map-search-input" placeholder="Search barangay, street, or landmark…" autocomplete="off" aria-label="Search pharmacy location">
-                          <button type="button" id="settings-pharmacy-map-search-btn" class="settings-map-tool-btn settings-map-search-btn">Search</button>
+                          <input type="search" id="settings-pharmacy-map-search" class="settings-map-search-input" placeholder="Search barangay, street, or landmark…" autocomplete="off" aria-label="Search pharmacy location" disabled>
+                          <button type="button" id="settings-pharmacy-map-search-btn" class="settings-map-tool-btn settings-map-search-btn" disabled>Search</button>
                           <ul id="settings-pharmacy-map-search-results" class="settings-map-search-results" hidden></ul>
                         </div>
-                        <button type="button" id="settings-pharmacy-map-locate-btn" class="settings-map-tool-btn settings-map-locate-btn">
+                        <button type="button" id="settings-pharmacy-map-locate-btn" class="settings-map-tool-btn settings-map-locate-btn" disabled>
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                             <path d="M12 21s7-4.35 7-10a7 7 0 1 0-14 0c0 5.65 7 10 7 10z"/><circle cx="12" cy="11" r="2.5"/>
                           </svg>
@@ -182,7 +183,8 @@ $profileDocFields = [
                 <div class="settings-alert" id="settings-business-alert" hidden role="alert"></div>
 
                 <div class="settings-panel-foot">
-                  <button type="submit" class="btn btn-accent" id="settings-business-save"><span>Save changes</span></button>
+                  <button type="button" class="btn" id="settings-business-cancel" hidden>Cancel</button>
+                  <button type="submit" class="btn btn-accent" id="settings-business-save" hidden><span>Save changes</span></button>
                 </div>
               </form>
             </div>
@@ -192,14 +194,15 @@ $profileDocFields = [
                 <div class="settings-section settings-section--flush">
                   <div class="form-grid">
                     <div class="field"><label for="settings-login-email">Email address</label><input id="settings-login-email" type="email" value="<?= htmlspecialchars($profileEmail, ENT_QUOTES, 'UTF-8') ?>" readonly autocomplete="email"></div>
-                    <div class="field"><label for="settings-current-password">Current password</label><input id="settings-current-password" type="password" placeholder="Current password" autocomplete="current-password"></div>
-                    <div class="field"><label for="settings-new-password">New password</label><input id="settings-new-password" type="password" placeholder="New password" autocomplete="new-password"></div>
-                    <div class="field"><label for="settings-confirm-password">Confirm new password</label><input id="settings-confirm-password" type="password" placeholder="Confirm new password" autocomplete="new-password"></div>
+                    <div class="field"><label for="settings-current-password">Current password</label><input id="settings-current-password" type="password" placeholder="Current password" autocomplete="current-password" disabled></div>
+                    <div class="field"><label for="settings-new-password">New password</label><input id="settings-new-password" type="password" placeholder="New password" autocomplete="new-password" disabled></div>
+                    <div class="field"><label for="settings-confirm-password">Confirm new password</label><input id="settings-confirm-password" type="password" placeholder="Confirm new password" autocomplete="new-password" disabled></div>
                   </div>
                 </div>
                 <div class="settings-alert" id="settings-security-alert" hidden role="alert"></div>
                 <div class="settings-panel-foot">
-                  <button type="button" class="btn btn-accent" id="settings-security-save">Save changes</button>
+                  <button type="button" class="btn" id="settings-security-cancel" hidden>Cancel</button>
+                  <button type="button" class="btn btn-accent" id="settings-security-save" hidden>Save changes</button>
                 </div>
               </div>
             </div>
