@@ -3168,7 +3168,6 @@ function renderOrderDetail(id){
   const fulfillmentNote = storeCount > 1
     ? `${completedStores} of ${storeCount} stores completed`
     : '';
-  const statusBadge = data.partially_fulfilled ? 'Partially fulfilled' : (data.status_label || 'Processing');
   const canCancel = !!data.can_cancel && ['pending', 'processing'].includes(String(data.status || '').toLowerCase()) && !data.partially_fulfilled;
   const cancelHtml = canCancel
     ? `<button type="button" class="btn od-cancel-btn" onclick="openResidenceCancelOrder(${Number(data.id) || 0}, '${escHtml(data.order_number)}')">Cancel order</button>`
@@ -3186,7 +3185,6 @@ function renderOrderDetail(id){
         <small>${odIcon('calendar')} ${escHtml(data.date_label)} • ${escHtml(data.time_label)}</small>
       </div>
       <div class="mo-parent-badge">
-        <strong class="${escHtml(data.status_class || '')}">${escHtml(statusBadge)}</strong>
         ${fulfillmentNote ? `<small>${escHtml(fulfillmentNote)}</small>` : ''}
         ${cancelHtml}
       </div>
