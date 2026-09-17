@@ -304,7 +304,7 @@ function pharmacy_accounts_store_upload(array $file, string $accountId, string $
         return null;
     }
 
-    if (($file['size'] ?? 0) > 5 * 1024 * 1024) {
+    if (($file['size'] ?? 0) < 1) {
         return null;
     }
 
@@ -632,7 +632,7 @@ function pharmacy_accounts_register(array $input, array $files): array
         if ($key === 'logo') {
             $path = pharmacy_accounts_store_upload($files[$key], $accountId, $key, $meta['ext']);
             if ($path === null) {
-                return ['ok' => false, 'error' => 'Could not upload ' . $meta['label'] . '. Use JPG, PNG, WEBP, or SVG (max 5 MB).'];
+                return ['ok' => false, 'error' => 'Could not upload ' . $meta['label'] . '. Use JPG, PNG, WEBP, or SVG.'];
             }
             $storedFiles[$key . '_path'] = $path;
             continue;
@@ -656,7 +656,7 @@ function pharmacy_accounts_register(array $input, array $files): array
             $basename = $index === 0 ? $key : $key . '-' . ($index + 1);
             $path = pharmacy_accounts_store_upload($file, $accountId, $basename, $meta['ext']);
             if ($path === null) {
-                return ['ok' => false, 'error' => 'Could not upload ' . $meta['label'] . '. Use JPG, PNG, or PDF (max 5 MB each).'];
+                return ['ok' => false, 'error' => 'Could not upload ' . $meta['label'] . '. Use JPG, PNG, or PDF.'];
             }
             $paths[] = $path;
         }
@@ -1123,7 +1123,7 @@ function pharmacy_accounts_update_profile(string $email, array $input, array $fi
     if (isset($files['logo']) && ($files['logo']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
         $logoPath = pharmacy_accounts_store_upload($files['logo'], $accountId, 'logo', ['jpg', 'jpeg', 'png', 'webp', 'svg']);
         if ($logoPath === null) {
-            return ['ok' => false, 'error' => 'Could not upload pharmacy logo. Use JPG, PNG, WEBP, or SVG (max 5 MB).'];
+            return ['ok' => false, 'error' => 'Could not upload pharmacy logo. Use JPG, PNG, WEBP, or SVG.'];
         }
         $account['logo_path'] = $logoPath;
     }
@@ -1145,7 +1145,7 @@ function pharmacy_accounts_update_profile(string $email, array $input, array $fi
             $basename = $paths === [] && $index === 0 ? $key : $key . '-' . (count($paths) + $index + 1);
             $path = pharmacy_accounts_store_upload($file, $accountId, $basename, $meta['ext']);
             if ($path === null) {
-                return ['ok' => false, 'error' => 'Could not upload ' . $meta['label'] . '. Use JPG, PNG, or PDF (max 5 MB each).'];
+                return ['ok' => false, 'error' => 'Could not upload ' . $meta['label'] . '. Use JPG, PNG, or PDF.'];
             }
             $paths[] = $path;
         }

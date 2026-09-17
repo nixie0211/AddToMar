@@ -115,7 +115,6 @@ function hideSettingsAlert() {
 })();
 
 (function setupSettingsDocUploads() {
-  const maxBytes = 5 * 1024 * 1024;
   const allowed = ['pdf', 'jpg', 'jpeg', 'png'];
   const pdfIcon = `<svg width="52" height="60" viewBox="0 0 52 60" fill="none">
     <path d="M8 0h24l16 16v36a8 8 0 0 1-8 8H8a8 8 0 0 1-8-8V8a8 8 0 0 1 8-8Z" fill="#E2574C"/>
@@ -128,7 +127,7 @@ function hideSettingsAlert() {
   }
 
   function isAllowed(file) {
-    return allowed.includes(extOf(file.name)) && file.size > 0 && file.size <= maxBytes;
+    return allowed.includes(extOf(file.name)) && file.size > 0;
   }
 
   function syncInput(widget) {

@@ -4358,7 +4358,6 @@ pharmacyLogoInput?.addEventListener('change', () => {
 });
 
 (function setupPharmacyDocUploads() {
-  const maxBytes = 5 * 1024 * 1024;
   const maxFiles = 10;
   const allowed = ['pdf', 'jpg', 'jpeg', 'png'];
 
@@ -4373,7 +4372,7 @@ pharmacyLogoInput?.addEventListener('change', () => {
   }
 
   function isAllowed(file) {
-    return allowed.includes(extOf(file.name)) && file.size > 0 && file.size <= maxBytes;
+    return allowed.includes(extOf(file.name)) && file.size > 0;
   }
 
   function fileKey(file) {

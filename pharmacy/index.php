@@ -102,7 +102,7 @@ window.PHARMACY_REGISTER_MAP_CONFIG = <?= json_encode([
 <script src="<?= htmlspecialchars(app_url('js/map-area-popup.js'), ENT_QUOTES, 'UTF-8') ?>?v=1"></script>
 <script src="<?= htmlspecialchars(app_url('js/map-service-overlay.js'), ENT_QUOTES, 'UTF-8') ?>?v=street-map-2"></script>
 <script src="<?= htmlspecialchars(app_url('js/register-pharmacy-map.js'), ENT_QUOTES, 'UTF-8') ?>?v=street-map-2"></script>
-<script src="js/settings.php?v=profile-layout-1"></script>
+<script src="js/settings.php?v=profile-docs-size-1"></script>
 <?php live_sync_render_script('pharmacy'); ?>
 </body>
 </html>
