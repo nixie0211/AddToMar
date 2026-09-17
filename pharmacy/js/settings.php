@@ -224,3 +224,115 @@ function hideSettingsAlert() {
 if (document.getElementById('pane-business')?.classList.contains('active')) {
   window.initSettingsBusinessMap?.();
 }
+
+(function setupPermitPreview() {
+  const viewer = document.getElementById('permit-viewer');
+  if (!viewer) return;
+
+  const title = document.getElementById('permit-viewer-title');
+  const image = document.getElementById('permit-viewer-image');
+  const frame = document.getElementById('permit-viewer-frame');
+  const missing = document.getElementById('permit-viewer-missing');
+
+  function resetCrop(flags) {
+    if (typeof window.resetRxCropPreview === 'function') {
+      window.resetRxCropPreview(viewer, flags);
+    }
+  }
+
+  function closePermitViewer() {
+    viewer.hidden = true;
+    document.body.classList.remove('modal-open');
+    if (image) image.removeAttribute('src');
+    if (frame) frame.removeAttribute('src');
+  }
+
+  function openPermitViewer(url, label, kind) {
+    const src = String(url || '').trim();
+    if (title) title.textContent = label || 'Document preview';
+    if (typeof window.bindRxCropPreview === 'function') window.bindRxCropPreview(viewer);
+
+    const showMissing = function (message) {
+      if (image) image.hidden = true;
+      if (frame) frame.hidden = true;
+      if (missing) {
+        missing.textContent = message || 'The uploaded document could not be loaded.';
+        missing.hidden = false;
+      }
+      resetCrop({ empty: true });
+    };
+
+    if (!src) {
+      showMissing('No document file is available.');
+      viewer.hidden = false;
+      document.body.classList.add('modal-open');
+      return;
+    }
+
+    if (missing) missing.hidden = true;
+    const entry = typeof window.preloadRxPreview === 'function' ? window.preloadRxPreview(src) : null;
+    const ready = typeof window.rxPreviewReadyUrl === 'function' ? window.rxPreviewReadyUrl(src) : '';
+    const looksPdf = kind === 'pdf' || (typeof window.rxPreviewLooksPdf === 'function'
+      ? window.rxPreviewLooksPdf(src)
+      : /\.pdf($|\?)/i.test(src));
+    const displaySrc = ready || src;
+    resetCrop({ pdf: looksPdf, empty: false });
+    if (image) {
+      image.onload = function () { if (missing) missing.hidden = true; };
+      image.onerror = function () {
+        if (ready || !frame) {
+          showMissing();
+          return;
+        }
+        image.hidden = true;
+        frame.hidden = false;
+        frame.src = displaySrc;
+        resetCrop({ pdf: true, empty: false });
+      };
+      image.hidden = looksPdf;
+      if (!looksPdf) image.src = displaySrc;
+    }
+    if (frame) {
+      frame.hidden = !looksPdf;
+      if (looksPdf) frame.src = displaySrc;
+    }
+    if (entry && entry.promise && !ready) {
+      entry.promise.then(function (result) {
+        if (!result || !result.objectUrl || viewer.hidden) return;
+        const isPdf = /pdf/i.test(result.type || '');
+        if (isPdf) {
+          if (image) image.hidden = true;
+          if (frame) {
+            frame.hidden = false;
+            frame.src = result.objectUrl;
+          }
+          resetCrop({ pdf: true, empty: false });
+        } else if (image && !image.hidden) {
+          image.src = result.objectUrl;
+        }
+      });
+    }
+    viewer.hidden = false;
+    document.body.classList.add('modal-open');
+  }
+
+  document.querySelectorAll('.settings-doc-card[data-permit-url]').forEach((card) => {
+    const url = card.getAttribute('data-permit-url') || '';
+    if (url && typeof window.preloadRxPreview === 'function') window.preloadRxPreview(url);
+    card.addEventListener('click', () => {
+      openPermitViewer(url, card.getAttribute('data-permit-label') || '', card.getAttribute('data-permit-kind') || '');
+    });
+  });
+
+  viewer.addEventListener('click', (event) => {
+    if (event.target.closest('#permit-viewer-close, #permit-viewer-close-btn')) {
+      closePermitViewer();
+    }
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && viewer.hidden === false) {
+      closePermitViewer();
+    }
+  });
+})();

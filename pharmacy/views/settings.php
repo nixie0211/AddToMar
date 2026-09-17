@@ -108,7 +108,7 @@ $profileDocFields = [
                         }
                       ?>
                       <?php foreach ($allDocCards as $docCard): ?>
-                      <a class="settings-doc-card" href="<?= htmlspecialchars($docCard['url'], ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener">
+                      <button type="button" class="settings-doc-card" data-permit-url="<?= htmlspecialchars($docCard['url'], ENT_QUOTES, 'UTF-8') ?>" data-permit-label="<?= htmlspecialchars($docCard['label'], ENT_QUOTES, 'UTF-8') ?>" data-permit-kind="<?= htmlspecialchars($docCard['kind'], ENT_QUOTES, 'UTF-8') ?>">
                         <span class="settings-doc-icon settings-doc-icon--<?= htmlspecialchars($docCard['kind'], ENT_QUOTES, 'UTF-8') ?>" aria-hidden="true">
                           <?php if ($docCard['kind'] === 'pdf'): ?>
                           <svg width="52" height="60" viewBox="0 0 52 60" fill="none">
@@ -124,7 +124,7 @@ $profileDocFields = [
                           <strong><?= htmlspecialchars($docCard['label'], ENT_QUOTES, 'UTF-8') ?></strong>
                           <small><?= htmlspecialchars($docCard['filename'], ENT_QUOTES, 'UTF-8') ?></small>
                         </span>
-                      </a>
+                      </button>
                       <?php endforeach; ?>
                       <?php if ($allDocCards === []): ?>
                       <p class="settings-doc-empty">No document on file</p>
@@ -203,5 +203,27 @@ $profileDocFields = [
                 </div>
               </div>
             </div>
+        </div>
+
+        <div class="rx-viewer rx-crop-modal" id="permit-viewer" hidden>
+          <button type="button" class="rx-crop-backdrop" id="permit-viewer-close" aria-label="Close document preview"></button>
+          <div class="rx-crop-sheet" role="dialog" aria-modal="true" aria-labelledby="permit-viewer-title">
+            <header class="rx-crop-head">
+              <h3 id="permit-viewer-title">Document preview</h3>
+            </header>
+            <div class="rx-crop-stage" id="permit-viewer-stage">
+              <div class="rx-crop-media" id="permit-viewer-media">
+                <img id="permit-viewer-image" src="" alt="Uploaded document">
+                <iframe id="permit-viewer-frame" title="Uploaded document" hidden></iframe>
+              </div>
+              <p class="rx-crop-missing" id="permit-viewer-missing" hidden>The uploaded document could not be loaded.</p>
+            </div>
+            <div class="rx-crop-zoombar">
+              <input type="range" class="rx-crop-zoom" id="permit-viewer-zoom" min="1" max="2.4" step="0.02" value="1" aria-label="Zoom document preview">
+            </div>
+            <footer class="rx-crop-foot">
+              <button type="button" class="rx-crop-cancel" id="permit-viewer-close-btn">Cancel</button>
+            </footer>
+          </div>
         </div>
       </section>
