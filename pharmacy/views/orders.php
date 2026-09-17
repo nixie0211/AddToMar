@@ -72,7 +72,6 @@ $overviewOrder = $panelOrder ?? [
     'payment_method' => 'GCash',
 ];
 
-$overviewBadge = pharmacy_order_status_map()[$overviewOrder['status'] ?? 'pending'] ?? ['c' => 'badge-gray', 't' => ucfirst((string) ($overviewOrder['status'] ?? 'pending'))];
 $overviewCustomer = trim((string) ($overviewOrder['customer_name'] ?? 'Customer'));
 $overviewContact = trim((string) ($overviewOrder['customer_phone'] ?? ''));
 $overviewAddress = trim((string) ($overviewOrder['customer_address'] ?? ''));
@@ -219,7 +218,6 @@ $overviewPickupProofKind = $overviewPickupProofExt === 'pdf' ? 'pdf' : ($overvie
               <div>
                 <h3 id="order-drawer-title">Order #<?= htmlspecialchars($overviewOrderNumber, ENT_QUOTES, 'UTF-8') ?></h3>
               </div>
-              <span class="badge <?= htmlspecialchars($overviewBadge['c'], ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($overviewBadge['t'], ENT_QUOTES, 'UTF-8') ?></span>
               <a class="order-drawer-close-btn" id="order-drawer-close-btn" href="<?= htmlspecialchars(pharmacy_orders_url($activeStatus), ENT_QUOTES, 'UTF-8') ?>" aria-label="Close">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
               </a>

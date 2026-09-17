@@ -626,7 +626,6 @@ function renderOrderDrawerDetail(detail) {
   if (!overview) return;
   overview.innerHTML =
     '<div class="panel-head"><div><h3 id="order-drawer-title">Order #' + escapeHtml(detail.order_number) + '</h3></div>' +
-    '<span class="badge ' + escapeHtml(detail.status_class || '') + '">' + escapeHtml(detail.status_label || '') + '</span>' +
     '<a class="order-drawer-close-btn" id="order-drawer-close-btn" href="' + closeHref + '" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></a></div>' +
     orderProgressHtml(detail.status, detail.created_stamp || detail.created_label || '') +
     '<div class="order-overview-body">' +
