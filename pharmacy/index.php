@@ -32,7 +32,7 @@ require_once dirname(__DIR__) . '/includes/maps.php';
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 <link rel="stylesheet" href="<?= htmlspecialchars(app_url('css/map-service-overlay.css'), ENT_QUOTES, 'UTF-8') ?>?v=street-map-2">
 <link rel="stylesheet" href="css/base.css?v=unified-mint-outer-canvas">
-<link rel="stylesheet" href="<?= htmlspecialchars(app_url('css/rx-crop-preview.css'), ENT_QUOTES, 'UTF-8') ?>?v=rx-crop-pan-1">
+<link rel="stylesheet" href="<?= htmlspecialchars(app_url('css/rx-crop-preview.css'), ENT_QUOTES, 'UTF-8') ?>?v=rx-crop-contain-1">
 <link rel="stylesheet" href="css/orders.css?v=order-rx-bold-1">
 <link rel="stylesheet" href="css/reports.css">
 <link rel="stylesheet" href="css/settings.css?v=profile-docs-preview-1">

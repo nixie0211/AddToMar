@@ -47,7 +47,7 @@
 .rx-crop-stage{
   position:relative;
   margin:14px 16px 8px;
-  height:min(52vh, 430px);
+  height:min(72vh, 640px);
   overflow:hidden;
   border:1px solid #d7dee4;
   background:#dfe5ea;
@@ -60,6 +60,8 @@
   inset:0;
   display:grid;
   place-items:center;
+  min-width:0;
+  min-height:0;
   transform:translate(0, 0) scale(1);
   transform-origin:center center;
   transition:transform .08s linear;
@@ -72,13 +74,18 @@
 .rx-crop-media img,
 .rx-crop-media iframe{
   display:block;
-  max-width:100%;
-  max-height:100%;
-  width:auto;
-  height:auto;
+  min-width:0;
+  min-height:0;
   border:0;
   background:#fff;
+}
+.rx-crop-media img{
+  width:100%;
+  height:100%;
+  max-width:100%;
+  max-height:100%;
   object-fit:contain;
+  object-position:center center;
 }
 .rx-crop-media iframe{
   width:100%;
@@ -128,5 +135,5 @@
 .rx-crop-cancel:hover{background:#eceff1;color:#3f4b54;}
 @media (max-width:560px){
   .rx-crop-sheet{width:calc(100vw - 16px);}
-  .rx-crop-stage{height:min(46vh, 320px);margin:10px 10px 6px;}
+  .rx-crop-stage{height:min(64vh, 480px);margin:10px 10px 6px;}
 }

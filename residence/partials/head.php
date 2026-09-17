@@ -4,7 +4,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="<?= residence_asset('css/style.css') ?>?v=residence-order-vat-1">
-<link rel="stylesheet" href="<?= htmlspecialchars(function_exists('app_url') ? app_url('css/rx-crop-preview.css') : '../css/rx-crop-preview.css', ENT_QUOTES, 'UTF-8') ?>?v=rx-crop-pan-1">
+<link rel="stylesheet" href="<?= htmlspecialchars(function_exists('app_url') ? app_url('css/rx-crop-preview.css') : '../css/rx-crop-preview.css', ENT_QUOTES, 'UTF-8') ?>?v=rx-crop-contain-1">
 <style>
 .page[data-page="orders"].is-order-detail{overflow:auto!important;}
 #orders-detail-view svg{width:16px!important;height:16px!important;max-width:16px!important;max-height:16px!important;display:block!important;flex:none!important;}
