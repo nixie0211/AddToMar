@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/database.php';
+require_once __DIR__ . '/pharmacy-accounts.php';
 
 function resident_notification_add(string $email, string $title, string $message, string $type = 'info', string $reportId = '', string $orderNumber = ''): bool
 {
@@ -104,10 +105,102 @@ function resident_notifications_for_user(string $email): array
     try {
         $statement = caps_db()->prepare('SELECT * FROM resident_notifications WHERE user_email = ? ORDER BY created_at DESC');
         $statement->execute([strtolower(trim($email))]);
-        return $statement->fetchAll();
+        return resident_notifications_attach_pharmacy_logos($statement->fetchAll());
     } catch (Throwable) {
         return [];
     }
+}
+
+function resident_notifications_attach_pharmacy_logos(array $notifications): array
+{
+    if ($notifications === []) {
+        return [];
+    }
+
+    $orderNumbers = [];
+    $reportIds = [];
+    foreach ($notifications as $notification) {
+        $orderNumber = resident_notification_order_number($notification);
+        if ($orderNumber !== '') {
+            $orderNumbers[$orderNumber] = true;
+        }
+        $reportId = trim((string) ($notification['report_id'] ?? ''));
+        if ($reportId !== '') {
+            $reportIds[$reportId] = true;
+        }
+    }
+
+    $pharmacyByOrder = [];
+    if ($orderNumbers !== []) {
+        try {
+            $keys = array_keys($orderNumbers);
+            $placeholders = implode(',', array_fill(0, count($keys), '?'));
+            $pdo = function_exists('pharmacy_db') ? pharmacy_db() : caps_db();
+            $statement = $pdo->prepare('SELECT order_number, pharmacy_id FROM orders WHERE order_number IN (' . $placeholders . ')');
+            $statement->execute($keys);
+            foreach ($statement->fetchAll() as $row) {
+                $pharmacyByOrder[(string) ($row['order_number'] ?? '')] = trim((string) ($row['pharmacy_id'] ?? ''));
+            }
+        } catch (Throwable) {
+        }
+    }
+
+    $pharmacyByReport = [];
+    if ($reportIds !== []) {
+        try {
+            $keys = array_keys($reportIds);
+            $placeholders = implode(',', array_fill(0, count($keys), '?'));
+            $statement = caps_db()->prepare('SELECT id, pharmacy_id FROM pharmacy_reports WHERE id IN (' . $placeholders . ')');
+            $statement->execute($keys);
+            foreach ($statement->fetchAll() as $row) {
+                $pharmacyByReport[(string) ($row['id'] ?? '')] = trim((string) ($row['pharmacy_id'] ?? ''));
+            }
+        } catch (Throwable) {
+        }
+    }
+
+    $accountsById = [];
+    $accountsByName = [];
+    foreach (pharmacy_accounts_list_approved() as $account) {
+        $id = trim((string) ($account['id'] ?? ''));
+        $name = strtolower(trim((string) ($account['pharmacy_name'] ?? '')));
+        if ($id !== '') {
+            $accountsById[$id] = $account;
+        }
+        if ($id !== '' && $name !== '') {
+            $accountsByName[$name] = $account;
+        }
+    }
+
+    foreach ($notifications as &$notification) {
+        $pharmacyId = $pharmacyByOrder[resident_notification_order_number($notification)] ?? '';
+        if ($pharmacyId === '') {
+            $pharmacyId = $pharmacyByReport[trim((string) ($notification['report_id'] ?? ''))] ?? '';
+        }
+
+        $account = $pharmacyId !== '' ? ($accountsById[$pharmacyId] ?? null) : null;
+        if (!is_array($account)) {
+            $haystack = strtolower(trim((string) ($notification['message'] ?? '') . ' ' . (string) ($notification['title'] ?? '')));
+            foreach ($accountsByName as $name => $namedAccount) {
+                if ($name !== '' && str_contains($haystack, $name)) {
+                    $account = $namedAccount;
+                    $pharmacyId = trim((string) ($namedAccount['id'] ?? $pharmacyId));
+                    break;
+                }
+            }
+        }
+
+        $logoUrl = is_array($account) ? pharmacy_accounts_public_logo_url($account) : '';
+        if ($logoUrl === '' && $pharmacyId !== '') {
+            $logoUrl = pharmacy_accounts_public_logo_url(['id' => $pharmacyId]);
+        }
+
+        $notification['pharmacy_id'] = $pharmacyId;
+        $notification['logo_url'] = $logoUrl;
+    }
+    unset($notification);
+
+    return $notifications;
 }
 
 function resident_notification_is_today(?string $value): bool

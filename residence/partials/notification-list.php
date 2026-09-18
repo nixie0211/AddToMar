@@ -34,14 +34,21 @@ $badgeSvgs = [
     $badgeKey = in_array($type, ['order', 'report'], true) ? $type : 'default';
     $title = trim((string) ($notification['title'] ?? 'Notification'));
     $message = trim((string) ($notification['message'] ?? ''));
+    $logoUrl = trim((string) ($notification['logo_url'] ?? ''));
+    $initials = resident_notification_initials($notification);
   ?>
   <article
     class="topbar-notification-item<?= $isUnread ? ' is-unread' : ' is-read' ?><?= $isLater ? ' is-later' : '' ?>"
     data-notification-group="<?= htmlspecialchars($groupKey, ENT_QUOTES, 'UTF-8') ?>"
     <?= resident_notification_click_attr($notification) ?>
   >
-    <span class="topbar-notification-avatar tone-<?= resident_notification_tone($notification) ?>" aria-hidden="true">
-      <span><?= htmlspecialchars(resident_notification_initials($notification), ENT_QUOTES, 'UTF-8') ?></span>
+    <span class="topbar-notification-avatar<?= $logoUrl !== '' ? ' has-logo' : ' tone-' . resident_notification_tone($notification) ?>" aria-hidden="true">
+      <?php if ($logoUrl !== ''): ?>
+      <img src="<?= htmlspecialchars($logoUrl, ENT_QUOTES, 'UTF-8') ?>" alt="" onerror="this.hidden=true; this.nextElementSibling.hidden=false;">
+      <span hidden><?= htmlspecialchars($initials, ENT_QUOTES, 'UTF-8') ?></span>
+      <?php else: ?>
+      <span><?= htmlspecialchars($initials, ENT_QUOTES, 'UTF-8') ?></span>
+      <?php endif; ?>
       <i class="topbar-notification-badge is-<?= htmlspecialchars($badgeKey, ENT_QUOTES, 'UTF-8') ?>"><?= $badgeSvgs[$badgeKey] ?></i>
     </span>
     <div class="topbar-notification-copy">
