@@ -223,9 +223,8 @@ function hideSettingsAlert() {
     const input = wrap.querySelector('input');
     const toggle = wrap.querySelector('.settings-toggle-eye');
     if (!input || !toggle) return;
-    const editing = !!document.getElementById('settings-profile-page')?.classList.contains('is-editing');
     const hasText = input.value.length > 0;
-    toggle.hidden = !editing && !hasText;
+    toggle.hidden = false;
     if (!hasText && input.type !== 'password') {
       input.type = 'password';
       toggle.classList.remove('is-showing');

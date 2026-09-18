@@ -895,6 +895,16 @@
   cursor:default;
 }
 
+.settings-security-grid{
+  grid-template-columns:1fr;
+  max-width:none;
+}
+
+#pane-security .field input,
+#pane-security .settings-password-wrap{
+  width:100%;
+}
+
 .settings-password-wrap{
   position:relative;
 }

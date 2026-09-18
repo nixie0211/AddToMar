@@ -192,7 +192,7 @@ $profileDocFields = [
             <div class="settings-pane" id="pane-security">
               <div class="settings-panel">
                 <div class="settings-section settings-section--flush">
-                  <div class="form-grid">
+                  <div class="form-grid settings-security-grid">
                     <div class="field">
                       <label for="settings-login-email">Email address</label>
                       <input id="settings-login-email" type="email" value="<?= htmlspecialchars($profileEmail, ENT_QUOTES, 'UTF-8') ?>" readonly autocomplete="email">
