@@ -1153,7 +1153,7 @@ body.modal-open{
 .order-panel-actions-row{
   display:flex;
   gap:10px;
-  justify-content:center;
+  justify-content:flex-end;
 }
 .order-panel-actions .btn{
   justify-content:center;

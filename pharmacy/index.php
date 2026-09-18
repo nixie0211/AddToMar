@@ -33,7 +33,7 @@ require_once dirname(__DIR__) . '/includes/maps.php';
 <link rel="stylesheet" href="<?= htmlspecialchars(app_url('css/map-service-overlay.css'), ENT_QUOTES, 'UTF-8') ?>?v=street-map-2">
 <link rel="stylesheet" href="css/base.css?v=unified-mint-outer-canvas">
 <link rel="stylesheet" href="<?= htmlspecialchars(app_url('css/rx-crop-preview.css'), ENT_QUOTES, 'UTF-8') ?>?v=rx-crop-contain-1">
-<link rel="stylesheet" href="css/orders.css?v=order-update-btn-center-1">
+<link rel="stylesheet" href="css/orders.css?v=order-update-btn-right-1">
 <link rel="stylesheet" href="css/reports.css">
 <link rel="stylesheet" href="css/settings.css?v=profile-edit-split-1">
 <link rel="stylesheet" href="css/add-medicine.css?v=saving-overlay-1">
