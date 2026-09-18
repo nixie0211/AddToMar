@@ -38,6 +38,7 @@ function showSettingsPane(name, el) {
   if (name === 'business' && typeof window.initSettingsBusinessMap === 'function') {
     window.initSettingsBusinessMap();
   }
+  if (typeof window.syncSettingsEditButtons === 'function') window.syncSettingsEditButtons();
 }
 
 function showSettingsAlert(message, type) {
@@ -62,7 +63,7 @@ function hideSettingsAlert() {
   if (!rows.length) return;
 
   function syncRows(locked) {
-    const isLocked = locked === true || (locked !== false && !document.getElementById('settings-profile-page')?.classList.contains('is-editing'));
+    const isLocked = locked === true || (locked !== false && !document.getElementById('settings-profile-page')?.classList.contains('is-editing-business'));
     rows.forEach((row) => {
       const checked = !!row.querySelector('input[name="operation_days[]"]')?.checked;
       row.classList.toggle('is-open', checked);
@@ -122,7 +123,8 @@ function hideSettingsAlert() {
 (function setupSettingsEditing() {
   const page = document.getElementById('settings-profile-page');
   const form = document.getElementById('settings-business-form');
-  const editBtn = document.getElementById('settings-profile-edit');
+  const businessEdit = document.getElementById('settings-business-edit');
+  const securityEdit = document.getElementById('settings-security-edit');
   const cancelBtn = document.getElementById('settings-business-cancel');
   const saveBtn = document.getElementById('settings-business-save');
   const securityCancel = document.getElementById('settings-security-cancel');
@@ -130,7 +132,7 @@ function hideSettingsAlert() {
   const logoInput = document.getElementById('settings-pharmacy-logo');
   const logoPreview = document.getElementById('settings-logo-preview-img');
   const logoBox = document.getElementById('settings-logo-preview');
-  if (!page || !form || !editBtn) return;
+  if (!page || !form || !businessEdit || !securityEdit) return;
 
   let logoOriginal = {
     src: logoPreview?.getAttribute('src') || '',
@@ -138,8 +140,20 @@ function hideSettingsAlert() {
     hasImage: !!logoBox?.classList.contains('has-image'),
   };
 
-  function setEditing(on) {
-    page.classList.toggle('is-editing', on);
+  function activePane() {
+    return document.getElementById('pane-security')?.classList.contains('active') ? 'security' : 'business';
+  }
+
+  function syncEditButtons() {
+    const pane = activePane();
+    const businessOn = page.classList.contains('is-editing-business');
+    const securityOn = page.classList.contains('is-editing-security');
+    businessEdit.hidden = pane !== 'business' || businessOn;
+    securityEdit.hidden = pane !== 'security' || securityOn;
+  }
+
+  function setBusinessEditing(on) {
+    page.classList.toggle('is-editing-business', on);
     form.querySelectorAll('#settings-pharmacy-name, #settings-contact-number, #settings-pharmacy-address').forEach((el) => {
       el.readOnly = !on;
     });
@@ -154,13 +168,19 @@ function hideSettingsAlert() {
     if (typeof window.syncSettingsHoursRows === 'function') window.syncSettingsHoursRows(!on);
     if (cancelBtn) cancelBtn.hidden = !on;
     if (saveBtn) saveBtn.hidden = !on;
-    if (securityCancel) securityCancel.hidden = !on;
-    if (securitySave) securitySave.hidden = !on;
+    syncEditButtons();
+  }
+
+  function setSecurityEditing(on) {
+    page.classList.toggle('is-editing-security', on);
     ['settings-current-password', 'settings-new-password', 'settings-confirm-password'].forEach((id) => {
       const el = document.getElementById(id);
       if (el) el.disabled = !on;
     });
+    if (securityCancel) securityCancel.hidden = !on;
+    if (securitySave) securitySave.hidden = !on;
     if (typeof window.syncSettingsPasswordToggles === 'function') window.syncSettingsPasswordToggles();
+    syncEditButtons();
   }
 
   function restoreLogo() {
@@ -190,29 +210,43 @@ function hideSettingsAlert() {
     };
   }
 
-  function cancelEditing() {
+  function cancelBusinessEditing() {
     form.reset();
     restoreLogo();
     hideSettingsAlert();
+    setBusinessEditing(false);
+  }
+
+  function cancelSecurityEditing() {
+    const securityAlert = document.getElementById('settings-security-alert');
+    if (securityAlert) {
+      securityAlert.hidden = true;
+      securityAlert.textContent = '';
+    }
     ['settings-current-password', 'settings-new-password', 'settings-confirm-password'].forEach((id) => {
       const el = document.getElementById(id);
       if (!el) return;
       el.value = '';
       el.type = 'password';
     });
-    setEditing(false);
+    setSecurityEditing(false);
   }
 
-  editBtn.addEventListener('click', () => {
+  businessEdit.addEventListener('click', () => {
     hideSettingsAlert();
-    setEditing(true);
+    setBusinessEditing(true);
   });
-  cancelBtn?.addEventListener('click', cancelEditing);
-  securityCancel?.addEventListener('click', cancelEditing);
+  securityEdit.addEventListener('click', () => {
+    setSecurityEditing(true);
+  });
+  cancelBtn?.addEventListener('click', cancelBusinessEditing);
+  securityCancel?.addEventListener('click', cancelSecurityEditing);
 
-  window.setSettingsEditing = setEditing;
+  window.syncSettingsEditButtons = syncEditButtons;
+  window.setSettingsEditing = setBusinessEditing;
   window.snapshotSettingsForm = snapshotAfterSave;
-  setEditing(false);
+  setBusinessEditing(false);
+  setSecurityEditing(false);
 })();
 
 (function setupSettingsPasswordToggles() {

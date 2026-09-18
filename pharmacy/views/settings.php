@@ -40,7 +40,10 @@ $profileDocFields = [
           <div class="settings-profile-tabs" role="tablist" aria-label="Profile settings">
             <button type="button" class="settings-profile-tab active" role="tab" aria-selected="true" onclick="showSettingsPane('business', this)">Business information</button>
             <button type="button" class="settings-profile-tab" role="tab" aria-selected="false" onclick="showSettingsPane('security', this)">Login credentials</button>
-            <button type="button" class="btn settings-edit-btn" id="settings-profile-edit">Edit</button>
+            <div class="settings-edit-slot">
+              <button type="button" class="btn settings-edit-btn" id="settings-business-edit">Edit</button>
+              <button type="button" class="btn settings-edit-btn" id="settings-security-edit" hidden>Edit</button>
+            </div>
           </div>
 
           <div class="settings-pane active" id="pane-business">

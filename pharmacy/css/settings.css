@@ -32,12 +32,14 @@
   font-size:14px;
   font-weight:700;
 }
+.settings-edit-slot{
+  margin-left:auto;
+  margin-bottom:8px;
+}
 .settings-edit-btn{
   display:inline-flex;
   align-items:center;
   justify-content:center;
-  margin-left:auto;
-  margin-bottom:8px;
   min-width:88px;
   height:36px;
   padding:0 16px;
@@ -48,13 +50,17 @@
   line-height:1;
   text-align:center;
 }
+.settings-edit-btn[hidden]{
+  display:none !important;
+}
 .settings-edit-btn:hover{
   border-color:var(--teal);
   color:var(--teal);
   background:var(--teal-soft);
 }
-.settings-profile-page.is-editing .settings-edit-btn{
-  display:none;
+.settings-profile-page.is-editing-business #settings-business-edit,
+.settings-profile-page.is-editing-security #settings-security-edit{
+  display:none !important;
 }
 .settings-profile-head h2{
   font-size:20px;
@@ -197,7 +203,8 @@
   border-radius:0 0 var(--radius) var(--radius);
 }
 
-.settings-profile-page:not(.is-editing) .settings-panel-foot{
+.settings-profile-page:not(.is-editing-business) #pane-business .settings-panel-foot,
+.settings-profile-page:not(.is-editing-security) #pane-security .settings-panel-foot{
   display:none;
 }
 
@@ -305,30 +312,30 @@
   cursor:pointer;
 }
 
-.settings-profile-page:not(.is-editing) .settings-logo{
+.settings-profile-page:not(.is-editing-business) .settings-logo{
   cursor:default;
   pointer-events:none;
 }
 
-.settings-profile-page:not(.is-editing) .settings-logo-plus{
+.settings-profile-page:not(.is-editing-business) .settings-logo-plus{
   display:none;
 }
 
-.settings-profile-page:not(.is-editing) .settings-business-form input:not([type="hidden"]):not(.settings-logo-input),
-.settings-profile-page:not(.is-editing) .settings-business-form textarea{
+.settings-profile-page:not(.is-editing-business) .settings-business-form input:not([type="hidden"]):not(.settings-logo-input),
+.settings-profile-page:not(.is-editing-business) .settings-business-form textarea{
   background:#f6f8f9;
   color:var(--navy);
   cursor:default;
 }
 
-.settings-profile-page:not(.is-editing) .settings-map-toolbar,
-.settings-profile-page:not(.is-editing) .settings-map-frame,
-.settings-profile-page:not(.is-editing) .settings-map-hint,
-.settings-profile-page:not(.is-editing) .settings-hours-list{
+.settings-profile-page:not(.is-editing-business) .settings-map-toolbar,
+.settings-profile-page:not(.is-editing-business) .settings-map-frame,
+.settings-profile-page:not(.is-editing-business) .settings-map-hint,
+.settings-profile-page:not(.is-editing-business) .settings-hours-list{
   pointer-events:none;
 }
 
-.settings-profile-page:not(.is-editing) .settings-map-hint{
+.settings-profile-page:not(.is-editing-business) .settings-map-hint{
   opacity:.72;
 }
 
@@ -908,7 +915,7 @@
   padding:24px 24px 28px;
 }
 
-.settings-profile-page.is-editing #pane-security .settings-section--flush{
+.settings-profile-page.is-editing-security #pane-security .settings-section--flush{
   padding-bottom:8px;
 }
 
@@ -973,7 +980,7 @@
   display:block;
 }
 
-.settings-profile-page:not(.is-editing) .settings-toggle-eye{
+.settings-profile-page:not(.is-editing-security) .settings-toggle-eye{
   pointer-events:none;
 }
 
