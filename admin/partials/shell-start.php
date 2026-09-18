@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="<?= htmlspecialchars(app_url('admin/css/admin.css'), ENT_QUOTES, 'UTF-8') ?>?v=hide-different-hours">
+<link rel="stylesheet" href="<?= htmlspecialchars(app_url('admin/css/admin.css'), ENT_QUOTES, 'UTF-8') ?>?v=admin-notify-previous-1">
 </head>
 <body<?= (!empty($viewPharmacyModal) || !empty($reviewReportModal)) ? ' class="modal-open"' : '' ?> data-admin-mark-read-url="<?= htmlspecialchars(admin_url(), ENT_QUOTES, 'UTF-8') ?>">
 <div class="admin-shell">
@@ -44,7 +44,7 @@
               <span class="admin-notify-badge"><?= $adminNotifyCount > 9 ? '9+' : number_format($adminNotifyCount) ?></span>
               <?php endif; ?>
             </button>
-            <div class="admin-notify-panel" id="admin-notify-panel" hidden>
+            <div class="admin-notify-panel" id="admin-notify-panel" hidden data-has-more="<?= count($adminNotifications) > 4 ? '1' : '0' ?>">
               <div class="admin-notify-head">
                 <h3>Notifications</h3>
                 <?php if ($adminNotifyCount > 0): ?>
@@ -57,9 +57,14 @@
                 <?php if ($adminNotifications === []): ?>
                 <p class="admin-notify-empty">No notifications yet.</p>
                 <?php else: ?>
+                  <?php $adminNotifyIndex = 0; ?>
                   <?php foreach ($adminNotifications as $notification): ?>
-                  <?php $isRead = !empty($notification['is_read']); ?>
-                  <a class="admin-notify-item admin-notify-item--<?= htmlspecialchars((string) $notification['type'], ENT_QUOTES, 'UTF-8') ?><?= $isRead ? ' is-read' : ' is-unread' ?>" href="<?= htmlspecialchars((string) $notification['href'], ENT_QUOTES, 'UTF-8') ?>" data-notification-id="<?= htmlspecialchars((string) ($notification['id'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+                  <?php
+                    $isRead = !empty($notification['is_read']);
+                    $isLater = $adminNotifyIndex >= 4;
+                    $adminNotifyIndex++;
+                  ?>
+                  <a class="admin-notify-item admin-notify-item--<?= htmlspecialchars((string) $notification['type'], ENT_QUOTES, 'UTF-8') ?><?= $isRead ? ' is-read' : ' is-unread' ?><?= $isLater ? ' is-later' : '' ?>" href="<?= htmlspecialchars((string) $notification['href'], ENT_QUOTES, 'UTF-8') ?>" data-notification-id="<?= htmlspecialchars((string) ($notification['id'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
                     <span class="admin-notify-item-icon" aria-hidden="true">
                       <?php if (($notification['type'] ?? '') === 'report'): ?>
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4h9l1 3h4v10H14l-1-3H7v7"/></svg>
@@ -78,6 +83,9 @@
                   </a>
                   <?php endforeach; ?>
                 <?php endif; ?>
+              </div>
+              <div class="admin-notify-footer" id="admin-notify-footer"<?= count($adminNotifications) > 4 ? '' : ' hidden' ?>>
+                <button type="button" id="admin-notify-see-previous">See previous notifications</button>
               </div>
             </div>
           </div>

@@ -261,6 +261,40 @@ a {
 .admin-notify-list {
   overflow-y: auto;
   padding: 0 10px 10px;
+  max-height: min(52vh, 420px);
+}
+
+.admin-notify-panel.is-expanded .admin-notify-list {
+  max-height: min(68vh, 560px);
+}
+
+.admin-notify-panel:not(.is-expanded) .admin-notify-item.is-later {
+  display: none !important;
+}
+
+.admin-notify-footer {
+  padding: 10px 12px 12px;
+  flex: 0 0 auto;
+}
+
+.admin-notify-footer[hidden] {
+  display: none !important;
+}
+
+.admin-notify-footer button {
+  width: 100%;
+  border: 0;
+  border-radius: 8px;
+  background: #e8eef2;
+  color: var(--navy);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 36px;
+  cursor: pointer;
+}
+
+.admin-notify-footer button:hover {
+  background: #dce6ec;
 }
 
 .admin-notify-empty {
