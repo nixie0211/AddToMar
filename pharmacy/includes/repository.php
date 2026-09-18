@@ -926,41 +926,86 @@ function pharmacy_get_notifications(): array
     ')->fetchAll();
 
     foreach ($orders as $order) {
+        $customer = trim((string) ($order['customer_name'] ?: 'Customer'));
         $notifications[] = [
             'type' => 'new-order',
             'unread' => true,
-            'title' => ($order['customer_name'] ?: 'Customer') . ' placed a new order worth ' . pharmacy_format_money((float) $order['total_amount']),
-            'subtitle' => $order['order_number'],
-            'time' => pharmacy_time_ago($order['created_at']),
-            'initials' => pharmacy_initials((string) ($order['customer_name'] ?: 'CU')),
+            'headline' => $customer,
+            'title' => $customer . ' placed a new order worth ' . pharmacy_format_money((float) $order['total_amount']),
+            'subtitle' => (string) ($order['order_number'] ?? ''),
+            'time' => pharmacy_time_ago($order['created_at'] ?? null),
+            'created_at' => (string) ($order['created_at'] ?? ''),
+            'initials' => pharmacy_initials($customer),
+            'view' => 'orders',
         ];
     }
 
     foreach (pharmacy_get_low_stock_medicines(5) as $medicine) {
+        $name = trim((string) ($medicine['name'] ?? 'Medicine'));
         $notifications[] = [
             'type' => 'low-stock',
             'unread' => true,
-            'title' => $medicine['name'] . ' is low on stock — only ' . (int) $medicine['stock_quantity'] . ' units left',
+            'headline' => $name,
+            'title' => $name . ' is low on stock — only ' . (int) $medicine['stock_quantity'] . ' units left',
             'subtitle' => 'Minimum threshold: ' . (int) $medicine['minimum_stock'] . ' units',
-            'time' => pharmacy_time_ago($medicine['updated_at'] ?? $medicine['created_at']),
-            'initials' => strtoupper(substr($medicine['name'], 0, 2)),
+            'time' => pharmacy_time_ago($medicine['updated_at'] ?? $medicine['created_at'] ?? null),
+            'created_at' => (string) ($medicine['updated_at'] ?? $medicine['created_at'] ?? ''),
+            'initials' => strtoupper(substr($name, 0, 2)),
+            'view' => 'inventory',
         ];
     }
 
     foreach (pharmacy_get_expiring_medicines(5) as $medicine) {
+        $name = trim((string) ($medicine['name'] ?? 'Medicine'));
         $expiryTimestamp = pharmacy_expiration_timestamp((string) $medicine['expiration_date']);
         $days = $expiryTimestamp === null ? 0 : (int) floor(($expiryTimestamp - time()) / 86400);
         $notifications[] = [
             'type' => 'expiring',
             'unread' => false,
-            'title' => $medicine['name'] . ' batch #' . $medicine['batch_number'] . ' expires in ' . max($days, 0) . ' days',
+            'headline' => $name,
+            'title' => $name . ' batch #' . $medicine['batch_number'] . ' expires in ' . max($days, 0) . ' days',
             'subtitle' => (int) $medicine['stock_quantity'] . ' units in this batch',
-            'time' => pharmacy_time_ago($medicine['updated_at'] ?? $medicine['created_at']),
-            'initials' => strtoupper(substr($medicine['name'], 0, 2)),
+            'time' => pharmacy_time_ago($medicine['updated_at'] ?? $medicine['created_at'] ?? null),
+            'created_at' => (string) ($medicine['updated_at'] ?? $medicine['created_at'] ?? ''),
+            'initials' => strtoupper(substr($name, 0, 2)),
+            'view' => 'inventory',
         ];
     }
 
+    usort($notifications, static function (array $a, array $b): int {
+        return strtotime((string) ($b['created_at'] ?? '')) <=> strtotime((string) ($a['created_at'] ?? ''));
+    });
+
     return $notifications;
+}
+
+function pharmacy_notification_is_today(?string $value): bool
+{
+    $timestamp = strtotime((string) $value);
+    if ($timestamp === false) {
+        return false;
+    }
+
+    $timezone = function_exists('app_timezone') ? app_timezone() : new DateTimeZone('Asia/Manila');
+    $created = (new DateTimeImmutable('@' . $timestamp))->setTimezone($timezone);
+    $now = new DateTimeImmutable('now', $timezone);
+
+    return $created->format('Y-m-d') === $now->format('Y-m-d');
+}
+
+function pharmacy_notifications_grouped(array $notifications): array
+{
+    $today = [];
+    $earlier = [];
+    foreach ($notifications as $notification) {
+        if (pharmacy_notification_is_today($notification['created_at'] ?? null)) {
+            $today[] = $notification;
+        } else {
+            $earlier[] = $notification;
+        }
+    }
+
+    return ['today' => $today, 'earlier' => $earlier];
 }
 
 function pharmacy_get_chart_data(): array

@@ -66,11 +66,19 @@ function syncViewUrl(name, replace){
 function toggleNotifDropdown(e){
   e.stopPropagation();
   const dd = document.getElementById('notif-dropdown');
+  if(!dd) return;
   const wasOpen = dd.classList.contains('open');
   dd.classList.toggle('open');
   if(wasOpen){
-    resetNotifPanel();
+    collapseNotifHistory();
   }
+}
+
+function closePharmacyNotif(){
+  const dd = document.getElementById('notif-dropdown');
+  if(!dd) return;
+  dd.classList.remove('open');
+  collapseNotifHistory();
 }
 
 function getActiveNotifFilterMode(){
@@ -78,109 +86,71 @@ function getActiveNotifFilterMode(){
   return activeTab && activeTab.textContent.trim().toLowerCase() === 'unread' ? 'unread' : 'all';
 }
 
-function resetNotifPanel(){
-  const recent = document.getElementById('notif-panel-recent');
-  const all = document.getElementById('notif-panel-all');
-  const link = document.getElementById('notif-see-previous');
-  if(recent) recent.hidden = false;
-  if(all) all.hidden = true;
-  if(link) link.textContent = 'See previous notifications';
-  clearNotifTypeFilter();
+function collapseNotifHistory(){
+  const dd = document.getElementById('notif-dropdown');
+  if(!dd) return;
+  dd.classList.remove('is-expanded');
+  const scroll = dd.querySelector('.notif-scroll');
+  if(scroll) scroll.scrollTop = 0;
+  const foot = document.getElementById('notif-foot');
+  if(foot && dd.getAttribute('data-has-more') === '1') foot.hidden = false;
   applyNotifFilter(getActiveNotifFilterMode());
 }
 
-function clearNotifTypeFilter(){
-  document.querySelectorAll('#notif-panel-all .notif-item').forEach(function(item){
-    delete item.dataset.typeFilter;
-  });
-}
-
-function toggleNotifHistory(e){
+function expandNotifHistory(e){
   if(e){
     e.preventDefault();
     e.stopPropagation();
   }
-  const recent = document.getElementById('notif-panel-recent');
-  const all = document.getElementById('notif-panel-all');
-  const link = document.getElementById('notif-see-previous');
-  if(!recent || !all) return;
-  const showAll = all.hidden;
-  recent.hidden = showAll;
-  all.hidden = !showAll;
-  if(link){
-    link.textContent = showAll ? 'Show recent notifications' : 'See previous notifications';
-  }
-  if(showAll){
-    clearNotifTypeFilter();
-  }
+  const dd = document.getElementById('notif-dropdown');
+  const foot = document.getElementById('notif-foot');
+  if(!dd) return;
+  dd.classList.add('is-expanded');
+  if(foot) foot.hidden = true;
   applyNotifFilter(getActiveNotifFilterMode());
-  const scroll = document.querySelector('#notif-dropdown .notif-scroll');
-  if(scroll) scroll.scrollTop = 0;
 }
 
-function showNotifTypeInPanel(e, type){
+function openPharmacyNotification(e, view){
   if(e){
     e.preventDefault();
     e.stopPropagation();
   }
-  const recent = document.getElementById('notif-panel-recent');
-  const all = document.getElementById('notif-panel-all');
-  const link = document.getElementById('notif-see-previous');
-  if(!recent || !all) return;
-  recent.hidden = true;
-  all.hidden = false;
-  if(link) link.textContent = 'Show recent notifications';
-  clearNotifTypeFilter();
-  all.querySelectorAll('.notif-item').forEach(function(item){
-    if(item.dataset.type !== type){
-      item.dataset.typeFilter = 'hidden';
-    }
-  });
-  applyNotifFilter(getActiveNotifFilterMode());
-  const scroll = document.querySelector('#notif-dropdown .notif-scroll');
-  if(scroll) scroll.scrollTop = 0;
+  closePharmacyNotif();
+  if(view && typeof showView === 'function'){
+    showView(view);
+  }
 }
 
 document.addEventListener('click', function(e){
   const dd = document.getElementById('notif-dropdown');
   if(dd && dd.classList.contains('open') && !e.target.closest('.notif-wrap')){
-    dd.classList.remove('open');
-    resetNotifPanel();
+    closePharmacyNotif();
   }
 });
 
-const ALLOWED_NOTIF_TYPES = ['low-stock', 'expiring', 'new-order'];
-
-function isAllowedNotifType(type){
-  return ALLOWED_NOTIF_TYPES.includes(type);
-}
-
 function applyNotifFilter(mode){
-  document.querySelectorAll('#notif-dropdown .notif-item').forEach(function(item){
-    const panel = item.closest('#notif-panel-recent, #notif-panel-all');
-    if(panel && panel.hidden){
-      return;
-    }
-    const type = item.dataset.type || '';
-    if(!isAllowedNotifType(type)){
-      item.style.display = 'none';
-      return;
-    }
-    if(item.dataset.typeFilter === 'hidden'){
-      item.style.display = 'none';
-      return;
-    }
-    item.style.display = (mode === 'unread' && item.dataset.unread !== '1') ? 'none' : 'flex';
+  const dd = document.getElementById('notif-dropdown');
+  if(!dd) return;
+  const expanded = dd.classList.contains('is-expanded');
+  dd.querySelectorAll('.notif-item').forEach(function(item){
+    const unread = item.dataset.unread === '1';
+    const later = item.classList.contains('is-later');
+    const show = (mode !== 'unread' || unread) && (expanded || !later);
+    item.hidden = !show;
+    item.style.display = show ? 'flex' : 'none';
   });
-
-  document.querySelectorAll('#view-notifications .list-row[data-type]').forEach(function(row){
-    const type = row.dataset.type || '';
-    row.style.display = isAllowedNotifType(type) ? '' : 'none';
+  dd.querySelectorAll('.notif-section').forEach(function(section){
+    const visible = Array.from(section.querySelectorAll('.notif-item')).some(function(item){ return !item.hidden; });
+    section.hidden = !visible;
   });
 }
 
-function filterNotifTab(mode, el){
-  el.parentElement.querySelectorAll('.notif-tab').forEach(t=>t.classList.remove('active'));
+function filterNotifTab(mode, el, event){
+  if(event){
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  el.parentElement.querySelectorAll('.notif-tab').forEach(function(tab){ tab.classList.remove('active'); });
   el.classList.add('active');
   applyNotifFilter(mode);
 }
