@@ -35,7 +35,7 @@ require_once dirname(__DIR__) . '/includes/maps.php';
 <link rel="stylesheet" href="<?= htmlspecialchars(app_url('css/rx-crop-preview.css'), ENT_QUOTES, 'UTF-8') ?>?v=rx-crop-contain-1">
 <link rel="stylesheet" href="css/orders.css?v=order-rx-bold-1">
 <link rel="stylesheet" href="css/reports.css">
-<link rel="stylesheet" href="css/settings.css?v=profile-edit-center-1">
+<link rel="stylesheet" href="css/settings.css?v=profile-security-pad-1">
 <link rel="stylesheet" href="css/add-medicine.css?v=saving-overlay-1">
 <link rel="stylesheet" href="css/inventory.css?v=store-name-ellipsis-2">
 </head>

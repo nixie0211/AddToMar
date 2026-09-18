@@ -901,13 +901,25 @@
 }
 
 .settings-security-grid{
-  grid-template-columns:1fr;
-  max-width:none;
+  grid-template-columns:1fr 1fr;
+}
+
+#pane-security .settings-section--flush{
+  padding:24px 24px 28px;
+}
+
+.settings-profile-page.is-editing #pane-security .settings-section--flush{
+  padding-bottom:8px;
 }
 
 #pane-security .field input,
 #pane-security .settings-password-wrap{
   width:100%;
+  min-width:0;
+}
+
+#pane-security .field{
+  min-width:0;
 }
 
 .settings-password-wrap{
