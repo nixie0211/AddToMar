@@ -859,11 +859,6 @@ input.field-input:focus-visible, select.field-input:focus-visible, textarea.fiel
 .topbar-notification-avatar.tone-1{ background:#42b72a; }
 .topbar-notification-avatar.tone-2{ background:#f7b928; color:#3d2e00; }
 .topbar-notification-avatar.tone-3{ background:#f02849; }
-.topbar-notification-badge{ position:absolute; right:-2px; bottom:-2px; display:grid; width:22px; height:22px; place-items:center; border:2px solid #fff; border-radius:50%; color:#fff; }
-.topbar-notification-badge svg{ width:12px; height:12px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
-.topbar-notification-badge.is-order{ background:#00a400; }
-.topbar-notification-badge.is-report{ background:#f02849; }
-.topbar-notification-badge.is-default{ background:#1877f2; }
 .topbar-notification-copy{ min-width:0; flex:1; padding-top:2px; }
 .topbar-notification-copy p{ margin:0; color:#050505; font-size:15px; font-weight:400; line-height:1.33; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
 .topbar-notification-copy p b{ font-weight:700; }
