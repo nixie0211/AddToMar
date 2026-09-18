@@ -1153,6 +1153,7 @@ body.modal-open{
 .order-panel-actions-row{
   display:flex;
   gap:10px;
+  justify-content:center;
 }
 .order-panel-actions .btn{
   justify-content:center;
@@ -1162,6 +1163,14 @@ body.modal-open{
 }
 .order-panel-actions-row .btn{
   flex:1;
+}
+.order-panel-actions-row .btn:only-child{
+  flex:0 0 auto;
+  width:auto;
+  min-width:168px;
+  max-width:220px;
+  padding:9px 22px;
+  font-size:0.88rem;
 }
 .btn-danger{
   border-color:#f0b4b4;
