@@ -53,7 +53,7 @@
                 <span id="admin-notify-head-count" hidden></span>
                 <?php endif; ?>
               </div>
-              <div class="admin-notify-list">
+              <div class="admin-notify-list" data-live-preserve="admin-notify-scroll">
                 <?php if ($adminNotifications === []): ?>
                 <p class="admin-notify-empty">No notifications yet.</p>
                 <?php else: ?>

@@ -44,9 +44,6 @@
     }
     const mode = el.getAttribute('data-live-mode') || 'html';
     if (mode === 'js') return true;
-    if (el.querySelector('.notif-dropdown.open, #admin-notify-panel:not([hidden]), .topbar-notification-dropdown:not([hidden])')) {
-      return true;
-    }
     const active = document.activeElement;
     if (active && el.contains(active)) {
       const tag = active.tagName;
@@ -93,6 +90,57 @@
     root.querySelectorAll('canvas').forEach((canvas) => {
       const chart = Chart.getChart(canvas);
       if (chart) chart.destroy();
+    });
+  }
+
+  function copyHidden(fromEl, toEl) {
+    if (fromEl.hasAttribute('hidden') || fromEl.hidden) {
+      toEl.hidden = true;
+      toEl.setAttribute('hidden', '');
+    } else {
+      toEl.hidden = false;
+      toEl.removeAttribute('hidden');
+    }
+  }
+
+  function copyNotifyUi(fromRoot, toRoot) {
+    [
+      '.notif-dropdown',
+      '#admin-notify-panel',
+      '.topbar-notification-dropdown',
+      '.admin-notify-wrap',
+      '.notif-foot',
+      '#admin-notify-footer',
+      '.topbar-notification-footer'
+    ].forEach(function (sel) {
+      const fromEl = fromRoot.matches && fromRoot.matches(sel) ? fromRoot : fromRoot.querySelector(sel);
+      const toEl = toRoot.matches && toRoot.matches(sel) ? toRoot : toRoot.querySelector(sel);
+      if (!fromEl || !toEl) return;
+      ['open', 'is-expanded'].forEach(function (name) {
+        toEl.classList.toggle(name, fromEl.classList.contains(name));
+      });
+      copyHidden(fromEl, toEl);
+    });
+
+    const fromTabs = fromRoot.querySelectorAll('.notif-tab, .topbar-notification-tabs button');
+    const toTabs = toRoot.querySelectorAll('.notif-tab, .topbar-notification-tabs button');
+    fromTabs.forEach(function (tab, index) {
+      const next = toTabs[index];
+      if (!next) return;
+      next.classList.toggle('active', tab.classList.contains('active'));
+      next.classList.toggle('is-active', tab.classList.contains('is-active'));
+    });
+
+    ['.notif-scroll', '.admin-notify-list', '.topbar-notification-scroll'].forEach(function (sel) {
+      const fromEl = fromRoot.querySelector(sel);
+      const toEl = toRoot.querySelector(sel);
+      if (fromEl && toEl) toEl.scrollTop = fromEl.scrollTop;
+    });
+
+    fromRoot.querySelectorAll('[aria-expanded]').forEach(function (fromBtn) {
+      const id = fromBtn.id ? '#' + fromBtn.id.replace(/"/g, '') : '';
+      const toBtn = id ? toRoot.querySelector(id) : null;
+      if (toBtn) toBtn.setAttribute('aria-expanded', fromBtn.getAttribute('aria-expanded') || 'false');
     });
   }
 
@@ -192,6 +240,7 @@
         const preserve = snapshotPreserve(current);
         destroyCharts(current);
         copyUiState(current, incoming);
+        copyNotifyUi(current, incoming);
         current.replaceWith(incoming);
         restorePreserve(incoming, preserve);
         swapped = true;

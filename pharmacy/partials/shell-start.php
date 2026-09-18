@@ -68,7 +68,7 @@
               <button type="button" class="notif-tab" onclick="filterNotifTab('unread', this, event)">Unread</button>
             </div>
 
-            <div class="notif-scroll">
+            <div class="notif-scroll" data-live-preserve="pharmacy-notif-scroll">
               <?php if (empty($notifications)): ?>
               <p class="notif-empty">No notifications yet.</p>
               <?php else: ?>

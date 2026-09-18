@@ -90,7 +90,7 @@
                 <button type="button" class="is-active" onclick="filterResidentNotificationTab('all', this, event)">All</button>
                 <button type="button" onclick="filterResidentNotificationTab('unread', this, event)">Unread</button>
               </div>
-              <div class="topbar-notification-scroll">
+              <div class="topbar-notification-scroll" data-live-preserve="residence-notify-scroll">
                 <?php
                 $notificationListContext = 'dropdown';
                 include RESIDENCE_ROOT . '/partials/notification-list.php';
