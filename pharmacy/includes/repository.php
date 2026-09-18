@@ -912,9 +912,76 @@ function pharmacy_get_suppliers(): array
     return pharmacy_db()->query('SELECT * FROM suppliers WHERE ' . pharmacy_scope_sql() . ' ORDER BY name ASC')->fetchAll();
 }
 
+function pharmacy_notification_id(string $type, string $subject): string
+{
+    $type = strtolower(trim($type));
+    $subject = trim($subject);
+
+    return $type . ':' . $subject;
+}
+
+function pharmacy_notification_read_ids(): array
+{
+    $pharmacyId = pharmacy_current_id();
+    if ($pharmacyId === '') {
+        return [];
+    }
+
+    try {
+        $stmt = pharmacy_db()->prepare('SELECT notice_id FROM pharmacy_notification_reads WHERE pharmacy_id = ?');
+        $stmt->execute([$pharmacyId]);
+        $ids = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    } catch (Throwable) {
+        return [];
+    }
+
+    return array_values(array_filter(array_map('strval', is_array($ids) ? $ids : [])));
+}
+
+function pharmacy_notification_is_read(string $noticeId, ?array $readIds = null): bool
+{
+    $noticeId = trim($noticeId);
+    if ($noticeId === '') {
+        return false;
+    }
+
+    $readIds ??= pharmacy_notification_read_ids();
+
+    return in_array($noticeId, $readIds, true);
+}
+
+function pharmacy_notification_unread_count(?array $notifications = null): int
+{
+    $notifications ??= pharmacy_get_notifications();
+
+    return count(array_filter($notifications, static fn(array $item): bool => !empty($item['unread'])));
+}
+
+function pharmacy_notification_mark_read(string $noticeId): array
+{
+    $pharmacyId = pharmacy_current_id();
+    $noticeId = trim($noticeId);
+    if ($pharmacyId === '' || $noticeId === '' || strlen($noticeId) > 160) {
+        return ['ok' => false, 'unread' => pharmacy_notification_unread_count()];
+    }
+
+    if (!preg_match('/^[a-z0-9\-]+:[A-Za-z0-9_\-]+$/', $noticeId)) {
+        return ['ok' => false, 'unread' => pharmacy_notification_unread_count()];
+    }
+
+    $stmt = pharmacy_db()->prepare('
+        INSERT IGNORE INTO pharmacy_notification_reads (pharmacy_id, notice_id, read_at)
+        VALUES (?, ?, ?)
+    ');
+    $stmt->execute([$pharmacyId, $noticeId, date('Y-m-d H:i:s')]);
+
+    return ['ok' => true, 'unread' => pharmacy_notification_unread_count()];
+}
+
 function pharmacy_get_notifications(): array
 {
     $notifications = [];
+    $readIds = pharmacy_notification_read_ids();
 
     $orders = pharmacy_db()->query('
         SELECT o.*, c.name AS customer_name
@@ -927,9 +994,11 @@ function pharmacy_get_notifications(): array
 
     foreach ($orders as $order) {
         $customer = trim((string) ($order['customer_name'] ?: 'Customer'));
+        $noticeId = pharmacy_notification_id('new-order', (string) (int) ($order['id'] ?? 0));
         $notifications[] = [
+            'id' => $noticeId,
             'type' => 'new-order',
-            'unread' => true,
+            'unread' => !pharmacy_notification_is_read($noticeId, $readIds),
             'headline' => $customer,
             'title' => $customer . ' placed a new order worth ' . pharmacy_format_money((float) $order['total_amount']),
             'subtitle' => (string) ($order['order_number'] ?? ''),
@@ -942,9 +1011,11 @@ function pharmacy_get_notifications(): array
 
     foreach (pharmacy_get_low_stock_medicines(5) as $medicine) {
         $name = trim((string) ($medicine['name'] ?? 'Medicine'));
+        $noticeId = pharmacy_notification_id('low-stock', (string) (int) ($medicine['id'] ?? 0));
         $notifications[] = [
+            'id' => $noticeId,
             'type' => 'low-stock',
-            'unread' => true,
+            'unread' => !pharmacy_notification_is_read($noticeId, $readIds),
             'headline' => $name,
             'title' => $name . ' is low on stock — only ' . (int) $medicine['stock_quantity'] . ' units left',
             'subtitle' => 'Minimum threshold: ' . (int) $medicine['minimum_stock'] . ' units',
@@ -959,9 +1030,11 @@ function pharmacy_get_notifications(): array
         $name = trim((string) ($medicine['name'] ?? 'Medicine'));
         $expiryTimestamp = pharmacy_expiration_timestamp((string) $medicine['expiration_date']);
         $days = $expiryTimestamp === null ? 0 : (int) floor(($expiryTimestamp - time()) / 86400);
+        $noticeId = pharmacy_notification_id('expiring', (string) (int) ($medicine['id'] ?? 0));
         $notifications[] = [
+            'id' => $noticeId,
             'type' => 'expiring',
-            'unread' => false,
+            'unread' => !pharmacy_notification_is_read($noticeId, $readIds),
             'headline' => $name,
             'title' => $name . ' batch #' . $medicine['batch_number'] . ' expires in ' . max($days, 0) . ' days',
             'subtitle' => (int) $medicine['stock_quantity'] . ' units in this batch',

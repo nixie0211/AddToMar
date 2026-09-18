@@ -21,8 +21,21 @@ function pharmacy_db(): PDO
     if (!defined('PHARMACY_SKIP_MIGRATIONS') || !PHARMACY_SKIP_MIGRATIONS) {
         pharmacy_run_migrations($pdo);
     }
+    pharmacy_ensure_notification_reads_table($pdo);
 
     return $pdo;
+}
+
+function pharmacy_ensure_notification_reads_table(PDO $pdo): void
+{
+    $pdo->exec('
+        CREATE TABLE IF NOT EXISTS pharmacy_notification_reads (
+            pharmacy_id VARCHAR(64) NOT NULL,
+            notice_id VARCHAR(160) NOT NULL,
+            read_at VARCHAR(40) NOT NULL,
+            PRIMARY KEY (pharmacy_id, notice_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    ');
 }
 
 function pharmacy_ensure_order_uploads_table(PDO $pdo): void

@@ -1,4 +1,4 @@
-        <div class="notif-wrap" data-live-region="pharmacy-notify" data-live-keys="shell,orders,inventory">
+        <div class="notif-wrap" data-live-region="pharmacy-notify" data-live-keys="shell,orders,inventory" data-mark-read-url="<?= htmlspecialchars(app_url('ajax/pharmacy-notification-read.php'), ENT_QUOTES, 'UTF-8') ?>">
           <?php
             $notifUnreadCount = count(array_filter($notifications ?? [], static fn($item): bool => !empty($item['unread'])));
             $notifBadgeLabel = $notifUnreadCount > 9 ? '9+' : (string) $notifUnreadCount;
@@ -48,7 +48,7 @@
                     : $title;
                   $view = (string) ($item['view'] ?? 'notifications');
                 ?>
-                <button type="button" class="notif-item<?= $isUnread ? ' is-unread' : ' is-read' ?><?= $isLater ? ' is-later' : '' ?>" data-type="<?= htmlspecialchars($itemType, ENT_QUOTES, 'UTF-8') ?>" data-unread="<?= $isUnread ? '1' : '0' ?>" onclick="openPharmacyNotification(event, '<?= htmlspecialchars($view, ENT_QUOTES, 'UTF-8') ?>')">
+                <button type="button" class="notif-item<?= $isUnread ? ' is-unread' : ' is-read' ?><?= $isLater ? ' is-later' : '' ?>" data-id="<?= htmlspecialchars((string) ($item['id'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" data-type="<?= htmlspecialchars($itemType, ENT_QUOTES, 'UTF-8') ?>" data-unread="<?= $isUnread ? '1' : '0' ?>" onclick="openPharmacyNotification(event, '<?= htmlspecialchars($view, ENT_QUOTES, 'UTF-8') ?>')">
                   <span class="notif-avatar-wrap">
                     <span class="notif-avatar" style="background:<?= htmlspecialchars($tone, ENT_QUOTES, 'UTF-8') ?>;"><?= htmlspecialchars((string) ($item['initials'] ?? ''), ENT_QUOTES, 'UTF-8') ?></span>
                     <span class="notif-badge-icon is-<?= htmlspecialchars($itemType, ENT_QUOTES, 'UTF-8') ?>">

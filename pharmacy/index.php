@@ -50,7 +50,7 @@ require_once dirname(__DIR__) . '/includes/maps.php';
 <?php include PHARMACY_ROOT . '/partials/shell-end.php'; ?>
 <?php include dirname(__DIR__) . '/partials/map-area-modal.php'; ?>
 
-<script src="js/app.php"></script>
+<script src="js/app.php?v=pharmacy-notif-read-1"></script>
 <script type="application/json" id="pharmacy-chart-data"><?= json_encode($chartData ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>
 <script>
 window.PHARMACY_CHART_DATA = <?= json_encode($chartData ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
