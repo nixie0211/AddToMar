@@ -2,8 +2,8 @@
   const cfg = window.LIVE_SYNC || {};
   if (!cfg.url) return;
 
-  const minDelay = Math.max(2500, Number(cfg.interval) || 4000);
-  const maxDelay = 30000;
+  const minDelay = Math.max(800, Number(cfg.interval) || 1200);
+  const maxDelay = 8000;
   let versions = Object.assign({}, cfg.versions || {});
   let delay = minDelay;
   let timer = null;
@@ -190,7 +190,7 @@
 
   function schedule(nextDelay) {
     clearTimeout(timer);
-    const hiddenBoost = document.hidden ? Math.max(delay, 12000) : delay;
+    const hiddenBoost = document.hidden ? Math.max(delay, 4000) : delay;
     timer = window.setTimeout(tick, nextDelay != null ? nextDelay : hiddenBoost);
   }
 
@@ -200,6 +200,48 @@
       if (String(prev[key] || '') !== String(next[key] || '')) keys.push(key);
     });
     return keys;
+  }
+
+  function notifyFragmentUrl() {
+    const syncUrl = String(cfg.url || '');
+    const notifyUrl = syncUrl.replace(/live-sync\.php(?:\?.*)?$/i, 'live-notify.php');
+    const glue = notifyUrl.indexOf('?') >= 0 ? '&' : '?';
+    return notifyUrl + glue + 'portal=' + encodeURIComponent(cfg.portal || 'public');
+  }
+
+  function isNotifyRegion(el) {
+    const name = el.getAttribute('data-live-region') || '';
+    return name === 'pharmacy-notify' || name === 'residence-notify-menu' || name === 'admin-notify';
+  }
+
+  function swapFromDoc(doc, list) {
+    let swapped = false;
+    list.forEach(function (current) {
+      const region = current.getAttribute('data-live-region') || '';
+      const incoming = doc.querySelector('[data-live-region="' + region.replace(/"/g, '') + '"]');
+      if (!incoming) return;
+      const preserve = snapshotPreserve(current);
+      destroyCharts(current);
+      copyUiState(current, incoming);
+      copyNotifyUi(current, incoming);
+      current.replaceWith(incoming);
+      restorePreserve(incoming, preserve);
+      swapped = true;
+    });
+    return swapped;
+  }
+
+  async function fetchHtmlDoc(url) {
+    const response = await fetch(url, {
+      credentials: 'same-origin',
+      cache: 'no-store',
+      headers: {
+        'X-Live-Sync': '1',
+        Accept: 'text/html'
+      }
+    });
+    if (!response.ok) throw new Error('html');
+    return new DOMParser().parseFromString(await response.text(), 'text/html');
   }
 
   async function refreshHtml(keys) {
@@ -216,36 +258,26 @@
     const unlocked = regions.filter((el) => !regionLocked(el));
     if (!unlocked.length) return;
 
+    const notifyUnlocked = unlocked.filter(isNotifyRegion);
+    const pageUnlocked = unlocked.filter((el) => !isNotifyRegion(el));
+
     htmlInFlight = true;
+    let swapped = false;
     try {
-      const response = await fetch(window.location.href, {
-        credentials: 'same-origin',
-        cache: 'no-store',
-        headers: {
-          'X-Live-Sync': '1',
-          Accept: 'text/html'
+      if (notifyUnlocked.length) {
+        try {
+          const notifyDoc = await fetchHtmlDoc(notifyFragmentUrl());
+          if (swapFromDoc(notifyDoc, notifyUnlocked)) swapped = true;
+        } catch (err) {
+          pageUnlocked.push.apply(pageUnlocked, notifyUnlocked);
         }
-      });
-      if (!response.ok) throw new Error('html');
-      const html = await response.text();
-      const doc = new DOMParser().parseFromString(html, 'text/html');
-      mergeResidenceConfig(doc);
-      mergeScriptJson(doc, 'pharmacy-chart-data', 'PHARMACY_CHART_DATA');
-
-      let swapped = false;
-      unlocked.forEach((current) => {
-        const region = current.getAttribute('data-live-region') || '';
-        const incoming = doc.querySelector('[data-live-region="' + region.replace(/"/g, '') + '"]');
-        if (!incoming) return;
-        const preserve = snapshotPreserve(current);
-        destroyCharts(current);
-        copyUiState(current, incoming);
-        copyNotifyUi(current, incoming);
-        current.replaceWith(incoming);
-        restorePreserve(incoming, preserve);
-        swapped = true;
-      });
-
+      }
+      if (pageUnlocked.length) {
+        const doc = await fetchHtmlDoc(window.location.href);
+        mergeResidenceConfig(doc);
+        mergeScriptJson(doc, 'pharmacy-chart-data', 'PHARMACY_CHART_DATA');
+        if (swapFromDoc(doc, pageUnlocked)) swapped = true;
+      }
       if (swapped) {
         document.dispatchEvent(new CustomEvent('livesync:applied', { detail: { keys } }));
       }
@@ -319,5 +351,5 @@
     }
   };
 
-  schedule(1200);
+  schedule(300);
 })();

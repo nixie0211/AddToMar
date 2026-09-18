@@ -291,7 +291,7 @@ function live_sync_client_config(?string $portal = null): array
 
     return [
         'url' => app_url('ajax/live-sync.php'),
-        'interval' => 4000,
+        'interval' => 1200,
         'portal' => $portal,
         'versions' => live_sync_versions($portal),
     ];
@@ -301,5 +301,5 @@ function live_sync_render_script(?string $portal = null): void
 {
     $config = live_sync_client_config($portal);
     echo '<script>window.LIVE_SYNC=' . json_encode($config, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . ';</script>' . "\n";
-    echo '<script src="' . htmlspecialchars(app_url('js/live-sync.js'), ENT_QUOTES, 'UTF-8') . '?v=live-sync-7" defer></script>' . "\n";
+    echo '<script src="' . htmlspecialchars(app_url('js/live-sync.js'), ENT_QUOTES, 'UTF-8') . '?v=live-sync-8" defer></script>' . "\n";
 }
