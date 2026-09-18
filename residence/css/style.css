@@ -844,8 +844,6 @@ input.field-input:focus-visible, select.field-input:focus-visible, textarea.fiel
 .topbar-notification-group[hidden]{ display:none !important; }
 .topbar-notification-group-head{ display:flex; align-items:center; justify-content:space-between; padding:8px 8px 4px 12px; }
 .topbar-notification-group-head h4{ margin:0; color:#050505; font-size:17px; font-weight:700; }
-.topbar-notification-see-all{ border:0; background:transparent; color:#0866ff; font-size:15px; font-weight:600; cursor:pointer; }
-.topbar-notification-see-all:hover{ text-decoration:underline; }
 .topbar-notification-item{ display:flex; align-items:flex-start; gap:12px; padding:10px 10px; border-radius:10px; }
 .topbar-notification-item[hidden]{ display:none !important; }
 .topbar-notification-dropdown:not(.is-expanded) .topbar-notification-item.is-later{ display:none !important; }

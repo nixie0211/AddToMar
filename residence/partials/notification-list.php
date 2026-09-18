@@ -24,9 +24,6 @@ $badgeSvgs = [
 <div class="topbar-notification-group" data-notification-group="<?= htmlspecialchars($groupKey, ENT_QUOTES, 'UTF-8') ?>">
   <div class="topbar-notification-group-head">
     <h4><?= htmlspecialchars($groupLabel, ENT_QUOTES, 'UTF-8') ?></h4>
-    <?php if ($groupKey === 'earlier' && $notificationListContext === 'dropdown'): ?>
-    <button type="button" class="topbar-notification-see-all" onclick="event.stopPropagation(); closeNotificationMenu(); go('notifications');">See all</button>
-    <?php endif; ?>
   </div>
   <?php foreach ($groupItems as $notification): ?>
   <?php
