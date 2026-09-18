@@ -160,6 +160,7 @@ function hideSettingsAlert() {
       const el = document.getElementById(id);
       if (el) el.disabled = !on;
     });
+    if (typeof window.syncSettingsPasswordToggles === 'function') window.syncSettingsPasswordToggles();
   }
 
   function restoreLogo() {
@@ -195,7 +196,9 @@ function hideSettingsAlert() {
     hideSettingsAlert();
     ['settings-current-password', 'settings-new-password', 'settings-confirm-password'].forEach((id) => {
       const el = document.getElementById(id);
-      if (el) el.value = '';
+      if (!el) return;
+      el.value = '';
+      el.type = 'password';
     });
     setEditing(false);
   }
@@ -210,6 +213,47 @@ function hideSettingsAlert() {
   window.setSettingsEditing = setEditing;
   window.snapshotSettingsForm = snapshotAfterSave;
   setEditing(false);
+})();
+
+(function setupSettingsPasswordToggles() {
+  const wraps = document.querySelectorAll('#pane-security .settings-password-wrap');
+  if (!wraps.length) return;
+
+  function syncWrap(wrap) {
+    const input = wrap.querySelector('input');
+    const toggle = wrap.querySelector('.settings-toggle-eye');
+    if (!input || !toggle) return;
+    const editing = !!document.getElementById('settings-profile-page')?.classList.contains('is-editing');
+    const hasText = input.value.length > 0;
+    toggle.hidden = !editing && !hasText;
+    if (!hasText && input.type !== 'password') {
+      input.type = 'password';
+      toggle.classList.remove('is-showing');
+      toggle.setAttribute('aria-label', 'Show password');
+    }
+  }
+
+  wraps.forEach((wrap) => {
+    const input = wrap.querySelector('input');
+    const toggle = wrap.querySelector('.settings-toggle-eye');
+    if (!input || !toggle) return;
+
+    toggle.addEventListener('click', () => {
+      if (input.disabled) return;
+      const show = input.type === 'password';
+      input.type = show ? 'text' : 'password';
+      toggle.classList.toggle('is-showing', show);
+      toggle.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+    });
+
+    input.addEventListener('input', () => syncWrap(wrap));
+    input.addEventListener('change', () => syncWrap(wrap));
+    syncWrap(wrap);
+  });
+
+  window.syncSettingsPasswordToggles = function () {
+    wraps.forEach(syncWrap);
+  };
 })();
 
 (function setupSettingsBusinessForm() {
