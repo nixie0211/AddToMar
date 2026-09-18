@@ -33,6 +33,9 @@
   font-weight:700;
 }
 .settings-edit-btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
   margin-left:auto;
   margin-bottom:8px;
   min-width:88px;
@@ -42,6 +45,8 @@
   background:#fff;
   color:var(--navy);
   font-weight:700;
+  line-height:1;
+  text-align:center;
 }
 .settings-edit-btn:hover{
   border-color:var(--teal);
