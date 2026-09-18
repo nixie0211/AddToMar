@@ -225,6 +225,12 @@ a{text-decoration:none; color:inherit;}
 .icon-btn:hover{background:#F1F5F9; color:var(--text);}
 .icon-btn svg{width:18px; height:18px;}
 .dot-badge{position:absolute; top:6px; right:6px; width:8px; height:8px; border-radius:50%; background:var(--red); border:2px solid #fff;}
+.notif-count-badge{
+  position:absolute; top:2px; right:2px; display:grid; place-items:center;
+  min-width:16px; height:16px; padding:0 4px; border:2px solid #fff; border-radius:999px;
+  background:#e5484d; color:#fff; font-size:9px; font-weight:800; line-height:1;
+}
+.notif-count-badge[hidden]{display:none !important;}
 
 /* ---------- notification dropdown (Facebook-style) ---------- */
 .notif-wrap{position:relative; z-index:240;}

@@ -1,5 +1,12 @@
         <div class="notif-wrap" data-live-region="pharmacy-notify" data-live-keys="shell,orders,inventory">
-          <button class="icon-btn" onclick="toggleNotifDropdown(event)" title="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9zM13.73 21a2 2 0 0 1-3.46 0"/></svg><?php if (!empty($notifications)): ?><span class="dot-badge"></span><?php endif; ?></button>
+          <?php
+            $notifUnreadCount = count(array_filter($notifications ?? [], static fn($item): bool => !empty($item['unread'])));
+            $notifBadgeLabel = $notifUnreadCount > 9 ? '9+' : (string) $notifUnreadCount;
+          ?>
+          <button class="icon-btn" onclick="toggleNotifDropdown(event)" title="Notifications" aria-label="<?= $notifUnreadCount > 0 ? $notifUnreadCount . ' unread notifications' : 'Notifications' ?>">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9zM13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span class="notif-count-badge" id="notif-count-badge"<?= $notifUnreadCount < 1 ? ' hidden' : '' ?>><?= htmlspecialchars($notifBadgeLabel, ENT_QUOTES, 'UTF-8') ?></span>
+          </button>
 
           <div class="notif-dropdown" id="notif-dropdown" data-has-more="<?= count($notifications) > 4 ? '1' : '0' ?>">
             <div class="notif-head">
