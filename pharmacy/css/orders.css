@@ -409,6 +409,11 @@
   border-bottom:1px solid #F1F5F9;
   padding-top:11px;
 }
+.order-med-row .list-meta{
+  font-weight:800;
+  font-size:14px;
+  color:var(--text);
+}
 .order-med-row .med-thumb{
   width:44px;
   height:44px;
