@@ -41,8 +41,20 @@ $profileDocFields = [
             <button type="button" class="settings-profile-tab active" role="tab" aria-selected="true" onclick="showSettingsPane('business', this)">Business information</button>
             <button type="button" class="settings-profile-tab" role="tab" aria-selected="false" onclick="showSettingsPane('security', this)">Login credentials</button>
             <div class="settings-edit-slot">
-              <button type="button" class="btn settings-edit-btn" id="settings-business-edit">Edit</button>
-              <button type="button" class="btn settings-edit-btn" id="settings-security-edit" hidden>Edit</button>
+              <button type="button" class="btn settings-edit-btn" id="settings-business-edit">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M12 20h9"/>
+                  <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/>
+                </svg>
+                Edit
+              </button>
+              <button type="button" class="btn settings-edit-btn" id="settings-security-edit" hidden>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M12 20h9"/>
+                  <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/>
+                </svg>
+                Edit
+              </button>
             </div>
           </div>
 

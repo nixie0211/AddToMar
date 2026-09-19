@@ -40,23 +40,29 @@
   display:inline-flex;
   align-items:center;
   justify-content:center;
+  gap:7px;
   min-width:88px;
   height:36px;
   padding:0 16px;
-  border:1.5px solid var(--border);
-  background:#fff;
-  color:var(--navy);
+  border:1.5px solid var(--red);
+  background:var(--red);
+  color:#fff;
   font-weight:700;
   line-height:1;
   text-align:center;
+}
+.settings-edit-btn svg{
+  width:14px;
+  height:14px;
+  flex:0 0 14px;
 }
 .settings-edit-btn[hidden]{
   display:none !important;
 }
 .settings-edit-btn:hover{
-  border-color:var(--teal);
-  color:var(--teal);
-  background:var(--teal-soft);
+  border-color:#a83232;
+  background:#a83232;
+  color:#fff;
 }
 .settings-profile-page.is-editing-business #settings-business-edit,
 .settings-profile-page.is-editing-security #settings-security-edit{
