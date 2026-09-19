@@ -16,6 +16,10 @@ function updateTopbarHead(name){
 
 function showView(name, el, options){
   options = options || {};
+  const previous = document.querySelector('.view.active')?.id?.replace('view-', '') || '';
+  if (previous === 'settings' && name !== 'settings' && typeof window.discardPharmacySettingsEdits === 'function') {
+    window.discardPharmacySettingsEdits();
+  }
   document.querySelectorAll('.nav-item[data-view]').forEach(n=>n.classList.remove('active'));
   if(el){ el.classList.add('active'); }
   else{

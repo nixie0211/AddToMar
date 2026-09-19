@@ -50,7 +50,7 @@ require_once dirname(__DIR__) . '/includes/maps.php';
 <?php include PHARMACY_ROOT . '/partials/shell-end.php'; ?>
 <?php include dirname(__DIR__) . '/partials/map-area-modal.php'; ?>
 
-<script src="js/app.php?v=pharmacy-notif-read-1"></script>
+<script src="js/app.php?v=pharmacy-settings-reset-1"></script>
 <script type="application/json" id="pharmacy-chart-data"><?= json_encode($chartData ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>
 <script>
 window.PHARMACY_CHART_DATA = <?= json_encode($chartData ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
@@ -101,8 +101,8 @@ window.PHARMACY_REGISTER_MAP_CONFIG = <?= json_encode([
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="<?= htmlspecialchars(app_url('js/map-area-popup.js'), ENT_QUOTES, 'UTF-8') ?>?v=1"></script>
 <script src="<?= htmlspecialchars(app_url('js/map-service-overlay.js'), ENT_QUOTES, 'UTF-8') ?>?v=street-map-2"></script>
-<script src="<?= htmlspecialchars(app_url('js/register-pharmacy-map.js'), ENT_QUOTES, 'UTF-8') ?>?v=street-map-2"></script>
-<script src="js/settings.php?v=profile-edit-split-1"></script>
+<script src="<?= htmlspecialchars(app_url('js/register-pharmacy-map.js'), ENT_QUOTES, 'UTF-8') ?>?v=settings-map-restore-1"></script>
+<script src="js/settings.php?v=profile-edit-reset-1"></script>
 <?php live_sync_render_script('pharmacy'); ?>
 </body>
 </html>

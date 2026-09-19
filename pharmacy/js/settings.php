@@ -27,6 +27,9 @@ window.initSettingsBusinessMap = function initSettingsBusinessMap() {
 };
 
 function showSettingsPane(name, el) {
+  if (typeof window.discardPharmacySettingsEdits === 'function') {
+    window.discardPharmacySettingsEdits(name === 'security' ? 'business' : 'security');
+  }
   document.querySelectorAll('.settings-profile-tab').forEach(function (tab) {
     const on = tab === el;
     tab.classList.toggle('active', on);
@@ -139,6 +142,11 @@ function hideSettingsAlert() {
     hidden: !!logoPreview?.hidden,
     hasImage: !!logoBox?.classList.contains('has-image'),
   };
+  let businessSnapshot = [];
+  let mapSnapshot = {
+    lat: document.getElementById('settings-pharmacy-latitude')?.value || '',
+    lng: document.getElementById('settings-pharmacy-longitude')?.value || '',
+  };
 
   function activePane() {
     return document.getElementById('pane-security')?.classList.contains('active') ? 'security' : 'business';
@@ -186,23 +194,38 @@ function hideSettingsAlert() {
   function restoreLogo() {
     if (!logoPreview || !logoBox) return;
     if (logoInput) logoInput.value = '';
-    if (logoOriginal.src) {
+    const logoText = logoBox.querySelector('.settings-logo-text');
+    if (logoOriginal.src && !logoOriginal.hidden) {
       logoPreview.src = logoOriginal.src;
       logoPreview.hidden = false;
-      logoBox.classList.add('has-image');
+      logoBox.classList.toggle('has-image', logoOriginal.hasImage);
+      if (logoText) logoText.hidden = true;
       window.updatePharmacyRegisterMapLogo?.(logoOriginal.src);
       return;
     }
     logoPreview.removeAttribute('src');
     logoPreview.hidden = true;
     logoBox.classList.remove('has-image');
+    if (logoText) logoText.hidden = false;
+    window.updatePharmacyRegisterMapLogo?.('');
   }
 
-  function snapshotAfterSave() {
+  function snapshotBusinessForm() {
+    businessSnapshot = [];
     form.querySelectorAll('input, textarea').forEach((el) => {
-      if (el.type === 'checkbox') el.defaultChecked = el.checked;
-      else if (el.type !== 'file') el.defaultValue = el.value;
+      if (el.type === 'file') return;
+      businessSnapshot.push({
+        el: el,
+        checked: el.type === 'checkbox' || el.type === 'radio' ? el.checked : null,
+        value: el.type === 'checkbox' || el.type === 'radio' ? null : el.value,
+      });
+      if (el.type === 'checkbox' || el.type === 'radio') el.defaultChecked = el.checked;
+      else el.defaultValue = el.value;
     });
+    mapSnapshot = {
+      lat: document.getElementById('settings-pharmacy-latitude')?.value || '',
+      lng: document.getElementById('settings-pharmacy-longitude')?.value || '',
+    };
     logoOriginal = {
       src: logoPreview?.getAttribute('src') || '',
       hidden: !!logoPreview?.hidden,
@@ -210,10 +233,29 @@ function hideSettingsAlert() {
     };
   }
 
-  function cancelBusinessEditing() {
-    form.reset();
+  function restoreBusinessForm() {
+    businessSnapshot.forEach((item) => {
+      if (!item.el) return;
+      if (item.checked !== null) {
+        item.el.checked = item.checked;
+      } else {
+        item.el.value = item.value;
+      }
+    });
     restoreLogo();
     hideSettingsAlert();
+    if (typeof window.restorePharmacyRegisterMapPin === 'function') {
+      window.restorePharmacyRegisterMapPin(mapSnapshot.lat, mapSnapshot.lng);
+    } else {
+      const latInput = document.getElementById('settings-pharmacy-latitude');
+      const lngInput = document.getElementById('settings-pharmacy-longitude');
+      if (latInput) latInput.value = mapSnapshot.lat;
+      if (lngInput) lngInput.value = mapSnapshot.lng;
+    }
+  }
+
+  function cancelBusinessEditing() {
+    restoreBusinessForm();
     setBusinessEditing(false);
   }
 
@@ -232,6 +274,17 @@ function hideSettingsAlert() {
     setSecurityEditing(false);
   }
 
+  function discardPharmacySettingsEdits(scope) {
+    const all = !scope;
+    if (all || scope === 'business') {
+      restoreBusinessForm();
+      setBusinessEditing(false);
+    }
+    if (all || scope === 'security') {
+      cancelSecurityEditing();
+    }
+  }
+
   businessEdit.addEventListener('click', () => {
     hideSettingsAlert();
     setBusinessEditing(true);
@@ -244,7 +297,9 @@ function hideSettingsAlert() {
 
   window.syncSettingsEditButtons = syncEditButtons;
   window.setSettingsEditing = setBusinessEditing;
-  window.snapshotSettingsForm = snapshotAfterSave;
+  window.snapshotSettingsForm = snapshotBusinessForm;
+  window.discardPharmacySettingsEdits = discardPharmacySettingsEdits;
+  snapshotBusinessForm();
   setBusinessEditing(false);
   setSecurityEditing(false);
 })();
