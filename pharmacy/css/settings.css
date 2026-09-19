@@ -220,6 +220,8 @@
 
 .settings-panel-foot .btn-accent{
   min-width:148px;
+  justify-content:center;
+  text-align:center;
   background:linear-gradient(135deg, #4ec4b4, #219e82);
   color:#fff;
   box-shadow:0 6px 16px rgba(33,158,130,.28);
@@ -269,6 +271,7 @@
 
 .settings-business-form .settings-panel-foot .btn-accent{
   min-width:148px;
+  justify-content:center;
 }
 
 .settings-hint{
