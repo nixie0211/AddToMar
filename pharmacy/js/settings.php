@@ -173,6 +173,9 @@ function hideSettingsAlert() {
       if (el) el.disabled = !on;
     });
     if (logoInput) logoInput.disabled = !on;
+    if (typeof window.setPharmacyRegisterMapEditable === 'function') {
+      window.setPharmacyRegisterMapEditable(on);
+    }
     if (typeof window.syncSettingsHoursRows === 'function') window.syncSettingsHoursRows(!on);
     if (cancelBtn) cancelBtn.hidden = !on;
     if (saveBtn) saveBtn.hidden = !on;

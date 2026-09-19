@@ -329,14 +329,19 @@
 }
 
 .settings-profile-page:not(.is-editing-business) .settings-map-toolbar,
-.settings-profile-page:not(.is-editing-business) .settings-map-frame,
-.settings-profile-page:not(.is-editing-business) .settings-map-hint,
 .settings-profile-page:not(.is-editing-business) .settings-hours-list{
   pointer-events:none;
 }
 
-.settings-profile-page:not(.is-editing-business) .settings-map-hint{
-  opacity:.72;
+.settings-profile-page:not(.is-editing-business) .settings-map-hint--edit,
+.settings-profile-page.is-editing-business .settings-map-hint--view{
+  display:none;
+}
+
+.settings-profile-page:not(.is-editing-business) .settings-map.is-pin-locked .leaflet-marker-icon,
+.settings-profile-page:not(.is-editing-business) .settings-map.is-pin-locked .leaflet-marker-shadow{
+  cursor:default;
+  pointer-events:none;
 }
 
 .settings-logo-initials{

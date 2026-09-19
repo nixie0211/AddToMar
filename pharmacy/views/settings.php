@@ -170,7 +170,8 @@ $profileDocFields = [
                         </button>
                       </div>
 
-                      <p class="settings-map-hint">Click the map or drag the pin to set your pharmacy location.</p>
+                      <p class="settings-map-hint settings-map-hint--view">Scroll to zoom and drag the map to move around. Click Edit to change the pin.</p>
+                      <p class="settings-map-hint settings-map-hint--edit">Click the map or drag the pin to set your pharmacy location.</p>
                       <p id="settings-pharmacy-map-status" class="settings-map-status" hidden aria-live="polite"></p>
 
                       <div class="settings-map-frame">

@@ -69,12 +69,42 @@
     return makeIcon('#10b981', 22);
   }
 
+  function isSettingsMap() {
+    return ids.map === 'settings-pharmacy-map';
+  }
+
+  function canMovePin() {
+    if (!isSettingsMap()) return true;
+    return !!document.getElementById('settings-profile-page')?.classList.contains('is-editing-business');
+  }
+
+  function fitServiceOverview() {
+    const bounds = getFitBounds();
+    if (!map || !bounds) return;
+    map.fitBounds(bounds, { padding: [16, 16], maxZoom: 13, animate: false });
+  }
+
+  function syncMapPinLock() {
+    const movable = canMovePin();
+    if (userMarker && userMarker.dragging) {
+      if (movable) userMarker.dragging.enable();
+      else userMarker.dragging.disable();
+    }
+    el(ids.map)?.classList.toggle('is-pin-locked', isSettingsMap() && !movable);
+    if (userMarker) {
+      userMarker.setPopupContent(getPopupHtml());
+    }
+  }
+
   function getPopupHtml() {
+    const hint = canMovePin()
+      ? 'Drag the pin or click the map to adjust.'
+      : 'Click Edit to change this pin.';
     if (logoObjectUrl) {
-      return `<div class="map-popup-logo"><img src="${logoObjectUrl}" alt=""><strong>Pharmacy location</strong><br><small>Drag the pin or click the map to adjust.</small></div>`;
+      return `<div class="map-popup-logo"><img src="${logoObjectUrl}" alt=""><strong>Pharmacy location</strong><br><small>${hint}</small></div>`;
     }
 
-    return '<strong>Pharmacy location</strong><br><small>Drag the pin or click the map to adjust.</small>';
+    return `<strong>Pharmacy location</strong><br><small>${hint}</small>`;
   }
 
   function refreshMarkerAppearance() {
@@ -325,7 +355,7 @@
 
     userMarker = L.marker([lat, lng], {
       icon: getMarkerIcon(MARKER_SIZE),
-      draggable: true,
+      draggable: canMovePin(),
       title: 'Pharmacy location',
       zIndexOffset: 1000,
     })
@@ -333,9 +363,15 @@
       .addTo(map);
 
     userMarker.on('dragend', (event) => {
+      if (!canMovePin()) {
+        const saved = readSavedCoords();
+        if (saved) userMarker.setLatLng([saved.lat, saved.lng]);
+        return;
+      }
       const { lat: dragLat, lng: dragLng } = event.target.getLatLng();
       applyLocation(dragLat, dragLng, { pan: false, userAction: true });
     });
+    syncMapPinLock();
   }
 
   function applyLocation(lat, lng, options = {}) {
@@ -378,7 +414,9 @@
 
     const saved = readSavedCoords();
     if (saved && isInServiceArea(saved.lat, saved.lng)) {
-      applyLocation(saved.lat, saved.lng, { pan: true, skipReverse: true });
+      applyLocation(saved.lat, saved.lng, { pan: !isSettingsMap(), skipReverse: true });
+      if (isSettingsMap()) fitServiceOverview();
+      syncMapPinLock();
       return;
     }
 
@@ -393,10 +431,12 @@
     }
 
     applyLocation(result.lat, result.lng, {
-      pan: true,
+      pan: !isSettingsMap(),
       skipReverse: true,
       address: result.label.split(',').slice(0, 5).join(', ').trim(),
     });
+    if (isSettingsMap()) fitServiceOverview();
+    syncMapPinLock();
   }
 
   function locateUser() {
@@ -418,6 +458,7 @@
     mapClickBound = true;
 
     map.on('click', (event) => {
+      if (!canMovePin()) return;
       applyLocation(event.latlng.lat, event.latlng.lng, { pan: false, userAction: true });
     });
   }
@@ -452,20 +493,22 @@
     });
   }
 
-  function invalidateMapSize() {
+  function invalidateMapSize(refitOverview) {
     if (!map) return;
 
-    map.invalidateSize({ animate: false });
-
-    requestAnimationFrame(() => {
+    const refresh = () => {
       map.invalidateSize({ animate: false });
-    });
+      if (refitOverview && isSettingsMap() && !canMovePin()) {
+        fitServiceOverview();
+      }
+    };
+
+    refresh();
+    requestAnimationFrame(refresh);
 
     [120, 320, 600].forEach((delay) => {
       setTimeout(() => {
-        if (map) {
-          map.invalidateSize({ animate: false });
-        }
+        if (map) refresh();
       }, delay);
     });
   }
@@ -518,9 +561,16 @@
 
     setHiddenCoords(latNum, lngNum);
     setUserMarker(latNum, lngNum);
-    if (map) {
+    if (isSettingsMap()) {
+      fitServiceOverview();
+    } else if (map) {
       map.setView([latNum, lngNum], Math.max(map.getZoom(), 15));
     }
+    syncMapPinLock();
+  };
+
+  window.setPharmacyRegisterMapEditable = function setPharmacyRegisterMapEditable() {
+    syncMapPinLock();
   };
 
   window.initPharmacyRegisterMap = function initPharmacyRegisterMap() {
@@ -549,17 +599,18 @@
       bindMapInteractions();
 
       if (fitBounds) {
-        map.fitBounds(fitBounds, { padding: [20, 20] });
+        map.fitBounds(fitBounds, { padding: [16, 16], maxZoom: 13 });
       } else {
         map.setView([cfg.defaultLat || 18.1978, cfg.defaultLng || 120.5937], cfg.defaultZoom || 12);
       }
 
-      invalidateMapSize();
       restoreSavedLocation();
+      syncMapPinLock();
+      invalidateMapSize(true);
       return;
     }
 
-    invalidateMapSize();
+    invalidateMapSize(!canMovePin());
 
     if (!userMarker) {
       restoreSavedLocation();
@@ -567,5 +618,6 @@
       syncLogoFromDom();
       refreshMarkerAppearance();
     }
+    syncMapPinLock();
   };
 })();

@@ -35,7 +35,7 @@ require_once dirname(__DIR__) . '/includes/maps.php';
 <link rel="stylesheet" href="<?= htmlspecialchars(app_url('css/rx-crop-preview.css'), ENT_QUOTES, 'UTF-8') ?>?v=rx-crop-contain-1">
 <link rel="stylesheet" href="css/orders.css?v=order-update-btn-right-1">
 <link rel="stylesheet" href="css/reports.css">
-<link rel="stylesheet" href="css/settings.css?v=profile-edit-split-1">
+<link rel="stylesheet" href="css/settings.css?v=settings-map-view-1">
 <link rel="stylesheet" href="css/add-medicine.css?v=saving-overlay-1">
 <link rel="stylesheet" href="css/inventory.css?v=store-name-ellipsis-2">
 </head>
@@ -101,8 +101,8 @@ window.PHARMACY_REGISTER_MAP_CONFIG = <?= json_encode([
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="<?= htmlspecialchars(app_url('js/map-area-popup.js'), ENT_QUOTES, 'UTF-8') ?>?v=1"></script>
 <script src="<?= htmlspecialchars(app_url('js/map-service-overlay.js'), ENT_QUOTES, 'UTF-8') ?>?v=street-map-2"></script>
-<script src="<?= htmlspecialchars(app_url('js/register-pharmacy-map.js'), ENT_QUOTES, 'UTF-8') ?>?v=settings-map-restore-1"></script>
-<script src="js/settings.php?v=profile-edit-reset-1"></script>
+<script src="<?= htmlspecialchars(app_url('js/register-pharmacy-map.js'), ENT_QUOTES, 'UTF-8') ?>?v=settings-map-view-1"></script>
+<script src="js/settings.php?v=settings-map-view-1"></script>
 <?php live_sync_render_script('pharmacy'); ?>
 </body>
 </html>
