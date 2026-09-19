@@ -35,7 +35,7 @@ require_once dirname(__DIR__) . '/includes/maps.php';
 <link rel="stylesheet" href="<?= htmlspecialchars(app_url('css/rx-crop-preview.css'), ENT_QUOTES, 'UTF-8') ?>?v=rx-crop-contain-1">
 <link rel="stylesheet" href="css/orders.css?v=order-update-btn-right-1">
 <link rel="stylesheet" href="css/reports.css">
-<link rel="stylesheet" href="css/settings.css?v=settings-map-view-1">
+<link rel="stylesheet" href="css/settings.css?v=settings-logo-plus-1">
 <link rel="stylesheet" href="css/add-medicine.css?v=saving-overlay-1">
 <link rel="stylesheet" href="css/inventory.css?v=store-name-ellipsis-2">
 </head>
@@ -102,7 +102,7 @@ window.PHARMACY_REGISTER_MAP_CONFIG = <?= json_encode([
 <script src="<?= htmlspecialchars(app_url('js/map-area-popup.js'), ENT_QUOTES, 'UTF-8') ?>?v=1"></script>
 <script src="<?= htmlspecialchars(app_url('js/map-service-overlay.js'), ENT_QUOTES, 'UTF-8') ?>?v=street-map-2"></script>
 <script src="<?= htmlspecialchars(app_url('js/register-pharmacy-map.js'), ENT_QUOTES, 'UTF-8') ?>?v=settings-map-view-1"></script>
-<script src="js/settings.php?v=settings-map-view-1"></script>
+<script src="js/settings.php?v=settings-logo-plus-1"></script>
 <?php live_sync_render_script('pharmacy'); ?>
 </body>
 </html>

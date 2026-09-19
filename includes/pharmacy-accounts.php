@@ -1262,6 +1262,48 @@ function pharmacy_accounts_format_time(string $time): string
     return $dt ? $dt->format('g:i A') : $time;
 }
 
+function pharmacy_accounts_update_logo(string $email, array $files): array
+{
+    $email = pharmacy_accounts_normalize_email($email);
+    $accounts = pharmacy_accounts_load_all();
+
+    if ($email === '' || !isset($accounts[$email])) {
+        return ['ok' => false, 'error' => 'Pharmacy account not found.'];
+    }
+
+    $account = $accounts[$email];
+    $accountId = (string) ($account['id'] ?? '');
+    if ($accountId === '') {
+        return ['ok' => false, 'error' => 'Pharmacy account not found.'];
+    }
+
+    if (!isset($files['logo']) || ($files['logo']['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
+        return ['ok' => false, 'error' => 'Choose a pharmacy logo to upload.'];
+    }
+
+    $storedLogo = pharmacy_accounts_store_upload_result($files['logo'], $accountId, 'logo', ['jpg', 'jpeg', 'png', 'webp', 'svg']);
+    if (!$storedLogo['ok']) {
+        return ['ok' => false, 'error' => 'Could not upload pharmacy logo. ' . ($storedLogo['error'] !== '' ? $storedLogo['error'] : 'Use JPG, PNG, WEBP, or SVG.')];
+    }
+
+    $account['logo_path'] = $storedLogo['path'];
+    $account['updated_at'] = date('c');
+    $accounts[$email] = $account;
+
+    if (!pharmacy_accounts_save_all($accounts)) {
+        return ['ok' => false, 'error' => 'Could not save your pharmacy logo. Please try again.'];
+    }
+
+    if (pharmacy_accounts_is_approved($account)) {
+        pharmacy_accounts_sync_database($account);
+    }
+
+    pharmacy_accounts_sync_medvault($account);
+    pharmacy_hydrate_session_from_account($account);
+
+    return ['ok' => true, 'account' => $account];
+}
+
 function pharmacy_accounts_update_profile(string $email, array $input, array $files): array
 {
     $email = pharmacy_accounts_normalize_email($email);

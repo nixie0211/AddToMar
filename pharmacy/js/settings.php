@@ -94,6 +94,37 @@ function hideSettingsAlert() {
   const logoText = logoBox?.querySelector('.settings-logo-text');
   if (!logoInput || !logoPreview || !logoBox) return;
 
+  logoInput.disabled = false;
+
+  function applyLogoPreview(url) {
+    const src = String(url || '').trim();
+    if (!src) return;
+    logoPreview.src = src;
+    logoPreview.hidden = false;
+    logoBox.classList.add('has-image');
+    if (logoText) logoText.hidden = true;
+    if (typeof window.updatePharmacyRegisterMapLogo === 'function') {
+      window.updatePharmacyRegisterMapLogo(src);
+    }
+  }
+
+  function applyLogoToChrome(url) {
+    const src = String(url || '').trim();
+    if (!src) return;
+    const avatar = document.querySelector('.topbar-profile .avatar');
+    if (!avatar) return;
+    avatar.classList.add('has-logo');
+    let img = avatar.querySelector('.avatar-logo');
+    if (!img) {
+      avatar.textContent = '';
+      img = document.createElement('img');
+      img.className = 'avatar-logo';
+      img.alt = '';
+      avatar.appendChild(img);
+    }
+    img.src = src;
+  }
+
   function syncMapLogo() {
     const src = logoPreview.getAttribute('src') || '';
     if (logoPreview.hidden || !src || src === window.location.href) return;
@@ -102,15 +133,38 @@ function hideSettingsAlert() {
     }
   }
 
-  logoInput.addEventListener('change', () => {
+  logoInput.addEventListener('change', async () => {
     const file = logoInput.files?.[0];
-    if (!file || !file.type.startsWith('image/')) return;
+    if (!file) return;
+    if (!file.type.startsWith('image/') && !/\.svg$/i.test(file.name || '')) {
+      showSettingsAlert('Use JPG, PNG, WEBP, or SVG for the pharmacy logo.', 'error');
+      logoInput.value = '';
+      return;
+    }
 
-    logoPreview.src = URL.createObjectURL(file);
-    logoPreview.hidden = false;
-    logoBox.classList.add('has-image');
-    if (logoText) logoText.hidden = true;
-    syncMapLogo();
+    applyLogoPreview(URL.createObjectURL(file));
+
+    const payload = new FormData();
+    payload.append('logo', file);
+    try {
+      const response = await fetch('api/save-logo.php', {
+        method: 'POST',
+        body: payload,
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok || !data.account?.logo_url) {
+        throw new Error(data.error || 'Could not update the pharmacy logo.');
+      }
+      applyLogoPreview(data.account.logo_url);
+      applyLogoToChrome(data.account.logo_url);
+      logoInput.value = '';
+      if (typeof window.snapshotSettingsForm === 'function') window.snapshotSettingsForm();
+      showSettingsAlert(data.message || 'Pharmacy logo updated.', 'success');
+    } catch (error) {
+      if (typeof window.restoreSettingsLogo === 'function') window.restoreSettingsLogo();
+      showSettingsAlert(error.message || 'Could not update the pharmacy logo.', 'error');
+      logoInput.value = '';
+    }
   });
 
   syncMapLogo();
@@ -172,7 +226,6 @@ function hideSettingsAlert() {
       const el = document.getElementById(id);
       if (el) el.disabled = !on;
     });
-    if (logoInput) logoInput.disabled = !on;
     if (typeof window.setPharmacyRegisterMapEditable === 'function') {
       window.setPharmacyRegisterMapEditable(on);
     }
@@ -302,6 +355,7 @@ function hideSettingsAlert() {
   window.setSettingsEditing = setBusinessEditing;
   window.snapshotSettingsForm = snapshotBusinessForm;
   window.discardPharmacySettingsEdits = discardPharmacySettingsEdits;
+  window.restoreSettingsLogo = restoreLogo;
   snapshotBusinessForm();
   setBusinessEditing(false);
   setSecurityEditing(false);

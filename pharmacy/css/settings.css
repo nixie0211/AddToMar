@@ -312,15 +312,6 @@
   cursor:pointer;
 }
 
-.settings-profile-page:not(.is-editing-business) .settings-logo{
-  cursor:default;
-  pointer-events:none;
-}
-
-.settings-profile-page:not(.is-editing-business) .settings-logo-plus{
-  display:none;
-}
-
 .settings-profile-page:not(.is-editing-business) .settings-business-form input:not([type="hidden"]):not(.settings-logo-input),
 .settings-profile-page:not(.is-editing-business) .settings-business-form textarea{
   background:#f6f8f9;

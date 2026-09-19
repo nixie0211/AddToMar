@@ -25,7 +25,7 @@ $profileDocFields = [
               <?php else: ?>
               <img id="settings-logo-preview-img" alt="" hidden>
               <?php endif; ?>
-              <input id="settings-pharmacy-logo" class="settings-logo-input" name="logo" type="file" accept=".jpg,.jpeg,.png,.webp,.svg,image/*" form="settings-business-form" disabled>
+              <input id="settings-pharmacy-logo" class="settings-logo-input" name="logo" type="file" accept=".jpg,.jpeg,.png,.webp,.svg,image/*" form="settings-business-form">
             </label>
             <div class="settings-profile-head-copy">
               <h2 id="settings-display-name"><?= htmlspecialchars($pharmacyName, ENT_QUOTES, 'UTF-8') ?></h2>
