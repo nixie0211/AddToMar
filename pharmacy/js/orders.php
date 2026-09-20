@@ -603,6 +603,7 @@ function renderOrderDrawerDetail(detail) {
       '</div></div>';
   } else if (detail.next_status) {
     actions = '<div class="order-panel-actions"><div class="order-panel-actions-row">' +
+      '<a class="btn btn-danger" id="order-update-cancel-btn" href="' + closeHref + '">Cancel</a>' +
       '<button type="button" class="btn btn-accent order-update-status-btn" id="update-order-status-btn" data-order-id="' + detail.id + '" data-next-status="' + escapeHtml(detail.next_status) + '" data-next-label="' + escapeHtml(detail.next_label) + '">Update status</button>' +
       '</div></div>';
   } else if (detail.is_ready) {
@@ -918,7 +919,7 @@ function navigateOrdersLink(link) {
     switchOrdersTab(href);
     return;
   }
-  if (link.classList.contains('order-drawer-close-btn') || link.id === 'order-drawer-close') {
+  if (link.classList.contains('order-drawer-close-btn') || link.id === 'order-drawer-close' || link.id === 'order-update-cancel-btn') {
     const close = document.getElementById('order-drawer-close-btn');
     closeOrderDrawer((close && close.getAttribute('href')) || href);
     return;
@@ -1145,7 +1146,7 @@ function initPharmacyOrderUi() {
       return;
     }
 
-    const closeEl = event.target.closest('#order-drawer-close, #order-drawer-close-btn');
+    const closeEl = event.target.closest('#order-drawer-close, #order-drawer-close-btn, #order-update-cancel-btn');
     if (closeEl) {
       event.preventDefault();
       navigateOrdersLink(closeEl);
