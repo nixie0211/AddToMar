@@ -39,6 +39,9 @@ function showView(name, el, options){
   if(!options.skipUrl){
     syncViewUrl(name, options.replaceUrl === true);
   }
+  if(name === 'orders'){
+    markPharmacyOrdersSeen();
+  }
 }
 
 function buildViewUrl(name){
@@ -65,6 +68,28 @@ function syncViewUrl(name, replace){
   } else {
     history.pushState(state, '', nextUrl);
   }
+}
+
+function setPharmacyOrdersBadge(count){
+  const badge = document.getElementById('nav-orders-badge');
+  if(!badge) return;
+  count = Math.max(0, Number(count) || 0);
+  if(count < 1){
+    badge.hidden = true;
+    badge.textContent = '0';
+    badge.setAttribute('aria-label', '0 new orders');
+    return;
+  }
+  badge.hidden = false;
+  badge.textContent = count > 99 ? '99+' : String(count);
+  badge.setAttribute('aria-label', count + ' new orders');
+}
+
+function markPharmacyOrdersSeen(){
+  setPharmacyOrdersBadge(0);
+  const url = document.querySelector('.sidebar')?.getAttribute('data-orders-seen-url') || '';
+  if(!url) return;
+  fetch(url, { method:'POST', credentials:'same-origin' }).catch(function(){});
 }
 
 document.addEventListener('DOMContentLoaded', function(){

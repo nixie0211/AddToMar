@@ -1005,6 +1005,66 @@ function pharmacy_notification_mark_read(string $noticeId): array
     return ['ok' => true, 'unread' => pharmacy_notification_unread_count()];
 }
 
+function pharmacy_pending_order_notice_ids(): array
+{
+    try {
+        $rows = pharmacy_db()->query(
+            'SELECT id FROM orders WHERE status = "pending" AND ' . pharmacy_scope_sql()
+        )->fetchAll();
+    } catch (Throwable) {
+        return [];
+    }
+
+    $ids = [];
+    foreach ($rows as $row) {
+        $orderId = (int) ($row['id'] ?? 0);
+        if ($orderId > 0) {
+            $ids[] = pharmacy_notification_id('new-order', (string) $orderId);
+        }
+    }
+
+    return $ids;
+}
+
+function pharmacy_new_order_badge_count(): int
+{
+    $pending = pharmacy_pending_order_notice_ids();
+    if ($pending === []) {
+        return 0;
+    }
+
+    $readIds = pharmacy_notification_read_ids();
+    $unread = 0;
+    foreach ($pending as $noticeId) {
+        if (!pharmacy_notification_is_read($noticeId, $readIds)) {
+            $unread++;
+        }
+    }
+
+    return $unread;
+}
+
+function pharmacy_mark_pending_orders_seen(): int
+{
+    $pharmacyId = pharmacy_current_id();
+    if ($pharmacyId === '') {
+        return pharmacy_new_order_badge_count();
+    }
+
+    $now = date('Y-m-d H:i:s');
+    try {
+        $stmt = pharmacy_db()->prepare(
+            'INSERT IGNORE INTO pharmacy_notification_reads (pharmacy_id, notice_id, read_at) VALUES (?, ?, ?)'
+        );
+        foreach (pharmacy_pending_order_notice_ids() as $noticeId) {
+            $stmt->execute([$pharmacyId, $noticeId, $now]);
+        }
+    } catch (Throwable) {
+    }
+
+    return pharmacy_new_order_badge_count();
+}
+
 function pharmacy_get_notifications(): array
 {
     $notifications = [];

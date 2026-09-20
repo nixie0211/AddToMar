@@ -1,5 +1,5 @@
 <div id="app-shell">
-  <aside class="sidebar" data-live-region="pharmacy-nav" data-live-keys="shell,orders,inventory">
+  <aside class="sidebar" data-live-region="pharmacy-nav" data-live-keys="shell,orders,inventory" data-orders-seen-url="<?= htmlspecialchars(function_exists('app_url') ? app_url('ajax/pharmacy-orders-seen.php') : '../ajax/pharmacy-orders-seen.php', ENT_QUOTES, 'UTF-8') ?>">
     <a class="brand-mark" href="<?= htmlspecialchars(function_exists('app_url') ? app_url('pharmacy/') : './', ENT_QUOTES, 'UTF-8') ?>" aria-label="AddToMar home">
       <span class="brand-logo" aria-hidden="true">
         <img src="<?= htmlspecialchars(function_exists('app_url') ? app_url('2.png') : '../2.png', ENT_QUOTES, 'UTF-8') ?>" alt="" width="40" height="40">
@@ -14,7 +14,10 @@
     </div>
     <?php
       $inventoryAlertCount = (int) ($stats['lowStock'] ?? 0) + (int) ($stats['expiring'] ?? 0);
-      $ordersAlertCount = (int) ($stats['pendingOrders'] ?? 0);
+      if (($activeView ?? '') === 'orders') {
+          pharmacy_mark_pending_orders_seen();
+      }
+      $ordersAlertCount = pharmacy_new_order_badge_count();
     ?>
     <div class="nav-item<?= $activeView === 'inventory' ? ' active' : '' ?>" data-view="inventory" onclick="showView('inventory', this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7L12 3 4 7v10l8 4 8-4V7z"/><path d="M4 7l8 4 8-4M12 11v10"/></svg>
@@ -24,7 +27,7 @@
     <div class="nav-item<?= $activeView === 'orders' ? ' active' : '' ?>" data-view="orders" onclick="showView('orders', this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2l1.5 3h9L18 2M3 6h18l-1.5 13a2 2 0 0 1-2 1.8H6.5a2 2 0 0 1-2-1.8L3 6z"/></svg>
       Orders
-      <span class="badge-count" id="nav-orders-badge"<?= $ordersAlertCount < 1 ? ' hidden' : '' ?> aria-label="<?= $ordersAlertCount ?> pending orders"><?= $ordersAlertCount > 99 ? '99+' : (string) $ordersAlertCount ?></span>
+      <span class="badge-count" id="nav-orders-badge"<?= $ordersAlertCount < 1 ? ' hidden' : '' ?> aria-label="<?= $ordersAlertCount ?> new orders"><?= $ordersAlertCount > 99 ? '99+' : (string) $ordersAlertCount ?></span>
     </div>
 
     <div class="nav-group-label">Business</div>
