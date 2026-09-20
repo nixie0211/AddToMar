@@ -12,19 +12,19 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
       Dashboard
     </div>
+    <?php
+      $inventoryAlertCount = (int) ($stats['lowStock'] ?? 0) + (int) ($stats['expiring'] ?? 0);
+      $ordersAlertCount = (int) ($stats['pendingOrders'] ?? 0);
+    ?>
     <div class="nav-item<?= $activeView === 'inventory' ? ' active' : '' ?>" data-view="inventory" onclick="showView('inventory', this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7L12 3 4 7v10l8 4 8-4V7z"/><path d="M4 7l8 4 8-4M12 11v10"/></svg>
       Inventory
-      <?php if ((int) ($stats['lowStock'] ?? 0) > 0): ?>
-      <span class="badge-count"><?= (int) $stats['lowStock'] ?></span>
-      <?php endif; ?>
+      <span class="badge-count" id="nav-inventory-badge"<?= $inventoryAlertCount < 1 ? ' hidden' : '' ?> aria-label="<?= $inventoryAlertCount ?> inventory alerts"><?= $inventoryAlertCount > 99 ? '99+' : (string) $inventoryAlertCount ?></span>
     </div>
     <div class="nav-item<?= $activeView === 'orders' ? ' active' : '' ?>" data-view="orders" onclick="showView('orders', this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2l1.5 3h9L18 2M3 6h18l-1.5 13a2 2 0 0 1-2 1.8H6.5a2 2 0 0 1-2-1.8L3 6z"/></svg>
       Orders
-      <?php if ((int) ($stats['pendingOrders'] ?? 0) > 0): ?>
-      <span class="badge-count"><?= (int) $stats['pendingOrders'] ?></span>
-      <?php endif; ?>
+      <span class="badge-count" id="nav-orders-badge"<?= $ordersAlertCount < 1 ? ' hidden' : '' ?> aria-label="<?= $ordersAlertCount ?> pending orders"><?= $ordersAlertCount > 99 ? '99+' : (string) $ordersAlertCount ?></span>
     </div>
 
     <div class="nav-group-label">Business</div>
@@ -55,7 +55,6 @@
     <header class="topbar">
 <?php include PHARMACY_ROOT . '/partials/topbar-heads.php'; ?>
       <div class="topbar-actions">
-<?php include PHARMACY_ROOT . '/partials/notify-dropdown.php'; ?>
         <button class="icon-btn" onclick="showView('settings')" title="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0 1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.14.6.5 1.13 1 1.51H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
         <div class="topbar-profile" title="Pharmacy profile">
           <div class="avatar avatar--profile<?= $pharmacyLogoUrl !== '' ? ' has-logo' : '' ?>">

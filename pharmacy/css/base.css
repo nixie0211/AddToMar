@@ -112,10 +112,13 @@ a{text-decoration:none; color:inherit;}
 }
 .nav-item svg{width:18px; height:18px; flex-shrink:0;}.nav-item:hover{background:#effaf8;color:#087e70;}.nav-item.active{background:linear-gradient(135deg,#068a78,#1eb19b);color:#fff;box-shadow:0 4px 10px rgba(15,122,114,.22);}
 .nav-item .badge-count{
-  margin-left:auto; background:var(--red); color:#fff; font-size:10.5px; font-weight:700;
-  padding:1px 6px; border-radius:20px;
+  margin-left:auto; min-width:18px; height:18px; padding:0 6px;
+  display:inline-flex; align-items:center; justify-content:center;
+  background:var(--red); color:#fff; font-size:10.5px; font-weight:800;
+  line-height:1; border-radius:20px;
 }
-.sidebar .badge-count{display:none;}
+.nav-item .badge-count[hidden]{display:none !important;}
+.nav-item.active .badge-count{background:#fff; color:#c81e1e;}
 .sidebar-foot{margin-top:auto;padding:14px 2px 0;border-top:1px solid #e3eeee;}
 .sidebar-summary{
   margin:0 0 28px;

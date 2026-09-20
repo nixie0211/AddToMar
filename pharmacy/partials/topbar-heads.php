@@ -33,12 +33,6 @@ declare(strict_types=1);
           <p class="desc">Deeper trends across inventory turnover and demand.</p>
         </div>
 
-        <div class="topbar-head" data-topbar-head="notifications" hidden>
-          <span class="eyebrow">Notifications</span>
-          <h1>Notifications</h1>
-          <p class="desc">Low stock, expiring medicines, and new orders only.</p>
-        </div>
-
         <div class="topbar-head" data-topbar-head="customers" hidden>
           <span class="eyebrow">Customers</span>
           <h1>Customers</h1>
@@ -58,10 +52,6 @@ declare(strict_types=1);
       </div>
 
       <div class="topbar-view-actions">
-        <div class="topbar-page-actions" data-topbar-actions="notifications" hidden>
-          <button type="button" class="btn">Mark all as read</button>
-        </div>
-
         <div class="topbar-page-actions" data-topbar-actions="suppliers" hidden>
           <button type="button" class="btn btn-accent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>Add supplier</button>
         </div>

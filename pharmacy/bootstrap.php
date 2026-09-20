@@ -40,7 +40,6 @@ $orders = pharmacy_get_orders();
 $orderStatusCounts = pharmacy_get_order_status_counts();
 $customers = pharmacy_get_customers();
 $suppliers = pharmacy_get_suppliers();
-$notifications = pharmacy_get_notifications();
 $chartData = pharmacy_get_chart_data();
 $salesStats = pharmacy_get_sales_stats();
 $recentTransactions = pharmacy_get_recent_transactions();

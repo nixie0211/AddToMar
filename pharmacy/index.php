@@ -16,7 +16,6 @@ $views = [
     'sales',
     'reports',
     'analytics',
-    'notifications',
     'customers',
     'suppliers',
     'settings',
@@ -31,7 +30,7 @@ require_once dirname(__DIR__) . '/includes/maps.php';
 <?php include PHARMACY_ROOT . '/partials/head.php'; ?>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 <link rel="stylesheet" href="<?= htmlspecialchars(app_url('css/map-service-overlay.css'), ENT_QUOTES, 'UTF-8') ?>?v=street-map-2">
-<link rel="stylesheet" href="css/base.css?v=pharmacy-notif-count-1">
+<link rel="stylesheet" href="css/base.css?v=pharmacy-nav-badge-1">
 <link rel="stylesheet" href="<?= htmlspecialchars(app_url('css/rx-crop-preview.css'), ENT_QUOTES, 'UTF-8') ?>?v=rx-crop-contain-1">
 <link rel="stylesheet" href="css/orders.css?v=order-med-total-bold-1">
 <link rel="stylesheet" href="css/reports.css">
@@ -50,7 +49,7 @@ require_once dirname(__DIR__) . '/includes/maps.php';
 <?php include PHARMACY_ROOT . '/partials/shell-end.php'; ?>
 <?php include dirname(__DIR__) . '/partials/map-area-modal.php'; ?>
 
-<script src="js/app.php?v=pharmacy-settings-reset-1"></script>
+<script src="js/app.php?v=pharmacy-nav-badge-1"></script>
 <script type="application/json" id="pharmacy-chart-data"><?= json_encode($chartData ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>
 <script>
 window.PHARMACY_CHART_DATA = <?= json_encode($chartData ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;

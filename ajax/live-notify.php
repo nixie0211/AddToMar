@@ -28,13 +28,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
 
 echo '<!DOCTYPE html><html><body>';
 
-if ($portal === 'pharmacy') {
-    require_once dirname(__DIR__) . '/pharmacy/config.php';
-    require_once dirname(__DIR__) . '/pharmacy/includes/database.php';
-    require_once dirname(__DIR__) . '/pharmacy/includes/repository.php';
-    $notifications = pharmacy_get_notifications();
-    include dirname(__DIR__) . '/pharmacy/partials/notify-dropdown.php';
-} elseif ($portal === 'residence') {
+if ($portal === 'residence') {
     require_once dirname(__DIR__) . '/residence/config.php';
     require_once dirname(__DIR__) . '/includes/resident-notifications.php';
     $email = (string) ($_SESSION['user_email'] ?? '');
