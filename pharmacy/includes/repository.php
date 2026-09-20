@@ -1355,11 +1355,125 @@ function pharmacy_order_upload_blob(string $relativePath): ?array
     if (is_resource($row['content'] ?? null)) {
         $row['content'] = stream_get_contents($row['content']);
     }
+    if (!is_string($row['content'] ?? null)) {
+        $row['content'] = is_scalar($row['content'] ?? null) ? (string) $row['content'] : '';
+    }
+    if ($row['content'] === '') {
+        return null;
+    }
+
+    return $row;
+}
+
+function pharmacy_order_upload_blob_by_filename(string $filename): ?array
+{
+    $filename = basename(str_replace('\\', '/', trim($filename)));
+    if ($filename === '') {
+        return null;
+    }
+
+    try {
+        $stmt = pharmacy_db()->prepare(
+            'SELECT filename, mime, content FROM order_uploads
+             WHERE filename = ? OR relative_path = ? OR relative_path LIKE ?
+             ORDER BY id DESC
+             LIMIT 1'
+        );
+        $stmt->execute([$filename, $filename, '%/' . $filename]);
+        $row = $stmt->fetch();
+    } catch (Throwable) {
+        return null;
+    }
+
+    if (!is_array($row)) {
+        return null;
+    }
+    if (is_resource($row['content'] ?? null)) {
+        $row['content'] = stream_get_contents($row['content']);
+    }
     if (!is_string($row['content'] ?? null) || $row['content'] === '') {
         return null;
     }
 
     return $row;
+}
+
+function pharmacy_read_pickup_proof_file(int $orderId, string $relativePath): ?array
+{
+    $relativePath = str_replace('\\', '/', trim($relativePath));
+    if (preg_match('#^https?://[^/]+/(.+)$#i', $relativePath, $matches)) {
+        $relativePath = (string) ($matches[1] ?? $relativePath);
+    }
+    $filename = $relativePath !== '' ? basename(parse_url($relativePath, PHP_URL_PATH) ?: $relativePath) : '';
+    $candidates = [];
+    if ($relativePath !== '') {
+        $candidates[] = $relativePath;
+        $candidates[] = ltrim($relativePath, '/');
+        $candidates[] = 'uploads/pickup-proof/' . $filename;
+        $candidates[] = $filename;
+    }
+
+    foreach (array_unique(array_filter($candidates)) as $path) {
+        $file = pharmacy_read_order_upload_file($path);
+        if ($file !== null) {
+            return $file;
+        }
+        $file = pharmacy_order_upload_blob_by_filename($path);
+        if ($file !== null) {
+            return $file;
+        }
+    }
+
+    if ($orderId > 0) {
+        try {
+            $stmt = pharmacy_db()->prepare(
+                'SELECT filename, mime, content FROM order_uploads
+                 WHERE filename LIKE ? OR relative_path LIKE ?
+                 ORDER BY id DESC
+                 LIMIT 1'
+            );
+            $like = 'order-' . $orderId . '-%';
+            $stmt->execute([$like, '%/' . $like]);
+            $row = $stmt->fetch();
+            if (is_array($row)) {
+                if (is_resource($row['content'] ?? null)) {
+                    $row['content'] = stream_get_contents($row['content']);
+                }
+                if (is_string($row['content'] ?? null) && $row['content'] !== '') {
+                    return $row;
+                }
+            }
+        } catch (Throwable) {
+        }
+    }
+
+    $pattern = dirname(__DIR__, 2) . '/uploads/pickup-proof/order-' . $orderId . '-*';
+    $matches = glob($pattern) ?: [];
+    rsort($matches);
+    foreach ($matches as $absolute) {
+        if (!is_file($absolute)) {
+            continue;
+        }
+        $bytes = file_get_contents($absolute);
+        if (!is_string($bytes) || $bytes === '') {
+            continue;
+        }
+        $name = basename($absolute);
+        $mime = pharmacy_order_upload_mime($name);
+        $storePath = 'uploads/pickup-proof/' . $name;
+        try {
+            pharmacy_store_order_upload_blob($storePath, $bytes, $mime);
+        } catch (Throwable) {
+        }
+
+        return [
+            'filename' => $name,
+            'mime' => $mime,
+            'content' => $bytes,
+        ];
+    }
+
+    return null;
 }
 
 function pharmacy_read_order_upload_file(string $relativePath): ?array
