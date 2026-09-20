@@ -239,6 +239,7 @@
   background:rgba(255,255,255,.45);
   z-index:2;
 }
+.order-overview.panel,
 .order-overview{
   position:relative;
   display:flex;
@@ -248,10 +249,11 @@
   min-height:0;
   margin:0;
   padding:0;
-  border:1px solid #edf2f4;
-  border-radius:18px;
+  border:0;
+  border-radius:0;
+  box-shadow:none;
   overflow:hidden;
-  background:#fff;
+  background:transparent;
 }
 .order-overview .panel-head{
   display:flex;
@@ -1354,9 +1356,9 @@ body.modal-open{
   gap:10px;
   flex:0 0 auto;
   margin-top:auto;
-  padding:16px 22px 22px;
-  border-top:1px solid #e8eeed;
-  background:#fff;
+  padding:16px 22px 8px;
+  border-top:0;
+  background:transparent;
 }
 .order-panel-actions:empty{
   display:none;
