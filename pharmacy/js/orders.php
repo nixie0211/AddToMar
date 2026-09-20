@@ -928,11 +928,14 @@ function navigateOrdersLink(link) {
 }
 
 async function submitOrderStatusAdvance(button) {
+  if (!button || button.disabled || button.dataset.updating === '1') return;
+
   const orderId = parseInt(button.dataset.orderId || '0', 10);
   const nextStatus = button.dataset.nextStatus || '';
   if (!orderId || !nextStatus) return;
 
   const originalLabel = button.textContent;
+  button.dataset.updating = '1';
   button.disabled = true;
   button.textContent = 'Updating...';
 
@@ -953,6 +956,7 @@ async function submitOrderStatusAdvance(button) {
     if (!response.ok || !result.success) {
       window.alert(result.message || 'Could not update order status.');
       button.disabled = false;
+      button.dataset.updating = '0';
       button.textContent = originalLabel;
       return;
     }
@@ -962,6 +966,7 @@ async function submitOrderStatusAdvance(button) {
   } catch (error) {
     window.alert('Could not update order status. Please try again.');
     button.disabled = false;
+    button.dataset.updating = '0';
     button.textContent = originalLabel;
   }
 }
@@ -1271,8 +1276,6 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 });
 document.addEventListener('livesync:applied', function () {
-  const view = document.getElementById('view-orders');
-  if (view) delete view.dataset.orderUiBound;
   initPharmacyOrderUi();
 });
 document.addEventListener('livesync:change', function (event) {

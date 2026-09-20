@@ -388,7 +388,7 @@ function pharmacy_get_order_by_id(int $orderId, bool $scoped = true): ?array
     return $row ?: null;
 }
 
-function pharmacy_update_order_status(int $orderId, string $status): bool
+function pharmacy_update_order_status(int $orderId, string $status, ?string $fromStatus = null): bool
 {
     if ($orderId <= 0) {
         return false;
@@ -399,10 +399,19 @@ function pharmacy_update_order_status(int $orderId, string $status): bool
         return false;
     }
 
-    $stmt = pharmacy_db()->prepare('UPDATE orders SET status = ? WHERE id = ? AND ' . pharmacy_scope_sql());
-    $stmt->execute([$status, $orderId]);
+    if ($fromStatus !== null && $fromStatus !== '') {
+        $stmt = pharmacy_db()->prepare(
+            'UPDATE orders SET status = ? WHERE id = ? AND status = ? AND ' . pharmacy_scope_sql()
+        );
+        $stmt->execute([$status, $orderId, $fromStatus]);
+    } else {
+        $stmt = pharmacy_db()->prepare('UPDATE orders SET status = ? WHERE id = ? AND ' . pharmacy_scope_sql());
+        $stmt->execute([$status, $orderId]);
+    }
 
-    return $stmt->rowCount() > 0;
+    $fresh = pharmacy_get_order_by_id($orderId);
+
+    return $fresh !== null && (string) ($fresh['status'] ?? '') === $status;
 }
 
 function pharmacy_cancel_order(int $orderId, string $reason = ''): bool
@@ -448,21 +457,27 @@ function pharmacy_advance_order_status(int $orderId): ?array
 
     $current = (string) ($order['status'] ?? '');
     $next = pharmacy_next_order_status($current);
+    $map = pharmacy_order_status_map();
+
     if ($next === null) {
         return null;
     }
 
-    if (!pharmacy_update_order_status($orderId, $next)) {
+    $didUpdate = pharmacy_update_order_status($orderId, $next, $current);
+    $fresh = pharmacy_get_order_by_id($orderId);
+    $freshStatus = (string) ($fresh['status'] ?? '');
+
+    if ($freshStatus !== $next) {
         return null;
     }
 
-    pharmacy_notify_resident_order($order, $next);
-
-    $map = pharmacy_order_status_map();
+    if ($didUpdate && $current !== $next) {
+        pharmacy_notify_resident_order($order, $next);
+    }
 
     return [
         'id' => $orderId,
-        'from' => $current,
+        'from' => $current === $next ? (string) ($order['status'] ?? $current) : $current,
         'to' => $next,
         'label' => $map[$next]['t'] ?? ucfirst($next),
     ];
