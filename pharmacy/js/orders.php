@@ -45,13 +45,24 @@ function resetRxCropZoom(root, flags) {
   if (media) media.style.transform = 'translate(0px, 0px) scale(1)';
 }
 
-function openPrescriptionViewer(url) {
+function openPrescriptionViewer(url, title) {
   const viewer = document.getElementById('prescription-viewer');
   const image = document.getElementById('prescription-viewer-image');
   const frame = document.getElementById('prescription-viewer-frame');
   const missing = document.getElementById('prescription-viewer-missing');
+  const heading = document.getElementById('prescription-viewer-title');
+  const zoom = document.getElementById('prescription-viewer-zoom');
+  const closeBackdrop = document.getElementById('prescription-viewer-close');
   if (!viewer) return;
   bindRxCropZoom(viewer);
+
+  const isPickupProof = /pickup/i.test(String(title || '')) || /order-pickup-proof/i.test(String(url || ''));
+  const headingText = String(title || '').trim() || (isPickupProof ? 'Proof of pickup' : 'Prescription preview');
+  if (heading) heading.textContent = headingText;
+  if (zoom) zoom.setAttribute('aria-label', 'Zoom ' + headingText.toLowerCase());
+  if (closeBackdrop) closeBackdrop.setAttribute('aria-label', 'Close ' + headingText.toLowerCase());
+  if (image) image.alt = isPickupProof ? 'Proof of pickup' : 'Uploaded prescription';
+  if (frame) frame.title = isPickupProof ? 'Proof of pickup' : 'Uploaded prescription';
 
   const src = String(url || '').trim();
   const showMissing = function (message) {
@@ -62,14 +73,18 @@ function openPrescriptionViewer(url) {
       frame.hidden = true;
     }
     if (missing) {
-      missing.textContent = message || 'The uploaded prescription could not be loaded.';
+      missing.textContent = message || (isPickupProof
+        ? 'The pickup proof could not be loaded.'
+        : 'The uploaded prescription could not be loaded.');
       missing.hidden = false;
     }
     resetRxCropZoom(viewer, { empty: true });
   };
 
   if (!src) {
-    showMissing('No prescription file was saved for this order.');
+    showMissing(isPickupProof
+      ? 'No pickup proof file is available.'
+      : 'No prescription file was saved for this order.');
     viewer.hidden = false;
     syncModalOpenState();
     return;
@@ -616,7 +631,7 @@ function renderOrderDrawerDetail(detail) {
   let extra = '';
   if (detail.is_completed && detail.has_pickup_proof) {
     extra += '<div class="order-rx-docs-block"><h3 class="order-rx-docs-title">Proof of pickup</h3>' +
-      '<button type="button" class="order-rx-doc-card view-prescription-trigger" data-prescription-url="' + escapeHtml(detail.pickup_proof_url || '') + '">' +
+      '<button type="button" class="order-rx-doc-card view-prescription-trigger" data-prescription-url="' + escapeHtml(detail.pickup_proof_url || '') + '" data-preview-title="Proof of pickup">' +
       '<span class="order-rx-doc-meta"><strong>Pickup completed</strong><small>' + escapeHtml(detail.pickup_proof_name || '') + '</small></span></button></div>';
   }
   if (detail.is_cancelled) {
@@ -1167,7 +1182,10 @@ function initPharmacyOrderUi() {
           return;
         }
       }
-      openPrescriptionViewer(rx.getAttribute('data-prescription-url') || '');
+      openPrescriptionViewer(
+        rx.getAttribute('data-prescription-url') || '',
+        rx.getAttribute('data-preview-title') || ''
+      );
       return;
     }
 

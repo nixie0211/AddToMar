@@ -313,7 +313,7 @@ $overviewPickupProofKind = $overviewPickupProofExt === 'pdf' ? 'pdf' : ($overvie
             <?php if ($isCompletedOverview && $hasPickupProof): ?>
             <div class="order-rx-docs-block">
               <h3 class="order-rx-docs-title">Proof of pickup</h3>
-              <button type="button" class="order-rx-doc-card view-prescription-trigger" data-prescription-url="<?= htmlspecialchars($overviewPickupProofUrl, ENT_QUOTES, 'UTF-8') ?>" aria-label="View proof of pickup">
+              <button type="button" class="order-rx-doc-card view-prescription-trigger" data-prescription-url="<?= htmlspecialchars($overviewPickupProofUrl, ENT_QUOTES, 'UTF-8') ?>" data-preview-title="Proof of pickup" aria-label="View proof of pickup">
                 <span class="order-rx-doc-icon order-rx-doc-icon--<?= htmlspecialchars($overviewPickupProofKind, ENT_QUOTES, 'UTF-8') ?>" aria-hidden="true">
                   <?php if ($overviewPickupProofKind === 'pdf'): ?>
                   <svg width="52" height="60" viewBox="0 0 52 60" fill="none">
