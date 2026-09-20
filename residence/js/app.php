@@ -3204,10 +3204,6 @@ function renderOrderDetail(id){
   const cancelReasonHtml = String(data.status || '').toLowerCase() === 'cancelled' && data.cancellation_reason
     ? `<p class="mo-cancel-reason"><strong>Cancellation reason</strong><span>${escHtml(data.cancellation_reason)}</span></p>`
     : '';
-  const allReceiptItems = stores.flatMap(store => store.items || []);
-  const receiptItemRows = allReceiptItems.map(item => (
-    `<div class="od-receipt-row"><span>${escHtml(item.name)}  x${item.quantity}</span><i>:</i><b>${peso(item.line_total)}</b></div>`
-  )).join('');
   const receiptTitle = confirmed || fullyPaid ? 'Payment Successful' : 'Payment Pending';
   const receiptStatus = confirmed || fullyPaid ? 'Paid' : 'Pending';
   const receiptAmount = fullyPaid ? data.total_amount : (confirmed ? data.down_payment : paidOnline);
@@ -3253,9 +3249,6 @@ function renderOrderDetail(id){
             <div class="od-receipt-row"><span>Payment Method</span><i>:</i><b>GCash<small>${confirmed ? 'Payment confirmed via PayMongo' : 'PayMongo GCash checkout'}</small></b></div>
             <div class="od-receipt-row"><span>Payment Status</span><i>:</i><b><span class="od-receipt-pill${confirmed || fullyPaid ? '' : ' is-pending'}">${receiptStatus}</span></b></div>
             <div class="od-receipt-row"><span>Amount</span><i>:</i><b>${peso(receiptAmount)}</b></div>
-            <h4>Product Details</h4>
-            ${receiptItemRows}
-            <div class="od-receipt-row"><span>VAT (${Math.round(CHECKOUT_VAT_RATE * 100)}%)</span><i>:</i><b>${peso(data.vat)}</b></div>
             <div class="od-receipt-row od-receipt-total"><span>Total Amount</span><i>:</i><b>${peso(data.total_amount)}</b></div>
             <div class="od-receipt-row"><span>${fullyPaid ? 'Paid (100%)' : 'Paid (60%)'}<small>60% · paid via GCash</small></span><i>:</i><b class="is-paid">${peso(fullyPaid ? data.total_amount : data.down_payment)}</b></div>
             <div class="od-receipt-row"><span>Remaining Balance (40%)<small>${fullyPaid ? 'Paid in full' : 'Pay at pickup'}</small></span><i>:</i><b>${peso(fullyPaid ? 0 : remaining)}</b></div>
