@@ -3204,6 +3204,13 @@ function renderOrderDetail(id){
   const cancelReasonHtml = String(data.status || '').toLowerCase() === 'cancelled' && data.cancellation_reason
     ? `<p class="mo-cancel-reason"><strong>Cancellation reason</strong><span>${escHtml(data.cancellation_reason)}</span></p>`
     : '';
+  const allReceiptItems = stores.flatMap(store => store.items || []);
+  const receiptItemRows = allReceiptItems.map(item => (
+    `<div class="od-receipt-row"><span>${escHtml(item.name)}  x${item.quantity}</span><i>:</i><b>${peso(item.line_total)}</b></div>`
+  )).join('');
+  const receiptTitle = confirmed || fullyPaid ? 'Payment Successful' : 'Payment Pending';
+  const receiptStatus = confirmed || fullyPaid ? 'Paid' : 'Pending';
+  const receiptAmount = fullyPaid ? data.total_amount : (confirmed ? data.down_payment : paidOnline);
 
   root.innerHTML = `
     <button type="button" class="od-back" onclick="closeOrderDetail()">${odIcon('back')} Back to Orders</button>
@@ -3226,17 +3233,34 @@ function renderOrderDetail(id){
         <div class="mo-store-list">${storeCards}</div>
       </main>
       <aside class="od-aside">
-        <section class="od-card od-summary">
-          <h3><span class="od-icon">${odIcon('receipt')}</span><span>Payment Summary<small>Payment details and transaction breakdown</small></span></h3>
-          <div class="od-payment-summary-card"><div class="od-payment-summary-method"><span class="od-gcash">G</span><b>GCash<br>${peso(data.down_payment)}</b></div><div class="od-payment-summary-info"><small>${confirmed ? 'Payment confirmed via PayMongo' : 'Payment pending'}</small>${confirmed ? `<small>${escHtml(data.date_label)} • ${escHtml(data.time_label)}</small>` : ''}</div><span class="od-paid-badge">✓ Paid</span></div>
-          <div class="od-sum"><span>VAT (${Math.round(CHECKOUT_VAT_RATE * 100)}%)</span><b>${peso(data.vat)}</b></div>
-          <div class="od-sum"><span>Total Amount</span><b>${peso(data.total_amount)}</b></div>
-          <div class="od-sum"><span>${fullyPaid ? 'Paid (100%)' : 'Paid (60%)'}<small>60% · paid via GCash</small></span><b class="is-paid">${peso(fullyPaid ? data.total_amount : data.down_payment)}</b></div>
-          <div class="od-sum od-sum-balance">
-            <span>Remaining Balance (40%)${fullyPaid ? '<small class="od-balance-status">Paid in full</small>' : '<small class="od-balance-status">Pay at pickup</small>'}</span>
-            <b>${peso(fullyPaid ? 0 : remaining)}</b>
+        <section class="od-receipt">
+          <header class="od-receipt-head">
+            <span class="od-receipt-mark" aria-hidden="true">
+              <svg viewBox="0 0 72 56" fill="none">
+                <path d="M28 8h26v36l-3.2-2.2-3.2 2.2-3.2-2.2-3.2 2.2-3.2-2.2-3.2 2.2-3.4-2.2-3.4 2.2V8Z" fill="#fff" stroke="#2563eb" stroke-width="2.2"/>
+                <path d="M18 14h26v36l-3.2-2.2-3.2 2.2-3.2-2.2-3.2 2.2-3.2-2.2-3.2 2.2-3.4-2.2-3.4 2.2V14Z" fill="#fff" stroke="#2563eb" stroke-width="2.2"/>
+                <circle cx="31" cy="32" r="9" fill="#22c55e"/>
+                <path d="m27.2 32.2 2.4 2.4 5.2-5.4" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+            <h3>${receiptTitle}</h3>
+          </header>
+          <div class="od-receipt-perforation" aria-hidden="true"></div>
+          <div class="od-receipt-body">
+            <h4>Payment Details</h4>
+            <div class="od-receipt-row"><span>Order Number</span><i>:</i><b>${escHtml(data.order_number)}</b></div>
+            <div class="od-receipt-row"><span>Order Time</span><i>:</i><b>${escHtml(data.time_label)}, ${escHtml(data.date_label)}</b></div>
+            <div class="od-receipt-row"><span>Payment Method</span><i>:</i><b>GCash<small>${confirmed ? 'Payment confirmed via PayMongo' : 'PayMongo GCash checkout'}</small></b></div>
+            <div class="od-receipt-row"><span>Payment Status</span><i>:</i><b><span class="od-receipt-pill${confirmed || fullyPaid ? '' : ' is-pending'}">${receiptStatus}</span></b></div>
+            <div class="od-receipt-row"><span>Amount</span><i>:</i><b>${peso(receiptAmount)}</b></div>
+            <h4>Product Details</h4>
+            ${receiptItemRows}
+            <div class="od-receipt-row"><span>VAT (${Math.round(CHECKOUT_VAT_RATE * 100)}%)</span><i>:</i><b>${peso(data.vat)}</b></div>
+            <div class="od-receipt-row od-receipt-total"><span>Total Amount</span><i>:</i><b>${peso(data.total_amount)}</b></div>
+            <div class="od-receipt-row"><span>${fullyPaid ? 'Paid (100%)' : 'Paid (60%)'}<small>60% · paid via GCash</small></span><i>:</i><b class="is-paid">${peso(fullyPaid ? data.total_amount : data.down_payment)}</b></div>
+            <div class="od-receipt-row"><span>Remaining Balance (40%)<small>${fullyPaid ? 'Paid in full' : 'Pay at pickup'}</small></span><i>:</i><b>${peso(fullyPaid ? 0 : remaining)}</b></div>
+            <p class="od-receipt-note">${odIcon(fullyPaid ? 'check' : 'shield')} <span>${fullyPaid ? 'All payments have been settled. Your order is fully paid.' : 'Your order is reserved. No further payment is needed online.'}</span></p>
           </div>
-          <div class="od-reserve">${odIcon(fullyPaid ? 'check' : 'shield')} <span>${fullyPaid ? 'All payments have been settled. Your order is fully paid.' : 'Your order is reserved. No further payment is needed online.'}</span></div>
         </section>
         ${pickupProofHtml}
       </aside>
