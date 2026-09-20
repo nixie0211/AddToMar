@@ -628,6 +628,16 @@ function orderProgressHtml(status, stamp) {
   }).join('') + '</section>';
 }
 
+function setOrdersDetailMode(on) {
+  const view = document.getElementById('view-orders');
+  if (view) view.classList.toggle('has-order-detail', !!on);
+}
+
+function orderBackHtml(closeHref) {
+  return '<div class="panel-head"><a class="order-drawer-close-btn" id="order-drawer-close-btn" href="' + closeHref + '">' +
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg> Back to Orders</a></div>';
+}
+
 function renderOrderDrawerDetail(detail) {
   const drawer = document.getElementById('order-drawer');
   if (!drawer || !detail) return;
@@ -686,7 +696,7 @@ function renderOrderDrawerDetail(detail) {
   const overview = drawer.querySelector('.order-overview');
   if (!overview) return;
   overview.innerHTML =
-    '<div class="panel-head"><a class="order-drawer-close-btn" id="order-drawer-close-btn" href="' + closeHref + '" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></a></div>' +
+    orderBackHtml(closeHref) +
     '<div class="order-overview-body">' +
     '<div class="ph-order-head"><div>' +
     '<h2 id="order-drawer-title">Order #' + escapeHtml(detail.order_number) + '</h2>' +
@@ -712,6 +722,7 @@ function renderOrderDrawerDetail(detail) {
   drawer.hidden = false;
   drawer.classList.remove('is-loading');
   drawer.setAttribute('data-order-id', String(detail.id || 0));
+  setOrdersDetailMode(true);
   if (typeof window.preloadRxPreviewList === 'function') {
     const urls = (detail.items || []).map(function (item) { return item.prescription_url; }).filter(Boolean);
     if (detail.prescription_url) urls.push(detail.prescription_url);
@@ -754,6 +765,7 @@ function applyOrderDrawerHtml(html, orderId) {
   incoming.hidden = false;
   incoming.classList.remove('is-loading');
   incoming.setAttribute('data-order-id', String(orderId || loadedId || 0));
+  setOrdersDetailMode(true);
   return true;
 }
 
@@ -761,21 +773,16 @@ function showOrderDrawerPlaceholder(orderId, fromEl) {
   const drawer = document.getElementById('order-drawer');
   if (!drawer) return;
   const row = fromEl && fromEl.closest ? fromEl.closest('.orders-table-row') : null;
-  const orderNumber = ((row && row.querySelector('.ot-order')) ? row.querySelector('.ot-order').textContent : '').trim() || ('#' + orderId);
   const customer = ((row && row.querySelector('.ot-customer-name')) ? row.querySelector('.ot-customer-name').textContent : '').trim();
   const closeHref = 'index.php?view=orders&status=' + encodeURIComponent(currentOrdersStatus());
   drawer.hidden = false;
   drawer.classList.add('is-loading');
   drawer.setAttribute('data-order-id', String(orderId));
+  setOrdersDetailMode(true);
   const overview = drawer.querySelector('.order-overview');
   if (!overview) return;
   overview.innerHTML =
-    '<div class="panel-head">' +
-      '<div><h3 id="order-drawer-title">Order ' + escapeHtml(orderNumber.replace(/^#/, '#')) + '</h3></div>' +
-      '<a class="order-drawer-close-btn" id="order-drawer-close-btn" href="' + closeHref + '" aria-label="Close">' +
-        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>' +
-      '</a>' +
-    '</div>' +
+    orderBackHtml(closeHref) +
     '<p class="order-empty-panel">' + (customer ? ('Loading details for ' + escapeHtml(customer) + '…') : 'Loading order details…') + '</p>';
 }
 
@@ -846,6 +853,7 @@ function closeOrderDrawer(href, options) {
     drawer.classList.remove('is-loading');
     drawer.setAttribute('data-order-id', '0');
   }
+  setOrdersDetailMode(false);
   markActiveOrderRow(0);
   syncOrdersHistory(nextUrl, Object.assign({ replace: true }, options));
 }

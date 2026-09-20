@@ -123,7 +123,7 @@ $overviewReceiptNote = $isCompletedOverview
     : 'Customer pays the remaining balance when collecting this order at the pharmacy.';
 ?>
 <?php if (!$pharmacyOrdersDrawerOnly): ?>
-      <section class="<?= pharmacy_view_class('orders', $activeView) ?>" id="view-orders" data-live-region="pharmacy-orders" data-live-keys="orders" data-live-mode="js">
+      <section class="<?= pharmacy_view_class('orders', $activeView) ?><?= $hasPanelOrder ? ' has-order-detail' : '' ?>" id="view-orders" data-live-region="pharmacy-orders" data-live-keys="orders" data-live-mode="js">
         <div class="orders-layout">
           <div class="orders-main">
             <div class="orders-stats">
@@ -224,11 +224,11 @@ $overviewReceiptNote = $isCompletedOverview
 
 <?php if ($pharmacyOrdersDrawerOnly || empty($pharmacyOrdersListOnly)): ?>
           <div class="order-drawer" id="order-drawer" data-order-id="<?= $hasPanelOrder ? $panelOrderId : 0 ?>"<?= $hasPanelOrder ? '' : ' hidden' ?>>
-            <button type="button" class="order-drawer-backdrop" id="order-drawer-close" data-orders-close aria-label="Close order details"></button>
-            <aside class="panel order-overview" role="dialog" aria-modal="true" aria-labelledby="order-drawer-title">
+            <section class="panel order-overview" aria-labelledby="order-drawer-title">
             <div class="panel-head">
-              <a class="order-drawer-close-btn" id="order-drawer-close-btn" href="<?= htmlspecialchars(pharmacy_orders_url($activeStatus), ENT_QUOTES, 'UTF-8') ?>" aria-label="Close">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              <a class="order-drawer-close-btn" id="order-drawer-close-btn" href="<?= htmlspecialchars(pharmacy_orders_url($activeStatus), ENT_QUOTES, 'UTF-8') ?>">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+                Back to Orders
               </a>
             </div>
 
@@ -376,7 +376,7 @@ $overviewReceiptNote = $isCompletedOverview
             <?php endif; ?>
 
             <?php endif; ?>
-            </aside>
+            </section>
           </div>
 <?php endif; ?>
 <?php if (!$pharmacyOrdersDrawerOnly): ?>
