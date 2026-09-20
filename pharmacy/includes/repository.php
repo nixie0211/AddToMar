@@ -862,7 +862,7 @@ function pharmacy_order_detail_from_row(array $order, array $items): array
         'created_stamp' => pharmacy_order_progress_stamp((string) ($order['created_at'] ?? '')),
         'date_label' => $order['created_at'] ? date('M j, Y', strtotime((string) $order['created_at']) ?: time()) : date('M j, Y'),
         'time_label' => $order['created_at'] ? date('g:i A', strtotime((string) $order['created_at']) ?: time()) : '',
-        'payment_method' => trim((string) ($order['payment_method'] ?? 'GCash')) ?: 'GCash',
+        'payment_method' => 'GCash',
         'payment_confirmed' => $down > 0,
         'subtotal_label' => $prices['subtotal_label'],
         'vat_label' => $prices['vat_label'],

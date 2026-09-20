@@ -77,7 +77,7 @@ if ($intentId === '') {
                     [
                         'pickup_date' => (string) $pending['pickup_date'],
                         'pickup_time' => (string) $pending['pickup_time'],
-                        'payment_method' => 'paymongo_card',
+                        'payment_method' => 'gcash',
                         'prescription_path' => $pending['prescription_path'] ?? null,
                         'paymongo_intent_id' => $intentId,
                         'receipt_email' => (string) $pending['email'],

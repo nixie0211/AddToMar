@@ -568,7 +568,7 @@ function pharmacyPaymentReceiptHtml(detail) {
   const fullyPaid = !!detail.is_completed;
   const title = confirmed || fullyPaid ? 'Payment Successful' : 'Payment Pending';
   const status = confirmed || fullyPaid ? 'Paid' : 'Pending';
-  const method = escapeHtml(detail.payment_method || 'GCash');
+  const method = 'GCash';
   const timeLabel = escapeHtml(detail.time_label || '');
   const dateLabel = escapeHtml(detail.date_label || detail.created_label || '');
   const stamp = [timeLabel, dateLabel].filter(Boolean).join(', ');

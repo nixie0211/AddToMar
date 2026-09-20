@@ -91,7 +91,7 @@ $overviewDownPayment = pharmacy_order_down_payment($overviewOrder);
 $overviewBalanceDue = pharmacy_order_balance_on_pickup($overviewOrder);
 $overviewDownPaymentPercent = pharmacy_order_down_payment_percent($overviewOrder);
 $overviewPrices = pharmacy_order_vat_breakdown($overviewOrder, $overviewItems);
-$overviewPaymentMethod = trim((string) ($overviewOrder['payment_method'] ?? 'GCash'));
+$overviewPaymentMethod = 'GCash';
 $isPendingOverview = ($overviewOrder['status'] ?? '') === 'pending';
 $hasPanelOrder = $panelOrder !== null;
 $overviewStatus = (string) ($overviewOrder['status'] ?? '');
