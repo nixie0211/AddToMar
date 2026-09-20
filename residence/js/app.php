@@ -2643,7 +2643,8 @@ function presentResidenceOrder(order, options = {}){
     items,
     prescription_path: String(order.prescription_path || ''),
     prescription_url: String(order.prescription_url || ''),
-    pickup_proof_url: String(order.pickup_proof_url || (order.pickup_proof_path ? '../' + String(order.pickup_proof_path).replace(/^\.\//, '') : '')),
+    pickup_proof_url: String(order.pickup_proof_url || ''),
+    pickup_proof_kind: String(order.pickup_proof_kind || (/\.pdf($|\?)/i.test(String(order.pickup_proof_path || order.pickup_proof_url || '')) ? 'pdf' : 'img')),
     balance_paid: !!order.balance_paid,
     checkout_group_id: String(order.checkout_group_id || ''),
     cancellation_reason: String(order.cancellation_reason || ''),
@@ -3119,22 +3120,25 @@ function renderOrderDetail(id){
   const storeCount = stores.length;
   const completedStores = stores.filter(store => orderProgressIndex(store.status) >= 5).length;
   const confirmed = data.down_payment > 0;
-  const pickupProofButton = (url) => {
+  const pickupProofButton = (url, kind) => {
     const src = String(url || '').trim();
     if(!src) return '';
-    const name = decodeURIComponent(String(src.split('/').pop() || 'pickup-proof').split('?')[0] || 'pickup-proof');
-    const isPdf = /\.pdf($|\?)/i.test(src);
-    const thumb = isPdf
+    const looksPdf = String(kind || '') === 'pdf' || /\.pdf($|\?)/i.test(src);
+    const label = looksPdf ? 'PDF proof of pickup' : 'Photo of completed pickup';
+    const thumb = looksPdf
       ? `<span class="od-pickup-proof-thumb is-pdf" aria-hidden="true">PDF</span>`
-      : `<span class="od-pickup-proof-thumb"><img src="${escHtml(src)}" alt=""></span>`;
-    return `<button type="button" class="od-pickup-proof" data-preview-url="${escHtml(src)}" data-preview-title="Proof of pickup">${thumb}<span><strong>Pickup completed</strong><small>${escapeHtml(name)}</small></span>${odIcon('chevron')}</button>`;
+      : `<span class="od-pickup-proof-thumb"><img src="${escHtml(src)}" alt="Pickup proof"></span>`;
+    return `<button type="button" class="od-pickup-proof" data-preview-url="${escHtml(src)}" data-preview-title="Proof of pickup">${thumb}<span><strong>Pickup completed</strong><small>${escapeHtml(label)}</small></span>${odIcon('chevron')}</button>`;
   };
-  const pickupProofUrls = [];
+  const pickupProofEntries = [];
   stores.forEach(store => {
-    if(store.pickup_proof_url) pickupProofUrls.push(store.pickup_proof_url);
+    if(store.pickup_proof_url) pickupProofEntries.push({ url: store.pickup_proof_url, kind: store.pickup_proof_kind });
   });
-  if(data.pickup_proof_url) pickupProofUrls.unshift(data.pickup_proof_url);
-  const pickupProofHtml = Array.from(new Set(pickupProofUrls.filter(Boolean))).map(pickupProofButton).join('');
+  if(data.pickup_proof_url) pickupProofEntries.unshift({ url: data.pickup_proof_url, kind: data.pickup_proof_kind });
+  const pickupProofHtml = Array.from(new Map(pickupProofEntries.filter(item => item.url).map(item => [item.url, item])).values())
+    .map(item => pickupProofButton(item.url, item.kind))
+    .join('');
+  const pickupProofUrls = pickupProofEntries.map(item => item.url).filter(Boolean);
 
   const storeCards = stores.map(store => {
     const pharmacy = getMarketplacePharmacy(store.pharmacy_id) || {};

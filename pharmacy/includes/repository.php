@@ -485,7 +485,15 @@ function pharmacy_advance_order_status(int $orderId): ?array
 
 function pharmacy_pickup_proof_url(array $order): ?string
 {
-    return pharmacy_upload_url((string) ($order['pickup_proof_path'] ?? ''));
+    $path = trim((string) ($order['pickup_proof_path'] ?? ''));
+    $orderId = (int) ($order['id'] ?? 0);
+    if ($path === '' || $orderId <= 0) {
+        return null;
+    }
+
+    return function_exists('app_url')
+        ? app_url('order-pickup-proof.php?order_id=' . $orderId)
+        : '/order-pickup-proof.php?order_id=' . $orderId;
 }
 
 function pharmacy_order_has_pickup_proof(array $order): bool

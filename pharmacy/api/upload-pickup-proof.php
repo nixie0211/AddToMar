@@ -79,6 +79,11 @@ if (!pharmacy_save_pickup_proof($orderId, $relativePath)) {
     exit;
 }
 
+$bytes = is_file($absolute) ? (string) file_get_contents($absolute) : '';
+if ($bytes !== '') {
+    pharmacy_store_order_upload_blob($relativePath, $bytes, $mime);
+}
+
 echo json_encode([
     'success' => true,
     'message' => 'Proof of pickup uploaded.',

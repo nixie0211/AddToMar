@@ -24,6 +24,17 @@ function residence_order_prescription_url(int $orderId, int $itemId = 0, string 
     return function_exists('app_url') ? app_url('order-prescription.php?' . $query) : ('/order-prescription.php?' . $query);
 }
 
+function residence_order_pickup_proof_url(int $orderId, string $path = ''): string
+{
+    if ($orderId <= 0 || trim($path) === '') {
+        return '';
+    }
+
+    return function_exists('app_url')
+        ? app_url('order-pickup-proof.php?order_id=' . $orderId)
+        : ('/order-pickup-proof.php?order_id=' . $orderId);
+}
+
 function residence_prescription_url(string $path): string
 {
     $path = str_replace('\\', '/', trim($path));
@@ -949,7 +960,13 @@ function residence_present_order(array $order, array $directory = []): array
             trim((string) ($order['prescription_path'] ?? ''))
         ),
         'pickup_proof_path' => trim((string) ($order['pickup_proof_path'] ?? '')),
-        'pickup_proof_url' => residence_prescription_url((string) ($order['pickup_proof_path'] ?? '')),
+        'pickup_proof_url' => residence_order_pickup_proof_url(
+            (int) ($order['id'] ?? 0),
+            trim((string) ($order['pickup_proof_path'] ?? ''))
+        ),
+        'pickup_proof_kind' => strtolower((string) pathinfo((string) ($order['pickup_proof_path'] ?? ''), PATHINFO_EXTENSION)) === 'pdf'
+            ? 'pdf'
+            : 'img',
         'balance_paid' => in_array($status, ['picked_up', 'pickedup', 'delivered', 'completed'], true),
         'checkout_group_id' => trim((string) ($order['checkout_group_id'] ?? '')),
         'paymongo_intent_id' => trim((string) ($order['paymongo_intent_id'] ?? '')),
