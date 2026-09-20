@@ -3183,7 +3183,7 @@ function renderOrderDetail(id){
             <strong>${escHtml(store.pharmacy_name)}</strong>
             <small>Pickup: ${escHtml(store.pharmacy_address || pharmacy.address || 'Pharmacy counter')}</small>
           </div>
-          <span class="mo-store-status ${escHtml(store.status_class || '')}">${escHtml(store.status_label || 'Processing')}</span>
+          ${storeCount > 1 ? `<span class="mo-store-status ${escHtml(store.status_class || '')}">${escHtml(store.status_label || 'Processing')}</span>` : ''}
         </header>
         <div class="mo-store-items">${itemsHtml}</div>
         <div class="mo-store-foot">
