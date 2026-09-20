@@ -634,21 +634,22 @@ function renderOrderDrawerDetail(detail) {
   const status = pharmacyOrdersState.status;
   const closeHref = ordersHref(status);
   const canViewRx = detail.can_view_prescription !== false && !detail.is_completed && !detail.is_cancelled;
+  const itemCount = (detail.items || []).length;
   const itemsHtml = (detail.items || []).map(function (item) {
     const rxUrl = String(item.prescription_url || detail.prescription_url || '').trim();
     const rx = item.prescription_required
       ? (canViewRx && rxUrl
-        ? ' · <button type="button" class="order-prescription-inline view-prescription-trigger" data-prescription-url="' + escapeHtml(rxUrl) + '">Rx required · see prescription ›</button>'
-        : ' · <span class="order-prescription-inline">Rx required</span>')
+        ? '<small><button type="button" class="order-prescription-inline view-prescription-trigger" data-prescription-url="' + escapeHtml(rxUrl) + '">Rx required · see prescription ›</button></small>'
+        : '<small>Rx required</small>')
       : '';
-    const note = item.note ? '<div class="t2 order-item-note">Note: ' + escapeHtml(item.note) + '</div>' : '';
+    const note = item.note ? '<small class="mo-item-note">Note: ' + escapeHtml(item.note) + '</small>' : '';
     const thumb = item.image_url
-      ? '<div class="med-thumb' + (item.prescription_required ? ' med-thumb--rx' : '') + ' med-thumb--photo"><img src="' + escapeHtml(item.image_url) + '" alt=""></div>'
-      : '<div class="med-thumb' + (item.prescription_required ? ' med-thumb--rx' : '') + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7L12 3 4 7v10l8 4 8-4V7z"/></svg></div>';
-    return '<div class="list-row order-list-row order-med-row">' + thumb +
-      '<div class="list-body"><div class="t1 order-med-title">' + escapeHtml(item.name || 'Medicine') + '</div>' +
-      '<div class="t2">Qty ' + Number(item.quantity || 1) + rx + '</div>' + note + '</div>' +
-      '<div class="list-meta mono">' + escapeHtml(item.line_total_label || '') + '</div></div>';
+      ? '<img src="' + escapeHtml(item.image_url) + '" alt="">'
+      : '<span class="ph-order-item-thumb" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7L12 3 4 7v10l8 4 8-4V7z"/></svg></span>';
+    return '<div class="ph-order-item">' + thumb +
+      '<div><b>' + escapeHtml(item.name || 'Medicine') + '</b>' +
+      '<small>Qty: ' + Number(item.quantity || 1) + '</small>' + rx + note + '</div>' +
+      '<strong>' + escapeHtml(item.line_total_label || '') + '</strong></div>';
   }).join('');
 
   let actions = '';
@@ -671,29 +672,43 @@ function renderOrderDrawerDetail(detail) {
 
   let extra = '';
   if (detail.is_completed && detail.has_pickup_proof) {
-    extra += '<div class="order-rx-docs-block"><h3 class="order-rx-docs-title">Proof of pickup</h3>' +
-      '<button type="button" class="order-rx-doc-card view-prescription-trigger" data-prescription-url="' + escapeHtml(detail.pickup_proof_url || '') + '" data-preview-title="Proof of pickup">' +
-      '<span class="order-rx-doc-meta"><strong>Pickup completed</strong><small>' + escapeHtml(detail.pickup_proof_name || '') + '</small></span></button></div>';
+    const proofUrl = escapeHtml(detail.pickup_proof_url || '');
+    const isPdf = String(detail.pickup_proof_kind || '') === 'pdf';
+    extra += '<button type="button" class="ph-pickup-proof view-prescription-trigger" data-prescription-url="' + proofUrl + '" data-preview-title="Proof of pickup">' +
+      '<span class="ph-pickup-proof-thumb' + (isPdf ? ' is-pdf' : '') + '">' + (isPdf ? 'PDF' : '<img src="' + proofUrl + '" alt="Pickup proof">') + '</span>' +
+      '<span><strong>Pickup completed</strong><small>Photo of completed pickup</small></span>' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>';
   }
-  if (detail.is_cancelled) {
-    extra += '<div class="order-section-label">Cancellation reason</div><div class="order-cancellation-card"><p class="order-cancellation-text">' + escapeHtml(detail.cancellation_reason || 'No reason recorded.') + '</p></div>';
-  }
+  const cancelReason = detail.is_cancelled
+    ? '<p class="mo-cancel-reason"><strong>Cancellation reason</strong><span>' + escapeHtml(detail.cancellation_reason || 'No reason recorded.') + '</span></p>'
+    : '';
 
   const overview = drawer.querySelector('.order-overview');
   if (!overview) return;
   overview.innerHTML =
-    '<div class="panel-head"><div><h3 id="order-drawer-title">Order #' + escapeHtml(detail.order_number) + '</h3></div>' +
-    '<a class="order-drawer-close-btn" id="order-drawer-close-btn" href="' + closeHref + '" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></a></div>' +
-    orderProgressHtml(detail.status, detail.created_stamp || detail.created_label || '') +
+    '<div class="panel-head"><a class="order-drawer-close-btn" id="order-drawer-close-btn" href="' + closeHref + '" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></a></div>' +
     '<div class="order-overview-body">' +
-    '<div class="order-overview-main">' +
-    '<div class="order-section-label">Customer</div>' +
-    '<div class="list-row order-list-row"><div class="avatar" style="width:36px;height:36px;font-size:12px;">' + escapeHtml(detail.customer_initials) + '</div>' +
-    '<div class="list-body"><div class="t1">' + escapeHtml(detail.customer_name) + '</div><div class="t2">' + escapeHtml(detail.customer_line) + '</div></div></div>' +
-    '<div class="order-section-label">Medicines</div>' + itemsHtml + extra +
-    '</div>' +
-    '<div class="order-overview-side">' + pharmacyPaymentReceiptHtml(detail) + '</div>' +
-    '</div>' + actions;
+    '<div class="ph-order-head"><div>' +
+    '<h2 id="order-drawer-title">Order #' + escapeHtml(detail.order_number) + '</h2>' +
+    '<p>' + itemCount + ' item' + (itemCount === 1 ? '' : 's') + ' • ' + escapeHtml(detail.total_label || '') + '</p>' +
+    '<small><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 11h18"/></svg> ' +
+    escapeHtml(detail.date_label || detail.created_label || '') + (detail.time_label ? ' • ' + escapeHtml(detail.time_label) : '') + '</small>' +
+    '</div></div>' +
+    cancelReason +
+    '<div class="ph-order-layout">' +
+    '<main class="order-overview-main">' +
+    orderProgressHtml(detail.status, detail.created_stamp || detail.created_label || '') +
+    '<article class="ph-customer-card"><header class="ph-customer-head">' +
+    '<div class="ph-customer-logo">' + escapeHtml(detail.customer_initials) + '</div>' +
+    '<div><strong>' + escapeHtml(detail.customer_name) + '</strong><small>' + escapeHtml(detail.customer_line) + '</small></div>' +
+    '</header><div class="ph-order-items">' + itemsHtml + '</div>' +
+    '<div class="ph-order-foot">' +
+    '<div class="ph-order-foot-row"><span>VAT (' + Number(detail.vat_percent || 15) + '%)</span><b>' + escapeHtml(detail.vat_label || '') + '</b></div>' +
+    '<div class="ph-order-foot-row"><span>Store Subtotal</span><b>' + escapeHtml(detail.total_label || '') + '</b></div>' +
+    '</div></article>' + extra +
+    '</main>' +
+    '<aside class="order-overview-side">' + pharmacyPaymentReceiptHtml(detail) + '</aside>' +
+    '</div></div>' + actions;
   drawer.hidden = false;
   drawer.classList.remove('is-loading');
   drawer.setAttribute('data-order-id', String(detail.id || 0));

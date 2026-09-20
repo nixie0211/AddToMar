@@ -85,6 +85,7 @@ $overviewPrescriptionKind = $overviewPrescriptionExt === 'pdf' ? 'pdf' : ($overv
 $overviewPrescriptionDate = !empty($overviewOrder['created_at'])
     ? pharmacy_format_date((string) $overviewOrder['created_at'])
     : date('M j, Y');
+$overviewItemCount = count($overviewItems);
 $overviewOrderNumber = (string) ($overviewOrder['order_number'] ?? 'ORD-0000');
 $overviewTotalAmount = max(0, (float) ($overviewOrder['total_amount'] ?? 0));
 $overviewDownPayment = pharmacy_order_down_payment($overviewOrder);
@@ -226,9 +227,6 @@ $overviewReceiptNote = $isCompletedOverview
             <button type="button" class="order-drawer-backdrop" id="order-drawer-close" data-orders-close aria-label="Close order details"></button>
             <aside class="panel order-overview" role="dialog" aria-modal="true" aria-labelledby="order-drawer-title">
             <div class="panel-head">
-              <div>
-                <h3 id="order-drawer-title">Order #<?= htmlspecialchars($overviewOrderNumber, ENT_QUOTES, 'UTF-8') ?></h3>
-              </div>
               <a class="order-drawer-close-btn" id="order-drawer-close-btn" href="<?= htmlspecialchars(pharmacy_orders_url($activeStatus), ENT_QUOTES, 'UTF-8') ?>" aria-label="Close">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
               </a>
@@ -237,124 +235,78 @@ $overviewReceiptNote = $isCompletedOverview
             <?php if (!$hasPanelOrder): ?>
             <p class="order-empty-panel">Select an order from the list to view details.</p>
             <?php else: ?>
-            <?= pharmacy_order_progress_html($overviewStatus, pharmacy_order_progress_stamp((string) ($overviewOrder['created_at'] ?? ''))) ?>
             <div class="order-overview-body">
-            <div class="order-overview-main">
-
-            <div class="order-section-label">Customer</div>
-            <div class="list-row order-list-row">
-              <div class="avatar" style="width:36px;height:36px;font-size:12px;"><?= htmlspecialchars(pharmacy_initials($overviewCustomer), ENT_QUOTES, 'UTF-8') ?></div>
-              <div class="list-body">
-                <div class="t1"><?= htmlspecialchars($overviewCustomer, ENT_QUOTES, 'UTF-8') ?></div>
-                <div class="t2"><?= htmlspecialchars($overviewCustomerLine !== '' ? $overviewCustomerLine : 'No contact details', ENT_QUOTES, 'UTF-8') ?></div>
+            <div class="ph-order-head">
+              <div>
+                <h2 id="order-drawer-title">Order #<?= htmlspecialchars($overviewOrderNumber, ENT_QUOTES, 'UTF-8') ?></h2>
+                <p><?= (int) $overviewItemCount ?> item<?= $overviewItemCount === 1 ? '' : 's' ?> • <?= htmlspecialchars($overviewPrices['total_label'], ENT_QUOTES, 'UTF-8') ?></p>
+                <small>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 11h18"/></svg>
+                  <?= htmlspecialchars($overviewDateLabel, ENT_QUOTES, 'UTF-8') ?> • <?= htmlspecialchars($overviewTimeLabel, ENT_QUOTES, 'UTF-8') ?>
+                </small>
               </div>
             </div>
-
-            <div class="order-section-label">Medicines</div>
+            <?php if ($isCancelledOverview): ?>
+            <p class="mo-cancel-reason"><strong>Cancellation reason</strong><span><?= htmlspecialchars($overviewCancellationReason !== '' ? $overviewCancellationReason : 'No reason recorded.', ENT_QUOTES, 'UTF-8') ?></span></p>
+            <?php endif; ?>
+            <div class="ph-order-layout">
+            <main class="order-overview-main">
+            <?= pharmacy_order_progress_html($overviewStatus, pharmacy_order_progress_stamp((string) ($overviewOrder['created_at'] ?? ''))) ?>
+            <article class="ph-customer-card">
+              <header class="ph-customer-head">
+                <div class="ph-customer-logo"><?= htmlspecialchars(pharmacy_initials($overviewCustomer), ENT_QUOTES, 'UTF-8') ?></div>
+                <div>
+                  <strong><?= htmlspecialchars($overviewCustomer, ENT_QUOTES, 'UTF-8') ?></strong>
+                  <small><?= htmlspecialchars($overviewCustomerLine !== '' ? $overviewCustomerLine : 'No contact details', ENT_QUOTES, 'UTF-8') ?></small>
+                </div>
+              </header>
+              <div class="ph-order-items">
             <?php foreach ($overviewItems as $item): ?>
             <?php
             $itemRequiresRx = !empty($item['prescription_required']);
             $itemImage = trim((string) ($item['image_url'] ?? ''));
             $itemPrescriptionUrl = pharmacy_item_prescription_url($item, $overviewOrder) ?: $overviewPrescriptionUrl;
             $itemNote = trim((string) ($item['item_note'] ?? ''));
+            $itemQty = (int) ($item['quantity'] ?? 1);
             ?>
-            <div class="list-row order-list-row order-med-row">
-              <div class="med-thumb<?= $itemRequiresRx ? ' med-thumb--rx' : '' ?><?= $itemImage !== '' ? ' med-thumb--photo' : '' ?>">
-                <?php if ($itemImage !== ''): ?>
-                <img src="<?= htmlspecialchars($itemImage, ENT_QUOTES, 'UTF-8') ?>" alt="<?= htmlspecialchars((string) ($item['medicine_name'] ?? 'Medicine'), ENT_QUOTES, 'UTF-8') ?>">
-                <?php else: ?>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7L12 3 4 7v10l8 4 8-4V7z"/></svg>
-                <?php endif; ?>
-              </div>
-              <div class="list-body">
-                <div class="t1 order-med-title">
-                  <?= htmlspecialchars((string) ($item['medicine_name'] ?? 'Medicine'), ENT_QUOTES, 'UTF-8') ?>
+                <div class="ph-order-item">
+                  <?php if ($itemImage !== ''): ?>
+                  <img src="<?= htmlspecialchars($itemImage, ENT_QUOTES, 'UTF-8') ?>" alt="">
+                  <?php else: ?>
+                  <span class="ph-order-item-thumb" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7L12 3 4 7v10l8 4 8-4V7z"/></svg></span>
+                  <?php endif; ?>
+                  <div>
+                    <b><?= htmlspecialchars((string) ($item['medicine_name'] ?? 'Medicine'), ENT_QUOTES, 'UTF-8') ?></b>
+                    <small>Qty: <?= $itemQty ?></small>
+                    <?php if ($itemRequiresRx && $itemPrescriptionUrl): ?>
+                    <small><button type="button" class="order-prescription-inline view-prescription-trigger" data-prescription-url="<?= htmlspecialchars($itemPrescriptionUrl, ENT_QUOTES, 'UTF-8') ?>">Rx required · see prescription ›</button></small>
+                    <?php elseif ($itemRequiresRx): ?>
+                    <small>Rx required</small>
+                    <?php endif; ?>
+                    <?php if ($itemNote !== ''): ?>
+                    <small class="mo-item-note">Note: <?= htmlspecialchars($itemNote, ENT_QUOTES, 'UTF-8') ?></small>
+                    <?php endif; ?>
+                  </div>
+                  <strong><?= pharmacy_format_money((float) ($item['unit_price'] ?? 0) * $itemQty) ?></strong>
                 </div>
-                <div class="t2">Qty <?= (int) ($item['quantity'] ?? 1) ?><?php if ($itemRequiresRx && $itemPrescriptionUrl): ?> · <button type="button" class="order-prescription-inline view-prescription-trigger" data-prescription-url="<?= htmlspecialchars($itemPrescriptionUrl, ENT_QUOTES, 'UTF-8') ?>">Rx required · see prescription ›</button><?php elseif ($itemRequiresRx): ?> · <span class="order-prescription-inline">Rx required</span><?php endif; ?></div>
-                <?php if ($itemNote !== ''): ?>
-                <div class="t2 order-item-note">Note: <?= htmlspecialchars($itemNote, ENT_QUOTES, 'UTF-8') ?></div>
-                <?php endif; ?>
-              </div>
-              <div class="list-meta mono"><?= pharmacy_format_money((float) ($item['unit_price'] ?? 0) * (int) ($item['quantity'] ?? 1)) ?></div>
-            </div>
             <?php endforeach; ?>
-
-            <?php if (false && $overviewRequiresRx): ?>
-            <div class="order-rx-docs-block">
-              <h3 class="order-rx-docs-title">Uploaded prescription</h3>
-              <?php if ($overviewPrescriptionUrl): ?>
-              <button type="button" class="order-rx-doc-card view-prescription-trigger" data-prescription-url="<?= htmlspecialchars($overviewPrescriptionUrl, ENT_QUOTES, 'UTF-8') ?>" aria-label="View uploaded prescription">
-                <span class="order-rx-doc-icon order-rx-doc-icon--<?= htmlspecialchars($overviewPrescriptionKind, ENT_QUOTES, 'UTF-8') ?>" aria-hidden="true">
-                  <?php if ($overviewPrescriptionKind === 'pdf'): ?>
-                  <svg width="52" height="60" viewBox="0 0 52 60" fill="none">
-                    <path d="M8 0h24l16 16v36a8 8 0 0 1-8 8H8a8 8 0 0 1-8-8V8a8 8 0 0 1 8-8Z" fill="#E2574C"/>
-                    <path d="M32 0v12a4 4 0 0 0 4 4h16L32 0Z" fill="#fff" fill-opacity=".35"/>
-                    <text x="26" y="42" text-anchor="middle" fill="#fff" font-size="13" font-weight="800" font-family="Plus Jakarta Sans, sans-serif">PDF</text>
-                  </svg>
-                  <?php else: ?>
-                  <img src="<?= htmlspecialchars($overviewPrescriptionUrl, ENT_QUOTES, 'UTF-8') ?>" alt="">
-                  <?php endif; ?>
-                </span>
-                <span class="order-rx-doc-meta">
-                  <strong>Prescription</strong>
-                  <small><?= htmlspecialchars($overviewPrescriptionDate, ENT_QUOTES, 'UTF-8') ?></small>
-                </span>
-                <span class="order-rx-doc-chevron" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
-                </span>
-              </button>
-              <?php else: ?>
-              <div class="order-rx-doc-card is-empty">
-                <span class="order-rx-doc-icon order-rx-doc-icon--empty" aria-hidden="true">
-                  <svg width="52" height="60" viewBox="0 0 52 60" fill="none">
-                    <path d="M8 0h24l16 16v36a8 8 0 0 1-8 8H8a8 8 0 0 1-8-8V8a8 8 0 0 1 8-8Z" fill="#d0d5dd"/>
-                    <path d="M32 0v12a4 4 0 0 0 4 4h16L32 0Z" fill="#fff" fill-opacity=".45"/>
-                  </svg>
-                </span>
-                <span class="order-rx-doc-meta">
-                  <strong>Prescription required</strong>
-                  <small>Waiting for customer upload</small>
-                </span>
               </div>
-              <?php endif; ?>
-            </div>
-            <?php endif; ?>
-
+              <div class="ph-order-foot">
+                <div class="ph-order-foot-row"><span>VAT (<?= (int) $overviewPrices['vat_percent'] ?>%)</span><b><?= htmlspecialchars($overviewPrices['vat_label'], ENT_QUOTES, 'UTF-8') ?></b></div>
+                <div class="ph-order-foot-row"><span>Store Subtotal</span><b><?= htmlspecialchars($overviewPrices['total_label'], ENT_QUOTES, 'UTF-8') ?></b></div>
+              </div>
+            </article>
             <?php if ($isCompletedOverview && $hasPickupProof): ?>
-            <div class="order-rx-docs-block">
-              <h3 class="order-rx-docs-title">Proof of pickup</h3>
-              <button type="button" class="order-rx-doc-card view-prescription-trigger" data-prescription-url="<?= htmlspecialchars($overviewPickupProofUrl, ENT_QUOTES, 'UTF-8') ?>" data-preview-title="Proof of pickup" aria-label="View proof of pickup">
-                <span class="order-rx-doc-icon order-rx-doc-icon--<?= htmlspecialchars($overviewPickupProofKind, ENT_QUOTES, 'UTF-8') ?>" aria-hidden="true">
-                  <?php if ($overviewPickupProofKind === 'pdf'): ?>
-                  <svg width="52" height="60" viewBox="0 0 52 60" fill="none">
-                    <path d="M8 0h24l16 16v36a8 8 0 0 1-8 8H8a8 8 0 0 1-8-8V8a8 8 0 0 1 8-8Z" fill="#E2574C"/>
-                    <path d="M32 0v12a4 4 0 0 0 4 4h16L32 0Z" fill="#fff" fill-opacity=".35"/>
-                    <text x="26" y="42" text-anchor="middle" fill="#fff" font-size="13" font-weight="800" font-family="Plus Jakarta Sans, sans-serif">PDF</text>
-                  </svg>
-                  <?php else: ?>
-                  <img src="<?= htmlspecialchars($overviewPickupProofUrl, ENT_QUOTES, 'UTF-8') ?>" alt="">
-                  <?php endif; ?>
+              <button type="button" class="ph-pickup-proof view-prescription-trigger" data-prescription-url="<?= htmlspecialchars($overviewPickupProofUrl, ENT_QUOTES, 'UTF-8') ?>" data-preview-title="Proof of pickup">
+                <span class="ph-pickup-proof-thumb<?= $overviewPickupProofKind === 'pdf' ? ' is-pdf' : '' ?>">
+                  <?php if ($overviewPickupProofKind === 'pdf'): ?>PDF<?php else: ?><img src="<?= htmlspecialchars($overviewPickupProofUrl, ENT_QUOTES, 'UTF-8') ?>" alt="Pickup proof"><?php endif; ?>
                 </span>
-                <span class="order-rx-doc-meta">
-                  <strong>Pickup completed</strong>
-                  <small><?= htmlspecialchars($overviewPickupProofName, ENT_QUOTES, 'UTF-8') ?></small>
-                </span>
-                <span class="order-rx-doc-chevron" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
-                </span>
+                <span><strong>Pickup completed</strong><small>Photo of completed pickup</small></span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
               </button>
-            </div>
             <?php endif; ?>
-
-            <?php if ($isCancelledOverview): ?>
-            <div class="order-section-label">Cancellation reason</div>
-            <div class="order-cancellation-card">
-              <p class="order-cancellation-text"><?= htmlspecialchars($overviewCancellationReason !== '' ? $overviewCancellationReason : 'No reason recorded.', ENT_QUOTES, 'UTF-8') ?></p>
-            </div>
-            <?php endif; ?>
-
-            </div>
-            <div class="order-overview-side">
+            </main>
+            <aside class="order-overview-side">
             <div class="order-receipt">
               <header class="order-receipt-head">
                 <span class="order-receipt-mark" aria-hidden="true">
@@ -382,6 +334,7 @@ $overviewReceiptNote = $isCompletedOverview
                 <p class="order-receipt-note"><?= htmlspecialchars($overviewReceiptNote, ENT_QUOTES, 'UTF-8') ?></p>
               </div>
             </div>
+            </aside>
             </div>
             </div>
 
