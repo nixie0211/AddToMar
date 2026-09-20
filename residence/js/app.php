@@ -2877,20 +2877,27 @@ function resetResidenceRxCropZoom(root, flags){
   if(media) media.style.transform = 'translate(0px, 0px) scale(1)';
 }
 
-function openOrderPrescription(url){
+function openOrderDocumentPreview(url, title){
   const src = String(url || '').trim();
+  const heading = String(title || 'Prescription preview').trim() || 'Prescription preview';
   const modal = document.getElementById('order-rx-viewer');
+  const titleEl = document.getElementById('order-rx-viewer-title');
   const image = document.getElementById('order-rx-viewer-image');
   const frame = document.getElementById('order-rx-viewer-frame');
   const missing = document.getElementById('order-rx-viewer-missing');
   if(!modal) return;
+  if(titleEl) titleEl.textContent = heading;
+  if(image) image.alt = heading;
+  if(frame) frame.title = heading;
   bindResidenceRxCropZoom(modal);
   if(!src){
     if(image) image.hidden = true;
     if(frame) frame.hidden = true;
     if(missing){
       missing.hidden = false;
-      missing.textContent = 'No prescription file is available.';
+      missing.textContent = heading.toLowerCase().indexOf('pickup') !== -1
+        ? 'No pickup proof file is available.'
+        : 'No prescription file is available.';
     }
     resetResidenceRxCropZoom(modal, { empty:true });
     modal.hidden = false;
@@ -2929,11 +2936,16 @@ function openOrderPrescription(url){
   modal.hidden = false;
 }
 
+function openOrderPrescription(url){
+  openOrderDocumentPreview(url, 'Prescription preview');
+}
+
 function closeOrderPrescription(){
   const modal = document.getElementById('order-rx-viewer');
   if(modal) modal.hidden = true;
 }
 window.openOrderPrescription = openOrderPrescription;
+window.openOrderDocumentPreview = openOrderDocumentPreview;
 window.closeOrderPrescription = closeOrderPrescription;
 
 function viewOrder(id){
@@ -3107,9 +3119,22 @@ function renderOrderDetail(id){
   const storeCount = stores.length;
   const completedStores = stores.filter(store => orderProgressIndex(store.status) >= 5).length;
   const confirmed = data.down_payment > 0;
-  const pickupProofHtml = data.pickup_proof_url
-    ? `<a class="od-pickup-proof" href="${escHtml(data.pickup_proof_url)}" target="_blank" rel="noopener noreferrer"><span class="od-pickup-proof-icon">${odIcon('image')}</span><span><strong>Pickup completed</strong><small>${escapeHtml(String(data.pickup_proof_url).split('/').pop())}</small></span>${odIcon('chevron')}</a>`
-    : '';
+  const pickupProofButton = (url) => {
+    const src = String(url || '').trim();
+    if(!src) return '';
+    const name = decodeURIComponent(String(src.split('/').pop() || 'pickup-proof').split('?')[0] || 'pickup-proof');
+    const isPdf = /\.pdf($|\?)/i.test(src);
+    const thumb = isPdf
+      ? `<span class="od-pickup-proof-thumb is-pdf" aria-hidden="true">PDF</span>`
+      : `<span class="od-pickup-proof-thumb"><img src="${escHtml(src)}" alt=""></span>`;
+    return `<button type="button" class="od-pickup-proof" data-preview-url="${escHtml(src)}" data-preview-title="Proof of pickup">${thumb}<span><strong>Pickup completed</strong><small>${escapeHtml(name)}</small></span>${odIcon('chevron')}</button>`;
+  };
+  const pickupProofUrls = [];
+  stores.forEach(store => {
+    if(store.pickup_proof_url) pickupProofUrls.push(store.pickup_proof_url);
+  });
+  if(data.pickup_proof_url) pickupProofUrls.unshift(data.pickup_proof_url);
+  const pickupProofHtml = Array.from(new Set(pickupProofUrls.filter(Boolean))).map(pickupProofButton).join('');
 
   const storeCards = stores.map(store => {
     const pharmacy = getMarketplacePharmacy(store.pharmacy_id) || {};
@@ -3222,6 +3247,7 @@ function renderOrderDetail(id){
       });
     });
     if(data.prescription_url) rxUrls.push(data.prescription_url);
+    pickupProofUrls.forEach(url => rxUrls.push(url));
     window.preloadRxPreviewList(rxUrls);
   }
 }
@@ -4613,6 +4639,15 @@ document.addEventListener('click', e => {
   if(rxLink){
     e.preventDefault();
     openOrderPrescription(rxLink.getAttribute('data-rx-url') || '');
+    return;
+  }
+  const pickupPreview = e.target.closest('.od-pickup-proof');
+  if(pickupPreview){
+    e.preventDefault();
+    openOrderDocumentPreview(
+      pickupPreview.getAttribute('data-preview-url') || '',
+      pickupPreview.getAttribute('data-preview-title') || 'Proof of pickup'
+    );
     return;
   }
   const notificationItem = e.target.closest('.topbar-notification-item[role="button"], .notif-full[role="button"]');

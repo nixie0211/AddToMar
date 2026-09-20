@@ -6291,16 +6291,17 @@ body.is-pharmacy-empty.is-pharmacy-profile-page .page[data-page="pharmacy-profil
 .od-sum b{color:#163948;font-size:15px;}
 .od-sum .is-paid{color:#0a8a64;}
 .od-sum>span{display:flex;flex-direction:column;gap:2px}.od-sum>span small{font-size:11px;color:#78909a;font-weight:500}
-.od-pickup-proof{display:flex;align-items:center;gap:14px;margin-bottom:14px;padding:12px 16px;border:1px solid #dcefed;border-radius:14px;background:#f8fffd;color:#214b5a;text-decoration:none;}
+.od-pickup-proof{display:flex;align-items:center;gap:14px;width:100%;margin:0 0 14px;padding:12px 16px;border:1px solid #dcefed;border-radius:14px;background:#f8fffd;color:#214b5a;text-align:left;font:inherit;cursor:pointer;}
+.od-pickup-proof:hover{background:#effbf7;border-color:#b9e5da;}
+.od-pickup-proof>span:nth-child(2){display:flex;flex:1;flex-direction:column;gap:3px;min-width:0;}
+.od-pickup-proof strong{font-size:13px;}
+.od-pickup-proof small{color:#78909a;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.od-pickup-proof-thumb{display:grid;place-items:center;width:52px;height:60px;flex:0 0 52px;overflow:hidden;border-radius:8px;background:#e4f8f0;color:#fff;font-size:11px;font-weight:800;}
+.od-pickup-proof-thumb img{width:100%;height:100%;object-fit:cover;}
+.od-pickup-proof-thumb.is-pdf{background:#e2574c;}
+.od-pickup-proof>svg{width:16px;height:16px;color:#78909a;flex:0 0 16px;}
 .od-confirmed{display:none!important;}
 .od-summary>h3{display:flex;align-items:center;gap:10px}.od-summary>h3>span:last-child{display:flex;flex-direction:column}.od-summary>h3 small{display:block;margin-top:3px;color:#78909a;font-size:11px;font-weight:500}.od-payment-summary-card{display:flex;align-items:center;gap:12px;margin:4px -2px 12px;padding:13px 14px;border:1px solid #dcefed;border-radius:15px;background:#f5fcfa}.od-payment-summary-card>div{display:flex;flex-direction:column;gap:3px}.od-payment-summary-method{flex-direction:row!important;align-items:center;gap:10px}.od-payment-summary-method b{white-space:nowrap}.od-payment-summary-info{flex:1}.od-payment-summary-card b{color:#214b5a;font-size:14px}.od-payment-summary-card small{color:#78909a;font-size:11px}.od-payment-summary-card small svg{width:13px;height:13px;vertical-align:-2px}.od-payment-summary-card .od-paid-badge{white-space:nowrap}
-.od-pickup-proof:hover{background:#effbf7;border-color:#b9e5da;}
-.od-pickup-proof>span:nth-child(2){display:flex;flex:1;flex-direction:column;gap:3px;}
-.od-pickup-proof strong{font-size:13px;}
-.od-pickup-proof small{color:#78909a;font-size:11px;}
-.od-pickup-proof-icon{display:grid;place-items:center;width:42px;height:42px;border-radius:10px;background:#e4f8f0;color:#0b9a7f;}
-.od-pickup-proof-icon svg{width:22px;height:22px;}
-.od-pickup-proof>svg{width:16px;height:16px;color:#78909a;}
 .od-paid-badge{display:inline-flex;padding:5px 9px;border-radius:999px;background:#e7f8f1;color:#087b65;font-size:11px;font-weight:800;}
 .od-sum-balance{
   display:grid;
