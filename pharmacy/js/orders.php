@@ -608,6 +608,7 @@ function renderOrderDrawerDetail(detail) {
       '</div></div>';
   } else if (detail.is_ready) {
     actions = '<div class="order-panel-actions"><div class="order-panel-actions-row">' +
+      '<a class="btn btn-danger" id="order-update-cancel-btn" href="' + closeHref + '">Cancel</a>' +
       '<button type="button" class="btn btn-accent order-complete-btn" id="complete-order-btn" data-order-id="' + detail.id + '" data-order-number="' + escapeHtml(detail.order_number) + '" data-customer="' + escapeHtml(detail.customer_name) + '" data-has-proof="' + (detail.has_pickup_proof ? '1' : '0') + '">Mark as complete</button>' +
       '</div></div>';
   }

@@ -397,6 +397,7 @@ $overviewPickupProofKind = $overviewPickupProofExt === 'pdf' ? 'pdf' : ($overvie
               </div>
               <?php elseif ($isReadyOverview): ?>
               <div class="order-panel-actions-row">
+                <a class="btn btn-danger" id="order-update-cancel-btn" href="<?= htmlspecialchars(pharmacy_orders_url($activeStatus), ENT_QUOTES, 'UTF-8') ?>">Cancel</a>
                 <button
                   type="button"
                   class="btn btn-accent order-complete-btn"

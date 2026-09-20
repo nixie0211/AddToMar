@@ -59,7 +59,7 @@ window.PHARMACY_CHART_DATA = <?= json_encode($chartData ?? [], JSON_UNESCAPED_UN
 <script src="js/add-medicine.php?v=other-dosage-unit-1"></script>
 <script src="js/inventory.php?v=new-badge-7d"></script>
 <script src="<?= htmlspecialchars(app_url('js/rx-crop-preview.js'), ENT_QUOTES, 'UTF-8') ?>?v=rx-crop-preload-1"></script>
-<script src="js/orders.php?v=order-status-once-1"></script>
+<script src="js/orders.php?v=order-complete-cancel-1"></script>
 <script src="js/sales.php"></script>
 <script src="js/analytics.php"></script>
 <script src="js/reports.php"></script>
