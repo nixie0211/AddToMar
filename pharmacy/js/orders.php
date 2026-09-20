@@ -563,6 +563,46 @@ function orderProgressIcon(name) {
   return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (paths[name] || paths.check) + '</svg>';
 }
 
+function pharmacyPaymentReceiptHtml(detail) {
+  const confirmed = !!detail.payment_confirmed || Number(detail.paid_percent || 0) > 0;
+  const fullyPaid = !!detail.is_completed;
+  const title = confirmed || fullyPaid ? 'Payment Successful' : 'Payment Pending';
+  const status = confirmed || fullyPaid ? 'Paid' : 'Pending';
+  const method = escapeHtml(detail.payment_method || 'GCash');
+  const timeLabel = escapeHtml(detail.time_label || '');
+  const dateLabel = escapeHtml(detail.date_label || detail.created_label || '');
+  const stamp = [timeLabel, dateLabel].filter(Boolean).join(', ');
+  const note = escapeHtml(String(detail.payment_note || '').replace(/^✓\s*/, ''));
+  return (
+    '<div class="order-receipt">' +
+      '<header class="order-receipt-head">' +
+        '<span class="order-receipt-mark" aria-hidden="true">' +
+          '<svg viewBox="0 0 72 56" fill="none">' +
+            '<path d="M28 8h26v36l-3.2-2.2-3.2 2.2-3.2-2.2-3.2 2.2-3.2-2.2-3.2 2.2-3.4-2.2-3.4 2.2V8Z" fill="#fff" stroke="#2563eb" stroke-width="2.2"/>' +
+            '<path d="M18 14h26v36l-3.2-2.2-3.2 2.2-3.2-2.2-3.2 2.2-3.2-2.2-3.2 2.2-3.4-2.2-3.4 2.2V14Z" fill="#fff" stroke="#2563eb" stroke-width="2.2"/>' +
+            '<circle cx="31" cy="32" r="9" fill="#22c55e"/>' +
+            '<path d="m27.2 32.2 2.4 2.4 5.2-5.4" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>' +
+          '</svg>' +
+        '</span>' +
+        '<h3>' + title + '</h3>' +
+      '</header>' +
+      '<div class="order-receipt-perforation" aria-hidden="true"></div>' +
+      '<div class="order-receipt-body">' +
+        '<h4>Payment Details</h4>' +
+        '<div class="order-receipt-row"><span>Order Number</span><i>:</i><b>' + escapeHtml(detail.order_number || '') + '</b></div>' +
+        '<div class="order-receipt-row"><span>Order Time</span><i>:</i><b>' + stamp + '</b></div>' +
+        '<div class="order-receipt-row"><span>Payment Method</span><i>:</i><b>' + method + '<small>' + (confirmed ? 'Payment confirmed via PayMongo' : 'PayMongo GCash checkout') + '</small></b></div>' +
+        '<div class="order-receipt-row"><span>Payment Status</span><i>:</i><b><span class="order-receipt-pill' + (confirmed || fullyPaid ? '' : ' is-pending') + '">' + status + '</span></b></div>' +
+        '<div class="order-receipt-row"><span>Amount</span><i>:</i><b>' + escapeHtml(detail.paid_label || '') + '</b></div>' +
+        '<div class="order-receipt-row order-receipt-total"><span>Total Amount</span><i>:</i><b>' + escapeHtml(detail.total_label || '') + '</b></div>' +
+        '<div class="order-receipt-row"><span>Paid (' + Number(detail.paid_percent || 0) + '%)<small>' + Number(detail.paid_note_percent || 0) + '% · paid via GCash</small></span><i>:</i><b class="is-paid">' + escapeHtml(detail.paid_label || '') + '</b></div>' +
+        '<div class="order-receipt-row"><span>Remaining Balance (' + Number(detail.balance_percent || 0) + '%)<small>' + (fullyPaid ? 'Paid in full' : 'Pay at pickup') + '</small></span><i>:</i><b>' + escapeHtml(detail.balance_label || '') + '</b></div>' +
+        '<p class="order-receipt-note">' + note + '</p>' +
+      '</div>' +
+    '</div>'
+  );
+}
+
 function orderProgressHtml(status, stamp) {
   const current = orderProgressIndex(status);
   const cancelled = String(status || '').toLowerCase() === 'cancelled';
@@ -651,14 +691,7 @@ function renderOrderDrawerDetail(detail) {
     '<div class="list-body"><div class="t1">' + escapeHtml(detail.customer_name) + '</div><div class="t2">' + escapeHtml(detail.customer_line) + '</div></div></div>' +
     '<div class="order-section-label">Medicines</div>' + itemsHtml + extra +
     '</div>' +
-    '<div class="order-overview-side"><div class="order-payment-card"><h3 class="payment-summary-title"><span>Payment Summary<small>Payment details and transaction breakdown</small></span></h3>' +
-    '<div class="payment-summary-method"><b class="payment-gcash-icon">G</b><span class="payment-summary-details"><strong>GCash</strong><b>' + escapeHtml(detail.paid_label) + '</b></span><small class="payment-summary-meta">Payment confirmed via PayMongo<br>' + escapeHtml(detail.created_label) + '</small><span class="payment-summary-confirmed">✓ Paid</span></div>' +
-    '<div class="order-payment-row"><span>Subtotal</span><span class="mono">' + escapeHtml(detail.subtotal_label || '') + '</span></div>' +
-    '<div class="order-payment-row"><span>VAT (' + Number(detail.vat_percent || 15) + '%)</span><span class="mono">' + escapeHtml(detail.vat_label || '') + '</span></div>' +
-    '<div class="order-payment-row order-payment-row--total"><span>Total</span><span class="mono">' + escapeHtml(detail.total_label) + '</span></div>' +
-    '<div class="order-payment-row order-payment-row--paid"><span>Paid (' + Number(detail.paid_percent || 0) + '%)<small>' + Number(detail.paid_note_percent || 0) + '% · paid via GCash</small></span><span class="mono">' + escapeHtml(detail.paid_label) + '</span></div>' +
-    '<div class="order-payment-row order-payment-row--due"><span>Remaining Balance (' + Number(detail.balance_percent || 0) + '%)</span><span class="mono">' + escapeHtml(detail.balance_label) + '</span></div>' +
-    '<p class="order-payment-note">' + escapeHtml(detail.payment_note) + '</p></div></div>' +
+    '<div class="order-overview-side">' + pharmacyPaymentReceiptHtml(detail) + '</div>' +
     '</div>' + actions;
   drawer.hidden = false;
   drawer.classList.remove('is-loading');

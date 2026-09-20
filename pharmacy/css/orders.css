@@ -598,6 +598,132 @@ button.order-rx-doc-card{
   height:16px;
 }
 
+.order-receipt{
+  position:relative;
+  overflow:visible;
+  margin:0;
+  padding:0 0 10px;
+  border:0;
+  border-radius:22px;
+  background:#fff;
+  box-shadow:0 14px 36px rgba(28,45,70,.08), 0 0 0 1px rgba(15,23,42,.04);
+}
+.order-receipt-head{
+  padding:26px 22px 18px;
+  text-align:center;
+}
+.order-receipt-mark{
+  display:grid;
+  place-items:center;
+  width:72px;
+  height:56px;
+  margin:0 auto 12px;
+}
+.order-receipt-mark svg{
+  width:72px;
+  height:56px;
+  display:block;
+}
+.order-receipt-head h3{
+  display:block;
+  margin:0;
+  color:#111827;
+  font:800 22px/1.2 var(--font-display);
+  letter-spacing:-.03em;
+}
+.order-receipt-perforation{
+  position:relative;
+  height:0;
+  margin:0 18px 6px;
+  border-top:1.5px dashed #e5e7eb;
+}
+.order-receipt-perforation::before,
+.order-receipt-perforation::after{
+  content:'';
+  position:absolute;
+  top:-11px;
+  width:22px;
+  height:22px;
+  border-radius:50%;
+  background:#fff;
+  box-shadow:inset 0 0 0 1px rgba(15,23,42,.04);
+}
+.order-receipt-perforation::before{left:-29px;}
+.order-receipt-perforation::after{right:-29px;}
+.order-receipt-body{padding:8px 22px 18px;}
+.order-receipt-body h4{
+  margin:4px 0 10px;
+  color:#111827;
+  font:800 14px var(--font-display);
+}
+.order-receipt-row{
+  display:grid;
+  grid-template-columns:minmax(0,1.05fr) 12px minmax(0,1.15fr);
+  gap:8px;
+  align-items:start;
+  padding:7px 0;
+  color:#6b7c8a;
+  font-size:13px;
+  font-weight:500;
+}
+.order-receipt-row i{
+  color:#9aa8b3;
+  font-style:normal;
+  font-weight:700;
+  text-align:center;
+}
+.order-receipt-row b{
+  color:#111827;
+  font-size:13px;
+  font-weight:700;
+  text-align:left;
+}
+.order-receipt-row b small,
+.order-receipt-row span small{
+  display:block;
+  margin-top:2px;
+  color:#8a9aa6;
+  font-size:11px;
+  font-weight:500;
+}
+.order-receipt-total{
+  margin-top:4px;
+  padding-top:12px;
+  border-top:1.5px dashed #e5e7eb;
+}
+.order-receipt-pill{
+  display:inline-flex;
+  align-items:center;
+  padding:3px 9px;
+  border-radius:6px;
+  background:#16a34a;
+  color:#fff;
+  font-size:11px;
+  font-weight:800;
+  line-height:1.4;
+}
+.order-receipt-pill.is-pending{background:#d97706;}
+.order-receipt-row b.is-paid{color:#0a8a64;}
+.order-receipt-note{
+  margin:14px 0 0;
+  padding:10px 12px;
+  border-radius:10px;
+  background:#eef8f3;
+  color:#0a6b54;
+  font-size:12px;
+  font-weight:600;
+  line-height:1.45;
+}
+.order-receipt::after{
+  content:'';
+  display:block;
+  height:10px;
+  margin:2px 8px 0;
+  background-image:radial-gradient(circle at 10px 10px, #fff 6px, transparent 7px);
+  background-size:20px 10px;
+  background-repeat:repeat-x;
+}
+
 .order-payment-card{
   border:1px solid #d8e8e4;
   border-radius:14px;
