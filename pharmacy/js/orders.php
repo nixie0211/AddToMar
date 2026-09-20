@@ -594,6 +594,7 @@ function pharmacyPaymentReceiptHtml(detail) {
         '<div class="order-receipt-row"><span>Payment Method</span><i>:</i><b>' + method + '<small>' + (confirmed ? 'Payment confirmed via PayMongo' : 'PayMongo GCash checkout') + '</small></b></div>' +
         '<div class="order-receipt-row"><span>Payment Status</span><i>:</i><b><span class="order-receipt-pill' + (confirmed || fullyPaid ? '' : ' is-pending') + '">' + status + '</span></b></div>' +
         '<div class="order-receipt-row"><span>Amount</span><i>:</i><b>' + escapeHtml(detail.paid_label || '') + '</b></div>' +
+        '<div class="order-receipt-row"><span>VAT (' + Number(detail.vat_percent || 15) + '%)</span><i>:</i><b>' + escapeHtml(detail.vat_label || '') + '</b></div>' +
         '<div class="order-receipt-row order-receipt-total"><span>Total Amount</span><i>:</i><b>' + escapeHtml(detail.total_label || '') + '</b></div>' +
         '<div class="order-receipt-row"><span>Paid (' + Number(detail.paid_percent || 0) + '%)<small>' + Number(detail.paid_note_percent || 0) + '% · paid via GCash</small></span><i>:</i><b class="is-paid">' + escapeHtml(detail.paid_label || '') + '</b></div>' +
         '<div class="order-receipt-row"><span>Remaining Balance (' + Number(detail.balance_percent || 0) + '%)<small>' + (fullyPaid ? 'Paid in full' : 'Pay at pickup') + '</small></span><i>:</i><b>' + escapeHtml(detail.balance_label || '') + '</b></div>' +
