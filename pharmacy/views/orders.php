@@ -245,6 +245,34 @@ $overviewReceiptNote = $isCompletedOverview
                   <?= htmlspecialchars($overviewDateLabel, ENT_QUOTES, 'UTF-8') ?> • <?= htmlspecialchars($overviewTimeLabel, ENT_QUOTES, 'UTF-8') ?>
                 </small>
               </div>
+              <?php if ($isPendingOverview || $canAdvanceStatus || $isReadyOverview): ?>
+              <div class="ph-order-head-actions">
+                <?php if ($isPendingOverview): ?>
+                <button type="button" class="btn btn-danger order-cancel-btn" id="cancel-order-btn" data-order-id="<?= $panelOrderId ?>" data-order-number="<?= htmlspecialchars($overviewOrderNumber, ENT_QUOTES, 'UTF-8') ?>" data-customer="<?= htmlspecialchars($overviewCustomer, ENT_QUOTES, 'UTF-8') ?>"<?= $panelOrderId <= 0 ? ' disabled' : '' ?>>Cancel order</button>
+                <button type="button" class="btn btn-accent order-confirm-btn" id="confirm-order-btn" data-order-id="<?= $panelOrderId ?>" data-next-status="confirmed" data-next-label="Confirmed"<?= $panelOrderId <= 0 ? ' disabled' : '' ?>>Confirm order</button>
+                <?php elseif ($canAdvanceStatus): ?>
+                <button
+                  type="button"
+                  class="btn btn-accent order-update-status-btn"
+                  id="update-order-status-btn"
+                  data-order-id="<?= $panelOrderId ?>"
+                  data-next-status="<?= htmlspecialchars($nextOrderStatus, ENT_QUOTES, 'UTF-8') ?>"
+                  data-next-label="<?= htmlspecialchars($nextStatusLabel, ENT_QUOTES, 'UTF-8') ?>"
+                >Update status</button>
+                <?php elseif ($isReadyOverview): ?>
+                <button
+                  type="button"
+                  class="btn btn-accent order-complete-btn"
+                  id="complete-order-btn"
+                  data-order-id="<?= $panelOrderId ?>"
+                  data-order-number="<?= htmlspecialchars($overviewOrderNumber, ENT_QUOTES, 'UTF-8') ?>"
+                  data-customer="<?= htmlspecialchars($overviewCustomer, ENT_QUOTES, 'UTF-8') ?>"
+                  data-has-proof="<?= $hasPickupProof ? '1' : '0' ?>"
+                  data-proof-url="<?= htmlspecialchars($overviewPickupProofUrl ?? '', ENT_QUOTES, 'UTF-8') ?>"
+                >Mark as complete</button>
+                <?php endif; ?>
+              </div>
+              <?php endif; ?>
             </div>
             <?php if ($isCancelledOverview): ?>
             <p class="mo-cancel-reason"><strong>Cancellation reason</strong><span><?= htmlspecialchars($overviewCancellationReason !== '' ? $overviewCancellationReason : 'No reason recorded.', ENT_QUOTES, 'UTF-8') ?></span></p>
@@ -337,43 +365,6 @@ $overviewReceiptNote = $isCompletedOverview
             </aside>
             </div>
             </div>
-
-            <?php if ($isPendingOverview || $canAdvanceStatus || $isReadyOverview): ?>
-            <div class="order-panel-actions">
-              <?php if ($isPendingOverview): ?>
-              <div class="order-panel-actions-row">
-                <button type="button" class="btn btn-danger order-cancel-btn" id="cancel-order-btn" data-order-id="<?= $panelOrderId ?>" data-order-number="<?= htmlspecialchars($overviewOrderNumber, ENT_QUOTES, 'UTF-8') ?>" data-customer="<?= htmlspecialchars($overviewCustomer, ENT_QUOTES, 'UTF-8') ?>"<?= $panelOrderId <= 0 ? ' disabled' : '' ?>>Cancel order</button>
-                <button type="button" class="btn btn-accent order-confirm-btn" id="confirm-order-btn" data-order-id="<?= $panelOrderId ?>" data-next-status="confirmed" data-next-label="Confirmed"<?= $panelOrderId <= 0 ? ' disabled' : '' ?>>Confirm order</button>
-              </div>
-              <?php elseif ($canAdvanceStatus): ?>
-              <div class="order-panel-actions-row">
-                <a class="btn btn-danger" id="order-update-cancel-btn" href="<?= htmlspecialchars(pharmacy_orders_url($activeStatus), ENT_QUOTES, 'UTF-8') ?>">Cancel</a>
-                <button
-                  type="button"
-                  class="btn btn-accent order-update-status-btn"
-                  id="update-order-status-btn"
-                  data-order-id="<?= $panelOrderId ?>"
-                  data-next-status="<?= htmlspecialchars($nextOrderStatus, ENT_QUOTES, 'UTF-8') ?>"
-                  data-next-label="<?= htmlspecialchars($nextStatusLabel, ENT_QUOTES, 'UTF-8') ?>"
-                >Update status</button>
-              </div>
-              <?php elseif ($isReadyOverview): ?>
-              <div class="order-panel-actions-row">
-                <a class="btn btn-danger" id="order-update-cancel-btn" href="<?= htmlspecialchars(pharmacy_orders_url($activeStatus), ENT_QUOTES, 'UTF-8') ?>">Cancel</a>
-                <button
-                  type="button"
-                  class="btn btn-accent order-complete-btn"
-                  id="complete-order-btn"
-                  data-order-id="<?= $panelOrderId ?>"
-                  data-order-number="<?= htmlspecialchars($overviewOrderNumber, ENT_QUOTES, 'UTF-8') ?>"
-                  data-customer="<?= htmlspecialchars($overviewCustomer, ENT_QUOTES, 'UTF-8') ?>"
-                  data-has-proof="<?= $hasPickupProof ? '1' : '0' ?>"
-                  data-proof-url="<?= htmlspecialchars($overviewPickupProofUrl ?? '', ENT_QUOTES, 'UTF-8') ?>"
-                >Mark as complete</button>
-              </div>
-              <?php endif; ?>
-            </div>
-            <?php endif; ?>
 
             <?php endif; ?>
             </section>

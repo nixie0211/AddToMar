@@ -664,20 +664,18 @@ function renderOrderDrawerDetail(detail) {
 
   let actions = '';
   if (detail.is_pending) {
-    actions = '<div class="order-panel-actions"><div class="order-panel-actions-row">' +
+    actions = '<div class="ph-order-head-actions">' +
       '<button type="button" class="btn btn-danger order-cancel-btn" id="cancel-order-btn" data-order-id="' + detail.id + '" data-order-number="' + escapeHtml(detail.order_number) + '" data-customer="' + escapeHtml(detail.customer_name) + '">Cancel order</button>' +
       '<button type="button" class="btn btn-accent order-confirm-btn" id="confirm-order-btn" data-order-id="' + detail.id + '" data-next-status="confirmed" data-next-label="Confirmed">Confirm order</button>' +
-      '</div></div>';
+      '</div>';
   } else if (detail.next_status) {
-    actions = '<div class="order-panel-actions"><div class="order-panel-actions-row">' +
-      '<a class="btn btn-danger" id="order-update-cancel-btn" href="' + closeHref + '">Cancel</a>' +
+    actions = '<div class="ph-order-head-actions">' +
       '<button type="button" class="btn btn-accent order-update-status-btn" id="update-order-status-btn" data-order-id="' + detail.id + '" data-next-status="' + escapeHtml(detail.next_status) + '" data-next-label="' + escapeHtml(detail.next_label) + '">Update status</button>' +
-      '</div></div>';
+      '</div>';
   } else if (detail.is_ready) {
-    actions = '<div class="order-panel-actions"><div class="order-panel-actions-row">' +
-      '<a class="btn btn-danger" id="order-update-cancel-btn" href="' + closeHref + '">Cancel</a>' +
+    actions = '<div class="ph-order-head-actions">' +
       '<button type="button" class="btn btn-accent order-complete-btn" id="complete-order-btn" data-order-id="' + detail.id + '" data-order-number="' + escapeHtml(detail.order_number) + '" data-customer="' + escapeHtml(detail.customer_name) + '" data-has-proof="' + (detail.has_pickup_proof ? '1' : '0') + '">Mark as complete</button>' +
-      '</div></div>';
+      '</div>';
   }
 
   let extra = '';
@@ -703,7 +701,7 @@ function renderOrderDrawerDetail(detail) {
     '<p>' + itemCount + ' item' + (itemCount === 1 ? '' : 's') + ' • ' + escapeHtml(detail.total_label || '') + '</p>' +
     '<small><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 11h18"/></svg> ' +
     escapeHtml(detail.date_label || detail.created_label || '') + (detail.time_label ? ' • ' + escapeHtml(detail.time_label) : '') + '</small>' +
-    '</div></div>' +
+    '</div>' + actions + '</div>' +
     cancelReason +
     '<div class="ph-order-layout">' +
     '<main class="order-overview-main">' +
@@ -718,7 +716,7 @@ function renderOrderDrawerDetail(detail) {
     '</div></article>' + extra +
     '</main>' +
     '<aside class="order-overview-side">' + pharmacyPaymentReceiptHtml(detail) + '</aside>' +
-    '</div></div>' + actions;
+    '</div></div>';
   drawer.hidden = false;
   drawer.classList.remove('is-loading');
   drawer.setAttribute('data-order-id', String(detail.id || 0));
