@@ -596,6 +596,9 @@ input.field-input:focus-visible, select.field-input:focus-visible, textarea.fiel
   border-bottom:1px solid var(--border);
   box-shadow:none;
 }
+.app-topbar:has(.home-search-field.is-open){
+  z-index:260;
+}
 
 .app-location-bar{
   background:#1a6f5d;
@@ -1774,7 +1777,7 @@ input.field-input:focus-visible, select.field-input:focus-visible, textarea.fiel
 
 .home-category-nav{
   position:relative;
-  z-index:200;
+  z-index:40;
   width:100%;
   max-width:var(--content-max);
   margin:0 auto;
@@ -1984,7 +1987,7 @@ body:not(:has(.page[data-page="dashboard"].active)) .home-category-bar{ display:
   top:calc(100% + 8px);
   left:0;
   right:0;
-  z-index:120;
+  z-index:260;
   margin:0;
   padding:8px;
   list-style:none;
