@@ -27,7 +27,7 @@
               <div class="progress-track"><div class="progress-fill" style="width:<?= $outPct ?>%; background:linear-gradient(90deg,var(--red),#F87171);"></div></div>
             </div>
             <div style="margin-top:16px;">
-              <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:600; margin-bottom:2px;"><span>Expiring within 30 days</span><span><?= number_format((int) ($analyticsStats['expiring'] ?? 0)) ?> medicines</span></div>
+              <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:600; margin-bottom:2px;"><span>Expiring within 7 days</span><span><?= number_format((int) ($analyticsStats['expiring'] ?? 0)) ?> medicines</span></div>
               <div class="progress-track"><div class="progress-fill" style="width:<?= $expPct ?>%; background:linear-gradient(90deg,var(--amber),#FBBF24);"></div></div>
             </div>
           </div>

@@ -76,18 +76,22 @@ function pharmacy_medicine_status(array $medicine): string
     $min = (int) ($medicine['minimum_stock'] ?? 0);
     $exp = $medicine['expiration_date'] ?? null;
 
-    if ($qty <= 0) {
-        return 'out';
-    }
     if ($exp) {
         $expiryTimestamp = pharmacy_expiration_timestamp((string) $exp);
-        $days = $expiryTimestamp === null ? PHP_INT_MAX : (int) floor(($expiryTimestamp - time()) / 86400);
-        if ($days < 0) {
-            return 'expired';
+        if ($expiryTimestamp !== null) {
+            $expiryDay = strtotime(date('Y-m-d', $expiryTimestamp));
+            $today = strtotime(date('Y-m-d'));
+            $days = (int) floor(($expiryDay - $today) / 86400);
+            if ($days <= 0) {
+                return 'expired';
+            }
+            if ($days <= 7) {
+                return 'expiring';
+            }
         }
-        if ($days <= 30) {
-            return 'expiring';
-        }
+    }
+    if ($qty <= 0) {
+        return 'out';
     }
     if ($min > 0 && $qty <= $min) {
         return 'low';
@@ -1117,7 +1121,10 @@ function pharmacy_get_notifications(): array
     foreach (pharmacy_get_expiring_medicines(5) as $medicine) {
         $name = trim((string) ($medicine['name'] ?? 'Medicine'));
         $expiryTimestamp = pharmacy_expiration_timestamp((string) $medicine['expiration_date']);
-        $days = $expiryTimestamp === null ? 0 : (int) floor(($expiryTimestamp - time()) / 86400);
+        $days = 0;
+        if ($expiryTimestamp !== null) {
+            $days = (int) floor((strtotime(date('Y-m-d', $expiryTimestamp)) - strtotime(date('Y-m-d'))) / 86400);
+        }
         $noticeId = pharmacy_notification_id('expiring', (string) (int) ($medicine['id'] ?? 0));
         $notifications[] = [
             'id' => $noticeId,
