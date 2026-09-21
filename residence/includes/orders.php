@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require_once dirname(__DIR__, 2) . '/pharmacy/config.php';
+require_once dirname(__DIR__, 2) . '/includes/object-storage.php';
 require_once dirname(__DIR__, 2) . '/pharmacy/includes/database.php';
 require_once dirname(__DIR__, 2) . '/includes/resident-notifications.php';
 require_once __DIR__ . '/catalog.php';
@@ -28,6 +29,10 @@ function residence_order_pickup_proof_url(int $orderId, string $path = ''): stri
 {
     if ($orderId <= 0 || trim($path) === '') {
         return '';
+    }
+
+    if (preg_match('#^https?://#i', $path)) {
+        return $path;
     }
 
     return function_exists('app_url')
@@ -157,6 +162,14 @@ function residence_store_order_upload(array $file, string $prefix): ?string
     }
 
     $filename = $prefix . '-' . bin2hex(random_bytes(6)) . '.' . $allowed[$mime];
+    $bytes = (string) file_get_contents((string) $file['tmp_name']);
+    if (function_exists('addtomar_object_storage_put') && addtomar_object_storage_enabled() && $bytes !== '') {
+        $url = addtomar_object_storage_put('orders/' . $filename, $bytes, $mime);
+        if ($url !== '') {
+            return $url;
+        }
+    }
+
     $absolute = $dir . '/' . $filename;
     if (!move_uploaded_file((string) $file['tmp_name'], $absolute)) {
         return null;

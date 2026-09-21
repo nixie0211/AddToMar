@@ -56,6 +56,20 @@ if ((int) $file['size'] > 5 * 1024 * 1024) {
     exit;
 }
 
+$filename = 'order-' . $orderId . '-' . bin2hex(random_bytes(6)) . '.' . $allowed[$mime];
+$bytes = is_file($tmpName) ? (string) file_get_contents($tmpName) : '';
+if (function_exists('addtomar_object_storage_put') && addtomar_object_storage_enabled() && $bytes !== '') {
+    $stored = addtomar_object_storage_put('pickup-proof/' . $filename, $bytes, $mime);
+    if ($stored !== '' && pharmacy_save_pickup_proof($orderId, $stored)) {
+        echo json_encode([
+            'success' => true,
+            'message' => 'Proof of pickup uploaded.',
+            'proof_url' => $stored,
+        ]);
+        exit;
+    }
+}
+
 $dir = dirname(__DIR__, 2) . '/uploads/pickup-proof';
 if (!is_dir($dir) && !mkdir($dir, 0775, true) && !is_dir($dir)) {
     http_response_code(500);
@@ -63,7 +77,6 @@ if (!is_dir($dir) && !mkdir($dir, 0775, true) && !is_dir($dir)) {
     exit;
 }
 
-$filename = 'order-' . $orderId . '-' . bin2hex(random_bytes(6)) . '.' . $allowed[$mime];
 $absolute = $dir . '/' . $filename;
 if (!move_uploaded_file($tmpName, $absolute)) {
     http_response_code(500);

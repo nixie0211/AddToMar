@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/database.php';
+require_once dirname(__DIR__, 2) . '/includes/object-storage.php';
 require_once __DIR__ . '/pharmacy-context.php';
 
 function pharmacy_settings(): array
@@ -271,8 +272,12 @@ function pharmacy_medicine_editor_payload(array $medicine): array
     ];
 }
 
-function pharmacy_saved_medicine_image_url(int $id): string
+function pharmacy_saved_medicine_image_url(int $id, string $imagePath = ''): string
 {
+    if (preg_match('#^https?://#i', $imagePath)) {
+        $sep = str_contains($imagePath, '?') ? '&' : '?';
+        return $imagePath . $sep . 'v=' . time();
+    }
     $base = function_exists('app_url')
         ? app_url('medicine-image.php?id=' . $id)
         : ('../medicine-image.php?id=' . $id);
@@ -494,6 +499,9 @@ function pharmacy_pickup_proof_url(array $order): ?string
     $orderId = (int) ($order['id'] ?? 0);
     if ($path === '' || $orderId <= 0) {
         return null;
+    }
+    if (preg_match('#^https?://#i', $path)) {
+        return $path;
     }
 
     return function_exists('app_url')
@@ -1908,10 +1916,18 @@ function pharmacy_medicine_compress_image(string $content, string $mime): ?array
     return ['mime' => 'image/jpeg', 'content' => $out];
 }
 
-function pharmacy_medicine_store_image(int $medicineId, string $filename, string $mime, string $content): void
+function pharmacy_medicine_store_image(int $medicineId, string $filename, string $mime, string $content): string
 {
     if ($medicineId <= 0 || $content === '') {
-        return;
+        return '';
+    }
+
+    if (function_exists('addtomar_object_storage_put') && addtomar_object_storage_enabled()) {
+        $safe = preg_replace('/[^a-zA-Z0-9._-]+/', '-', $filename) ?: ('image-' . $medicineId . '.jpg');
+        $url = addtomar_object_storage_put('medicines/' . $medicineId . '/' . $safe, $content, $mime);
+        if ($url !== '') {
+            return $url;
+        }
     }
 
     $stmt = pharmacy_db()->prepare(
@@ -1920,6 +1936,9 @@ function pharmacy_medicine_store_image(int $medicineId, string $filename, string
          ON DUPLICATE KEY UPDATE filename = VALUES(filename), mime = VALUES(mime), content = VALUES(content)'
     );
     $stmt->execute([$medicineId, $filename, $mime, $content]);
+    pharmacy_medicine_db_image_ids(true);
+
+    return 'medicine-image.php?id=' . $medicineId;
 }
 
 function pharmacy_medicine_get_image(int $medicineId): ?array
@@ -1954,6 +1973,9 @@ function pharmacy_medicine_image_url(array $medicine): ?string
         $id = (int) ($medicine['id'] ?? 0);
     }
     $path = trim((string) ($medicine['image_path'] ?? ''));
+    if (preg_match('#^https?://#i', $path)) {
+        return $path;
+    }
     if (preg_match('/medicine-image\.php\?(?:.*&)?id=(\d+)/i', $path, $matches)) {
         $id = (int) $matches[1];
     }
@@ -1982,9 +2004,14 @@ function pharmacy_medicine_image_url(array $medicine): ?string
                 default => 'application/octet-stream',
             };
             try {
-                pharmacy_medicine_store_image($id, $filename, $mime, $bytes);
-                pharmacy_db()->prepare('UPDATE medicines SET image_path = ? WHERE id = ?')
-                    ->execute(['medicine-image.php?id=' . $id, $id]);
+                $stored = pharmacy_medicine_store_image($id, $filename, $mime, $bytes);
+                if ($stored !== '') {
+                    pharmacy_db()->prepare('UPDATE medicines SET image_path = ? WHERE id = ?')
+                        ->execute([$stored, $id]);
+                    if (preg_match('#^https?://#i', $stored)) {
+                        return $stored;
+                    }
+                }
             } catch (Throwable) {
                 // Fall back to the disk URL below if the database copy cannot be stored.
             }

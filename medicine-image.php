@@ -10,6 +10,19 @@ require_once __DIR__ . '/pharmacy/includes/repository.php';
 caps_bootstrap();
 
 $medicineId = (int) ($_GET['id'] ?? 0);
+if ($medicineId > 0) {
+    try {
+        $stmt = pharmacy_db()->prepare('SELECT image_path FROM medicines WHERE id = ? LIMIT 1');
+        $stmt->execute([$medicineId]);
+        $storedPath = trim((string) $stmt->fetchColumn());
+        if (preg_match('#^https?://#i', $storedPath)) {
+            header('Location: ' . $storedPath, true, 302);
+            exit;
+        }
+    } catch (Throwable) {
+    }
+}
+
 $image = pharmacy_medicine_get_image($medicineId);
 $content = $image['content'] ?? null;
 if (is_resource($content)) {

@@ -163,9 +163,8 @@ try {
 
     if ($medicineId > 0) {
         if ($imageUpload !== null) {
-            pharmacy_medicine_store_image($medicineId, $imageUpload['filename'], $imageUpload['mime'], $imageUpload['content']);
-            $imagePath = 'medicine-image.php?id=' . $medicineId;
-            $imageUrl = pharmacy_saved_medicine_image_url($medicineId);
+            $imagePath = pharmacy_medicine_store_image($medicineId, $imageUpload['filename'], $imageUpload['mime'], $imageUpload['content']);
+            $imageUrl = pharmacy_saved_medicine_image_url($medicineId, $imagePath);
         }
 
         $previous = $pdo->prepare('SELECT is_active, listed_at, created_at FROM medicines WHERE id = ? AND ' . pharmacy_scope_sql() . ' LIMIT 1');
@@ -307,10 +306,10 @@ try {
 
     $medicineId = (int) $pdo->lastInsertId();
     if ($imageUpload !== null && $medicineId > 0) {
-        pharmacy_medicine_store_image($medicineId, $imageUpload['filename'], $imageUpload['mime'], $imageUpload['content']);
+        $imagePath = pharmacy_medicine_store_image($medicineId, $imageUpload['filename'], $imageUpload['mime'], $imageUpload['content']);
         $pdo->prepare('UPDATE medicines SET image_path = ? WHERE id = ? AND ' . pharmacy_scope_sql())
-            ->execute(['medicine-image.php?id=' . $medicineId, $medicineId]);
-        $imageUrl = pharmacy_saved_medicine_image_url($medicineId);
+            ->execute([$imagePath, $medicineId]);
+        $imageUrl = pharmacy_saved_medicine_image_url($medicineId, $imagePath);
     }
 
     $saved = $pdo->prepare('SELECT * FROM medicines WHERE id = ? AND ' . pharmacy_scope_sql() . ' LIMIT 1');
