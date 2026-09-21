@@ -5245,6 +5245,39 @@ table.hist-table tr:hover td{ background:var(--bg);}
 .pharmacy-profile-meta p{ margin:0; color:#66758b; font-size:13px; }
 .pharmacy-profile-nav{ display:none !important; }
 .pharmacy-profile-home{ display:grid; gap:24px; margin-top:16px; }
+.pharmacy-profile-pager{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:4px;
+  margin:28px 0 4px;
+}
+.pharmacy-profile-pager button{
+  min-width:28px;
+  height:28px;
+  padding:0 6px;
+  border:0;
+  background:none;
+  color:#8aa0ab;
+  font:600 13px var(--font-body);
+  cursor:pointer;
+}
+.pharmacy-profile-pager button.is-active{
+  color:#087e6d;
+}
+.pharmacy-profile-pager button:hover:not(:disabled):not(.is-active){
+  color:#163948;
+}
+.pharmacy-profile-pager button:disabled{
+  opacity:.28;
+  cursor:default;
+}
+.pharmacy-profile-pager-gap{
+  min-width:20px;
+  color:#8aa0ab;
+  font:600 13px var(--font-body);
+  text-align:center;
+}
 .pharmacy-profile-section-head{ display:flex; align-items:center; justify-content:center; gap:16px; margin-bottom:22px; }
 .pharmacy-profile-section-head::before,
 .pharmacy-profile-section-head::after{ content:''; flex:1; height:1px; background:rgba(21, 34, 40, .22); }

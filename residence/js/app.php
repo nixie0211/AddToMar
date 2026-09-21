@@ -416,6 +416,7 @@ function openPharmacyProfile(pharmacyId){
   const distanceLabel = Number.isFinite(distance) && distance < 900 ? `${distance.toFixed(1)} km away` : 'Distance unavailable';
   document.getElementById('pharmacy-profile-status').innerHTML = `<span class="profile-state ${isOpen ? 'is-open' : ''}"><i></i>${isOpen ? 'Open now' : 'Currently closed'}</span><span class="pharmacy-profile-status-distance">${distanceLabel}</span>`;
   document.getElementById('pharmacy-profile-sold').textContent = `${totalSold.toLocaleString()} sold`;
+  pharmacyProfilePage = 1;
   showPharmacyProfileHome();
 
   go('pharmacy-profile');
@@ -534,18 +535,53 @@ function setPharmacyProfileEmpty(isEmpty){
   document.querySelector('.page[data-page="pharmacy-profile"]')?.classList.toggle('is-pharmacy-empty', Boolean(isEmpty));
 }
 
-function showPharmacyProfileHome(){
+const PHARMACY_PROFILE_PAGE_SIZE = 8;
+let pharmacyProfilePage = 1;
+
+function pharmacyProfilePagerHtml(page, pages){
+  if(pages <= 1) return '';
+  const numbers = [];
+  for(let i = 1; i <= pages; i += 1){
+    if(pages <= 7 || i === 1 || i === pages || Math.abs(i - page) <= 1){
+      numbers.push(i);
+    }else if(numbers[numbers.length - 1] !== '…'){
+      numbers.push('…');
+    }
+  }
+  const buttons = numbers.map(item => item === '…'
+    ? '<span class="pharmacy-profile-pager-gap">…</span>'
+    : `<button type="button" data-pharmacy-page="${item}"${item === page ? ' class="is-active" aria-current="page"' : ''}>${item}</button>`
+  ).join('');
+  return `<nav class="pharmacy-profile-pager" aria-label="Product pages">
+    <button type="button" data-pharmacy-page="prev"${page <= 1 ? ' disabled' : ''} aria-label="Previous page">‹</button>
+    ${buttons}
+    <button type="button" data-pharmacy-page="next"${page >= pages ? ' disabled' : ''} aria-label="Next page">›</button>
+  </nav>`;
+}
+
+function renderPharmacyProfileProductPage(products, heading = ''){
   const root = document.getElementById('pharmacy-profile-home');
   if(!root) return;
   bindPharmacyProfileProductClicks();
-  const products = Array.from(document.querySelectorAll(`.med-catalog .med-card[data-pharmacy-id="${activePharmacyProfileId}"]`));
   if(products.length === 0){
-    setPharmacyProfileEmpty(true);
-    root.innerHTML = '<div class="pharmacy-profile-empty-state"><p class="pharmacy-profile-empty">No products listed yet.</p></div>';
+    setPharmacyProfileEmpty(!heading);
+    root.innerHTML = heading
+      ? `<section><div class="pharmacy-profile-section-head"><h3>${heading}</h3></div><p class="pharmacy-profile-empty">No products in this category yet.</p></section>`
+      : '<div class="pharmacy-profile-empty-state"><p class="pharmacy-profile-empty">No products listed yet.</p></div>';
     return;
   }
   setPharmacyProfileEmpty(false);
-  root.innerHTML = `<section><div class="med-grid pharmacy-profile-product-grid">${products.map(pharmacyProfileCardHtml).join('')}</div></section>`;
+  const pages = Math.max(1, Math.ceil(products.length / PHARMACY_PROFILE_PAGE_SIZE));
+  pharmacyProfilePage = Math.min(Math.max(1, pharmacyProfilePage), pages);
+  const start = (pharmacyProfilePage - 1) * PHARMACY_PROFILE_PAGE_SIZE;
+  const pageItems = products.slice(start, start + PHARMACY_PROFILE_PAGE_SIZE);
+  const head = heading ? `<div class="pharmacy-profile-section-head"><h3>${heading}</h3></div>` : '';
+  root.innerHTML = `<section>${head}<div class="med-grid pharmacy-profile-product-grid">${pageItems.map(pharmacyProfileCardHtml).join('')}</div>${pharmacyProfilePagerHtml(pharmacyProfilePage, pages)}</section>`;
+}
+
+function showPharmacyProfileHome(){
+  const products = Array.from(document.querySelectorAll(`.med-catalog .med-card[data-pharmacy-id="${activePharmacyProfileId}"]`));
+  renderPharmacyProfileProductPage(products);
 }
 
 function bindPharmacyProfileProductClicks(){
@@ -553,6 +589,21 @@ function bindPharmacyProfileProductClicks(){
   if(!root || root.dataset.previewBound === '1') return;
   root.dataset.previewBound = '1';
   root.addEventListener('click', event => {
+    const pageBtn = event.target.closest('[data-pharmacy-page]');
+    if(pageBtn){
+      event.preventDefault();
+      event.stopPropagation();
+      if(pageBtn.disabled) return;
+      const raw = pageBtn.getAttribute('data-pharmacy-page');
+      if(raw === 'prev') pharmacyProfilePage -= 1;
+      else if(raw === 'next') pharmacyProfilePage += 1;
+      else pharmacyProfilePage = parseInt(raw, 10) || 1;
+      const heading = root.querySelector('.pharmacy-profile-section-head h3')?.textContent || '';
+      if(heading) showPharmacyProfileCategoryProducts(heading);
+      else showPharmacyProfileHome();
+      root.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
     const card = event.target.closest('.med-card');
     if(!card || !root.contains(card)) return;
     event.preventDefault();
@@ -569,19 +620,19 @@ function bindPharmacyProfileProductClicks(){
 }
 
 function browsePharmacyProfileProducts(){
+  pharmacyProfilePage = 1;
   showPharmacyProfileHome();
 }
 
 function browsePharmacyProfileCategories(){
+  pharmacyProfilePage = 1;
   showPharmacyProfileHome();
 }
 
 function showPharmacyProfileCategoryProducts(category){
-  const root = document.getElementById('pharmacy-profile-home');
-  if(!root) return;
   const products = Array.from(document.querySelectorAll(`.med-catalog .med-card[data-pharmacy-id="${activePharmacyProfileId}"]`))
     .filter(card => (card.querySelector('.med-cat')?.textContent || '').replace(/^[^\w]+\s*/, '').trim() === category);
-  root.innerHTML = `<section><div class="pharmacy-profile-section-head"><h3>${category}</h3></div><div class="med-grid pharmacy-profile-product-grid">${products.map(card => card.outerHTML).join('') || '<p class="pharmacy-profile-empty">No products in this category yet.</p>'}</div></section>`;
+  renderPharmacyProfileProductPage(products, category);
 }
 
 function closePharmacyProfile(){
