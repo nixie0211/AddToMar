@@ -2260,9 +2260,63 @@ function populateProductDetail(card){
   renderRelatedProducts(card);
 }
 
+let productPreviewOpening = false;
+
+function setProductPreviewMode(isOpen){
+  const catalog = document.getElementById('med-catalog');
+  const detail = document.getElementById('product-detail');
+  const relatedGrid = document.getElementById('product-detail-related-grid');
+  const main = document.querySelector('.home-main');
+
+  main?.classList.toggle('is-product-open', isOpen);
+  document.body.classList.toggle('is-product-open', isOpen);
+
+  if(catalog){
+    catalog.hidden = false;
+    catalog.removeAttribute('hidden');
+    catalog.inert = isOpen;
+  }
+
+  if(detail){
+    detail.hidden = !isOpen;
+    if(isOpen) detail.removeAttribute('hidden');
+    else detail.setAttribute('hidden', '');
+    detail.inert = !isOpen;
+  }
+
+  if(!isOpen && relatedGrid) relatedGrid.innerHTML = '';
+
+  if(typeof closeSearchSuggestions === 'function') closeSearchSuggestions();
+  if(typeof closeCategoryMenus === 'function') closeCategoryMenus();
+  if(typeof closeProfileMenu === 'function') closeProfileMenu();
+}
+
+function resetStuckProductPreview(){
+  const detail = document.getElementById('product-detail');
+  if(detail && !detail.hidden) return;
+  setProductPreviewMode(false);
+  activePreviewCard = null;
+}
+
+function bindCatalogPreviewClicks(){
+  const dashboard = document.querySelector('.page[data-page="dashboard"]');
+  if(!dashboard || dashboard.dataset.previewBound === '1') return;
+  dashboard.dataset.previewBound = '1';
+  dashboard.addEventListener('click', event => {
+    if(event.target.closest('.med-add, .qty-ctrl, a, button:not(.med-card)')) return;
+    const card = event.target.closest('.med-card');
+    if(!card) return;
+    openProductPreview(card);
+  });
+}
+
 function openProductPreview(card){
+  if(productPreviewOpening) return;
   const source = catalogCardForPreview(card);
   if(!source) return;
+  productPreviewOpening = true;
+  requestAnimationFrame(() => { productPreviewOpening = false; });
+
   activePreviewCard = source;
   const fromPage = currentResidencePage();
   if(fromPage === 'pharmacy-profile'){
@@ -2276,47 +2330,24 @@ function openProductPreview(card){
     go('dashboard', { keepProductPreview: true });
   }
 
-  const catalog = document.getElementById('med-catalog');
   const detail = document.getElementById('product-detail');
-  const main = document.querySelector('.home-main');
-
   if(!detail) return;
 
   populateProductDetail(source);
+  setProductPreviewMode(true);
 
-  if(catalog){
-    catalog.hidden = false;
-    catalog.removeAttribute('hidden');
-  }
-  detail.hidden = false;
-  if(typeof closeSearchSuggestions === 'function') closeSearchSuggestions();
-  main?.classList.add('is-product-open');
-  document.body.classList.add('is-product-open');
-
+  const main = document.querySelector('.home-main');
   document.querySelector('.content')?.scrollTo({ top: 0, behavior: 'smooth' });
   main?.scrollTo({ top: 0, behavior: 'smooth' });
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function closeProductPreview(options = {}){
-  const catalog = document.getElementById('med-catalog');
-  const detail = document.getElementById('product-detail');
-  const main = document.querySelector('.home-main');
   const returnPage = productPreviewReturnPage;
   const returnPharmacyId = productPreviewReturnPharmacyId;
   const skipPharmacyReturn = Boolean(options.skipPharmacyReturn);
 
-  if(detail){
-    detail.hidden = true;
-    detail.setAttribute('hidden', '');
-  }
-  if(catalog){
-    catalog.hidden = false;
-    catalog.removeAttribute('hidden');
-  }
-  main?.classList.remove('is-product-open');
-  document.body.classList.remove('is-product-open');
-  if(typeof closeSearchSuggestions === 'function') closeSearchSuggestions();
+  setProductPreviewMode(false);
   updateStoreBrowseView();
 
   activePreviewCard = null;
@@ -3016,6 +3047,8 @@ document.addEventListener('livesync:applied', function(event){
   if(typeof initProductCarousels === 'function') initProductCarousels();
   if(typeof initPharmacyMarquee === 'function') initPharmacyMarquee();
   document.querySelectorAll('.med-catalog .med-card').forEach(applySpotlightBadge);
+  if(typeof resetStuckProductPreview === 'function') resetStuckProductPreview();
+  if(typeof bindCatalogPreviewClicks === 'function') bindCatalogPreviewClicks();
   if(typeof updateStoreBrowseView === 'function' && document.querySelector('.page[data-page="dashboard"].active')){
     updateStoreBrowseView();
   }
@@ -4899,6 +4932,7 @@ function initLocatorMap(){
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  bindCatalogPreviewClicks();
   bindResidenceOrdersTools();
   renderResidenceOrders();
   const trackOrder = new URLSearchParams(location.search).get('track');

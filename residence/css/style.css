@@ -3369,17 +3369,30 @@ article.med-card--rx:hover .med-card-frame--rx{
 /* ============================================================
    PRODUCT DETAIL (inline main panel)
    ============================================================ */
-.product-detail[hidden]{
+.product-detail[hidden],
+.home-main:not(.is-product-open) #product-detail{
   display:none !important;
+  visibility:hidden !important;
   pointer-events:none !important;
+  position:absolute !important;
+  width:0 !important;
+  height:0 !important;
+  overflow:hidden !important;
+  inset:auto !important;
+  z-index:-1 !important;
+}
+.home-main.is-product-open #product-detail:not([hidden]){
+  display:block !important;
+  visibility:visible !important;
+  pointer-events:auto !important;
+  position:relative !important;
+  width:auto !important;
+  height:auto !important;
+  overflow:visible !important;
+  z-index:2 !important;
 }
 .home-main.is-product-open #med-catalog{
   display:none !important;
-  pointer-events:none !important;
-}
-.home-main:not(.is-product-open) #product-detail{
-  display:none !important;
-  pointer-events:none !important;
 }
 .home-main:not(.is-product-open) #med-catalog{
   display:block !important;
@@ -3389,8 +3402,9 @@ article.med-card--rx:hover .med-card-frame--rx{
   display:flex !important;
 }
 .home-main:not(.is-product-open) .home-spotlights,
-.home-main:not(.is-product-open) .home-spotlights .med-card{
-  pointer-events:auto;
+.home-main:not(.is-product-open) .home-spotlights .med-card,
+.home-main:not(.is-product-open) .med-catalog .med-card{
+  pointer-events:auto !important;
 }
 
 .product-detail-back{

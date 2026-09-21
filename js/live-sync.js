@@ -25,11 +25,14 @@
       '#pickup-proof-modal:not([hidden])',
       '#cancel-order-modal:not([hidden])',
       '#residence-cancel-order-modal:not([hidden])',
-      '.resident-report-floating-panel:not([hidden])'
+      '.resident-report-floating-panel:not([hidden])',
+      '#product-detail:not([hidden])',
+      '.home-main.is-product-open'
     ].join(',');
   }
 
   function isUiBusy() {
+    if (document.body.classList.contains('is-product-open')) return true;
     if (document.body.classList.contains('modal-open') && document.querySelector(busySelectors())) {
       return true;
     }
@@ -38,6 +41,7 @@
 
   function regionLocked(el) {
     if (!el) return true;
+    if (el.querySelector && el.querySelector('#product-detail:not([hidden]), .home-main.is-product-open')) return true;
     if (el.getAttribute('data-live-skip') === '1') return true;
     if (el.getAttribute('data-live-skip-active') === '1' && (el.classList.contains('active') || el.classList.contains('is-active'))) {
       return true;
