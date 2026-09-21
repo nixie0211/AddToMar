@@ -58,8 +58,7 @@
     <header class="topbar">
 <?php include PHARMACY_ROOT . '/partials/topbar-heads.php'; ?>
       <div class="topbar-actions">
-        <button class="icon-btn" onclick="showView('settings')" title="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0 1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.14.6.5 1.13 1 1.51H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
-        <div class="topbar-profile" title="Pharmacy profile">
+        <button type="button" class="topbar-profile" onclick="showView('settings')" title="Profile settings">
           <div class="avatar avatar--profile<?= $pharmacyLogoUrl !== '' ? ' has-logo' : '' ?>">
             <?php if ($pharmacyLogoUrl !== ''): ?>
             <img src="<?= htmlspecialchars($pharmacyLogoUrl, ENT_QUOTES, 'UTF-8') ?>" alt="" class="avatar-logo">
@@ -70,7 +69,7 @@
           <div>
             <div class="name"><?= htmlspecialchars($pharmacyName, ENT_QUOTES, 'UTF-8') ?></div>
           </div>
-        </div>
+        </button>
       </div>
     </header>
 
