@@ -41,6 +41,7 @@ function showView(name, el, options){
   }
   if(name === 'orders'){
     markPharmacyOrdersSeen();
+    if (typeof window.refreshPharmacyOrders === 'function') window.refreshPharmacyOrders();
   }
   if(name === 'inventory'){
     markPharmacyInventorySeen();

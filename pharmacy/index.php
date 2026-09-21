@@ -49,7 +49,7 @@ require_once dirname(__DIR__) . '/includes/maps.php';
 <?php include PHARMACY_ROOT . '/partials/shell-end.php'; ?>
 <?php include dirname(__DIR__) . '/partials/map-area-modal.php'; ?>
 
-<script src="js/app.php?v=pharmacy-inventory-badge-seen-1"></script>
+<script src="js/app.php?v=pharmacy-orders-live-1"></script>
 <script type="application/json" id="pharmacy-chart-data"><?= json_encode($chartData ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>
 <script>
 window.PHARMACY_CHART_DATA = <?= json_encode($chartData ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
@@ -58,7 +58,7 @@ window.PHARMACY_CHART_DATA = <?= json_encode($chartData ?? [], JSON_UNESCAPED_UN
 <script src="js/add-medicine.php?v=low-stock-threshold-1"></script>
 <script src="js/inventory.php?v=inventory-pagination-1"></script>
 <script src="<?= htmlspecialchars(app_url('js/rx-crop-preview.js'), ENT_QUOTES, 'UTF-8') ?>?v=rx-crop-preload-1"></script>
-<script src="js/orders.php?v=pharmacy-order-actions-top-1"></script>
+<script src="js/orders.php?v=pharmacy-orders-live-1"></script>
 <script src="js/sales.php"></script>
 <script src="js/analytics.php?v=analytics-detail-1"></script>
 <script src="js/reports.php"></script>
