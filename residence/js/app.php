@@ -2373,9 +2373,19 @@ function buyNowFromPreview(){
   toast(qty > 1 ? `${qty} items added — proceed to checkout` : 'Proceeding to checkout');
 }
 
+function initPharmacyMarquee(){
+  const track = document.getElementById('pharmacy-logo-track');
+  const sets = track ? track.querySelectorAll('.home-pharmacy-mall-set') : [];
+  if(!track || !sets.length) return;
+  const first = sets[0];
+  const pixelsPerSecond = 42;
+  const duration = Math.max(18, Math.round((first.scrollWidth || 480) / pixelsPerSecond));
+  track.style.setProperty('--marquee-duration', duration + 's');
+}
+
 function scrollPharmacyCarousel(direction){
   const track = document.getElementById('pharmacy-logo-track');
-  if(!track) return;
+  if(!track || track.classList.contains('is-marquee')) return;
 
   const slides = track.querySelectorAll('.home-pharmacy-mall-slide');
   if(!slides.length) return;
@@ -3008,6 +3018,7 @@ document.addEventListener('livesync:applied', function(event){
   if(keys.includes('orders') || keys.includes('notifications')) refreshResidenceOrders();
   document.querySelectorAll('[data-carousel-wrap]').forEach(wrap => { wrap._carouselReady = false; });
   if(typeof initProductCarousels === 'function') initProductCarousels();
+  if(typeof initPharmacyMarquee === 'function') initPharmacyMarquee();
   document.querySelectorAll('.med-catalog .med-card').forEach(applySpotlightBadge);
   if(typeof updateStoreBrowseView === 'function' && document.querySelector('.page[data-page="dashboard"].active')){
     updateStoreBrowseView();
@@ -4921,6 +4932,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initMedicineSearch();
   initCategoryNav();
   initProductCarousels();
+  initPharmacyMarquee();
   updatePharmacyCarouselNav();
   initUserLocationExperience();
   initProfilePasswordToggles();

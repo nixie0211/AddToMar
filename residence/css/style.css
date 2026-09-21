@@ -1482,11 +1482,55 @@ input.field-input:focus-visible, select.field-input:focus-visible, textarea.fiel
   box-shadow:none;
 }
 
+.home-pharmacy-mall-viewport.is-marquee{
+  mask-image:linear-gradient(90deg, transparent 0, #000 28px, #000 calc(100% - 28px), transparent 100%);
+}
+
 .home-pharmacy-mall-track{
   display:flex;
   width:100%;
   transition:transform .35s ease;
   will-change:transform;
+}
+
+.home-pharmacy-mall-track.is-marquee{
+  width:max-content;
+  transition:none;
+  animation:partner-pharmacies-marquee var(--marquee-duration, 36s) linear infinite;
+}
+
+.home-pharmacy-mall-wrap:hover .home-pharmacy-mall-track.is-marquee,
+.home-pharmacy-mall-wrap:focus-within .home-pharmacy-mall-track.is-marquee{
+  animation-play-state:paused;
+}
+
+.home-pharmacy-mall-set{
+  display:flex;
+  flex:0 0 auto;
+  align-items:stretch;
+  gap:18px;
+  min-width:max-content;
+  padding:0 9px;
+}
+
+.home-pharmacy-mall-set .home-pharmacy-mall-cell{
+  flex:0 0 200px;
+  width:200px;
+}
+
+@keyframes partner-pharmacies-marquee{
+  from{ transform:translateX(0); }
+  to{ transform:translateX(-50%); }
+}
+
+@media (prefers-reduced-motion:reduce){
+  .home-pharmacy-mall-viewport.is-marquee{
+    mask-image:none;
+    overflow-x:auto;
+  }
+  .home-pharmacy-mall-track.is-marquee{
+    animation:none;
+  }
 }
 
 .home-pharmacy-mall-slide{
@@ -1502,6 +1546,15 @@ input.field-input:focus-visible, select.field-input:focus-visible, textarea.fiel
   grid-template-rows:auto;
   gap:18px;
   justify-content:center;
+}
+
+.home-pharmacy-mall-set.home-pharmacy-mall-slide--compact{
+  display:flex;
+  grid-template-columns:none;
+  grid-template-rows:none;
+  justify-content:flex-start;
+  width:max-content;
+  flex:0 0 auto;
 }
 
 .home-pharmacy-mall-slide--compact .home-pharmacy-mall-cell{
