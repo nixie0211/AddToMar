@@ -52,6 +52,7 @@ $selectedOrder = $orders[0] ?? null;
 $selectedOrderItems = $selectedOrder ? pharmacy_get_order_items((int) $selectedOrder['id']) : [];
 
 $pharmacyName = trim((string) ($pharmacyAccount['pharmacy_name'] ?? '')) ?: (($settings['pharmacy_name'] ?? '') ?: 'Your Pharmacy');
+$pharmacyEmail = trim((string) ($pharmacyAccount['email'] ?? ($_SESSION['user_email'] ?? '')));
 $staffName = $settings['staff_name'] ?: 'Pharmacist';
 $staffRole = $settings['staff_role'] ?: 'Admin';
 $staffInitials = pharmacy_initials($staffName);

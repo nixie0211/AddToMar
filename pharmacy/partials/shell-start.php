@@ -68,6 +68,9 @@
           </div>
           <div>
             <div class="name"><?= htmlspecialchars($pharmacyName, ENT_QUOTES, 'UTF-8') ?></div>
+            <?php if ($pharmacyEmail !== ''): ?>
+            <div class="email"><?= htmlspecialchars($pharmacyEmail, ENT_QUOTES, 'UTF-8') ?></div>
+            <?php endif; ?>
           </div>
         </button>
       </div>
