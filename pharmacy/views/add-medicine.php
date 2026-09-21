@@ -50,16 +50,6 @@ foreach ($categories as $category) {
                     <span class="slider"></span>
                   </label>
                 </div>
-                <div class="toggle-row">
-                  <div>
-                    <div class="t1">Visible to customers</div>
-                    <div class="t2">Show this medicine when it is in stock</div>
-                  </div>
-                  <label class="switch">
-                    <input type="checkbox" name="is_active" value="1" checked>
-                    <span class="slider"></span>
-                  </label>
-                </div>
               </div>
             </aside>
 

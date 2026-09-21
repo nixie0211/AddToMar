@@ -93,9 +93,6 @@ function resetMedicineForm(){
   const medicineId = document.getElementById('medicine-id');
   if(medicineId) medicineId.value = '';
 
-  const isActive = form.querySelector('[name="is_active"]');
-  if(isActive) isActive.checked = true;
-
   medicineUploadApi?.clearPreview?.();
   resetOtherSelectField('med-category', 'med-category-other');
   resetOtherSelectField('med-dosage-form', 'med-dosage-form-other');
@@ -215,9 +212,6 @@ function populateMedicineForm(medicine){
 
   const prescription = form.querySelector('[name="prescription_required"]');
   if(prescription) prescription.checked = !!medicine.prescription_required;
-
-  const isActive = form.querySelector('[name="is_active"]');
-  if(isActive) isActive.checked = medicine.is_active !== false;
 
   if(medicine.image_url){
     medicineUploadApi?.showImageUrl?.(medicine.image_url);

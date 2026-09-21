@@ -139,7 +139,7 @@ $fields = [
     'unit_price' => $unitPrice,
     'selling_price' => $sellingPrice,
     'prescription_required' => isset($_POST['prescription_required']) ? 1 : 0,
-    'is_active' => isset($_POST['is_active']) ? 1 : 0,
+    'is_active' => 1,
 ];
 
 try {
@@ -262,7 +262,7 @@ try {
             $unitPrice,
             $sellingPrice,
             isset($_POST['prescription_required']) ? 1 : 0,
-            isset($_POST['is_active']) ? 1 : 0,
+            1,
             $imagePath,
             $listedAt,
         ]);
@@ -295,7 +295,7 @@ try {
             $unitPrice,
             $sellingPrice,
             isset($_POST['prescription_required']) ? 1 : 0,
-            isset($_POST['is_active']) ? 1 : 0,
+            1,
             $imagePath,
         ]);
     }
