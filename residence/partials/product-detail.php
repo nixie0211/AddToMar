@@ -15,10 +15,6 @@
             </div>
 
             <div class="product-detail-info">
-              <button type="button" class="product-detail-pharmacy" id="product-detail-pharmacy" hidden aria-label="View pharmacy profile" onclick="openPharmacyProfile(this.dataset.pharmacyId)">
-                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>
-                <span id="product-detail-pharmacy-name"></span>
-              </button>
               <div class="product-detail-title">
                 <h1 id="product-detail-name"></h1>
                 <p class="product-detail-price" id="product-detail-price"></p>

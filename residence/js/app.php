@@ -2220,20 +2220,6 @@ function populateProductDetail(card){
     ingredientsWrap.querySelector('.product-detail-detail-toggle')?.setAttribute('aria-expanded', 'true');
   }
 
-  const pharmacy = card.dataset.pharmacy || '';
-  const pharmacyWrap = document.getElementById('product-detail-pharmacy');
-  const pharmacyNameEl = document.getElementById('product-detail-pharmacy-name');
-  if(pharmacyWrap && pharmacyNameEl){
-    if(pharmacy){
-      pharmacyWrap.hidden = false;
-      pharmacyWrap.dataset.pharmacyId = card.dataset.pharmacyId || '';
-      pharmacyNameEl.textContent = pharmacy;
-    }else{
-      pharmacyWrap.hidden = true;
-      pharmacyNameEl.textContent = '';
-    }
-  }
-
   const metaEl = document.getElementById('product-detail-meta');
   if(metaEl){
     metaLines.splice(1);
