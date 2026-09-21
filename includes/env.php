@@ -2,6 +2,14 @@
 
 declare(strict_types=1);
 
+function addtomar_is_local_request(): bool
+{
+    $host = strtolower(trim((string) ($_SERVER['HTTP_HOST'] ?? '')));
+    $host = (string) preg_replace('/:\\d+$/', '', $host);
+
+    return $host === 'localhost' || $host === '127.0.0.1' || $host === '::1';
+}
+
 function addtomar_runtime_env(): array
 {
     static $loaded = null;
@@ -20,8 +28,66 @@ function addtomar_runtime_env(): array
     return $loaded;
 }
 
+function addtomar_local_env(): array
+{
+    static $loaded = null;
+    if (is_array($loaded)) {
+        return $loaded;
+    }
+
+    $loaded = [];
+    if (!addtomar_is_local_request()) {
+        return $loaded;
+    }
+
+    $file = dirname(__DIR__) . '/env.local.php';
+    if (!is_file($file)) {
+        return $loaded;
+    }
+
+    $data = require $file;
+    $loaded = is_array($data) ? $data : [];
+
+    return $loaded;
+}
+
+function addtomar_hosted_env(): array
+{
+    static $loaded = null;
+    if (is_array($loaded)) {
+        return $loaded;
+    }
+
+    $loaded = [];
+    if (addtomar_is_local_request()) {
+        return $loaded;
+    }
+
+    $file = dirname(__DIR__) . '/env.production.php';
+    if (!is_file($file)) {
+        return $loaded;
+    }
+
+    $data = require $file;
+    $loaded = is_array($data) ? $data : [];
+
+    return $loaded;
+}
+
 function addtomar_env(string $key, string $default = ''): string
 {
+    if (addtomar_is_local_request()) {
+        $local = addtomar_local_env();
+        if (array_key_exists($key, $local) && is_string($local[$key])) {
+            return trim($local[$key]);
+        }
+    } else {
+        $hosted = addtomar_hosted_env();
+        if (array_key_exists($key, $hosted) && is_string($hosted[$key])) {
+            return trim($hosted[$key]);
+        }
+    }
+
     $runtime = addtomar_runtime_env();
     if (isset($runtime[$key]) && is_string($runtime[$key]) && trim($runtime[$key]) !== '') {
         return trim($runtime[$key]);

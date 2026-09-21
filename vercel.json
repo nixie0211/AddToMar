@@ -1,9 +1,5 @@
 {
   "buildCommand": "sh scripts/copy-vercel-static.sh",
   "outputDirectory": "vercel-gateway",
-  "framework": null,
-  "rewrites": [
-    { "source": "/login", "destination": "https://addtomar.onrender.com/login.php" },
-    { "source": "/:path*", "destination": "https://addtomar.onrender.com/:path*" }
-  ]
+  "framework": null
 }

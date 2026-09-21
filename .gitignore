@@ -1,3 +1,5 @@
+env.local.php
+env.production.php
 config/google-oauth.local.php
 config/mail.local.php
 config/paymongo.local.php
