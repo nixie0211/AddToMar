@@ -403,8 +403,7 @@ function openPharmacyProfile(pharmacyId){
   if(!pharmacy) return;
   activePharmacyProfileId = pharmacyId;
 
-  const branch = pharmacy.branch ? ` — ${pharmacy.branch}` : '';
-  document.getElementById('pharmacy-profile-name').textContent = `${pharmacy.name || 'Pharmacy'}${branch}`;
+  document.getElementById('pharmacy-profile-name').textContent = pharmacy.name || 'Pharmacy';
   document.getElementById('pharmacy-profile-contact').textContent = formatPharmacyContact(pharmacy.contact) || 'Contact information unavailable';
   document.getElementById('pharmacy-profile-address').textContent = pharmacy.address || 'Address unavailable';
   const distance = Number(pharmacy.distance_km);
