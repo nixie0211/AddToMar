@@ -11,7 +11,10 @@
           $orderTotal = max(1, array_sum(array_map('intval', $orderStatusCounts ?? [])));
           $statusMap = pharmacy_order_status_map();
           $catalogCategories = array_slice($analyticsStats['categories'] ?? [], 0, 8, true);
-          $categoryMax = max(1, ...(array_map('intval', $catalogCategories) ?: [1]));
+          $categoryMax = 1;
+          foreach ($catalogCategories as $categoryCount) {
+              $categoryMax = max($categoryMax, (int) $categoryCount);
+          }
           $salesCategories = array_slice($chartData['categories'] ?? [], 0, 8);
           $salesCatMax = 1;
           foreach ($salesCategories as $row) {
