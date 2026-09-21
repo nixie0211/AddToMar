@@ -59,10 +59,10 @@ $badgeLabel = match ($spotlightBadge) {
           >
             <?php if ($status === 'expired'): ?>
             <span class="med-card-flag med-card-flag--expired">Expired</span>
-            <?php elseif ($badgeLabel !== ''): ?>
-            <span class="med-card-flag med-card-flag--<?= htmlspecialchars((string) $spotlightBadge, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($badgeLabel, ENT_QUOTES, 'UTF-8') ?></span>
             <?php elseif ($statusLabel !== ''): ?>
             <span class="med-card-flag med-card-flag--<?= htmlspecialchars($status, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($statusLabel, ENT_QUOTES, 'UTF-8') ?></span>
+            <?php elseif ($badgeLabel !== ''): ?>
+            <span class="med-card-flag med-card-flag--<?= htmlspecialchars((string) $spotlightBadge, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($badgeLabel, ENT_QUOTES, 'UTF-8') ?></span>
             <?php endif; ?>
 
             <?php if ($rxRequired): ?>

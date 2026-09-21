@@ -506,7 +506,10 @@ function applySpotlightBadge(card){
   if(!badge) return;
   const existing = card.querySelector('.med-card-flag');
   if(existing){
-    if(existing.classList.contains('med-card-flag--expired')) return;
+    if(existing.classList.contains('med-card-flag--expired')
+      || existing.classList.contains('med-card-flag--low')
+      || existing.classList.contains('med-card-flag--out')
+      || existing.classList.contains('med-card-flag--expiring')) return;
     existing.className = `med-card-flag med-card-flag--${badge.type}`;
     existing.textContent = badge.label;
     return;

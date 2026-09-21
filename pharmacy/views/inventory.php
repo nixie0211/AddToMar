@@ -57,7 +57,7 @@
               ]));
             ?>
             <article
-              class="med-card<?= $requiresRx ? ' med-card--rx' : '' ?><?= $statusKey === 'expired' ? ' med-card--expired' : '' ?><?= !empty($medicine['is_featured']) ? ' is-featured' : '' ?>"
+              class="med-card<?= $requiresRx ? ' med-card--rx' : '' ?><?= in_array($statusKey, ['expired', 'out', 'low', 'expiring'], true) ? ' med-card--' . $statusKey : '' ?><?= !empty($medicine['is_featured']) ? ' is-featured' : '' ?>"
               data-medicine-id="<?= (int) ($medicine['id'] ?? 0) ?>"
               data-search="<?= htmlspecialchars($searchBlob, ENT_QUOTES, 'UTF-8') ?>"
               data-category="<?= htmlspecialchars($categoryKey, ENT_QUOTES, 'UTF-8') ?>"
@@ -74,13 +74,14 @@
               >
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
               </button>
-              <?php if ($statusKey === 'expired'): ?>
-              <span class="med-card-flag med-card-flag--expired">Expired</span>
-              <?php elseif ($isNew): ?>
-              <span class="med-card-new">New</span>
-              <?php elseif ($statusKey !== 'ok'): ?>
+              <div class="med-card-signs">
+              <?php if (in_array($statusKey, ['expired', 'out', 'low', 'expiring'], true)): ?>
               <span class="med-card-flag med-card-flag--<?= htmlspecialchars($statusKey, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($status['t'], ENT_QUOTES, 'UTF-8') ?></span>
               <?php endif; ?>
+              <?php if ($isNew && $statusKey !== 'expired'): ?>
+              <span class="med-card-new">New</span>
+              <?php endif; ?>
+              </div>
 
               <div class="med-card-product">
               <?php if ($requiresRx): ?>

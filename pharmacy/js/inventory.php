@@ -91,16 +91,16 @@ function buildInventoryCardHtml(card, featured){
   const featuredLabel = featured ? 'Remove from featured products' : 'Feature this product on the resident dashboard';
   const featuredTitle = featured ? 'Featured on resident dashboard' : 'Feature on resident dashboard';
   const rxClass = requiresRx ? ' med-card--rx' : '';
-  const expiredClass = statusKey === 'expired' ? ' med-card--expired' : '';
+  const alertClass = ['expired', 'out', 'low', 'expiring'].indexOf(statusKey) !== -1 ? ' med-card--' + statusKey : '';
 
-  let flag = '';
-  if (statusKey === 'expired') {
-    flag = '<span class="med-card-flag med-card-flag--expired">Expired</span>';
-  } else if (isNew) {
-    flag = '<span class="med-card-new">New</span>';
-  } else if (statusKey !== 'ok') {
-    flag = '<span class="med-card-flag med-card-flag--' + statusKey + '">' + statusLabel + '</span>';
+  let flags = '<div class="med-card-signs">';
+  if (['expired', 'out', 'low', 'expiring'].indexOf(statusKey) !== -1) {
+    flags += '<span class="med-card-flag med-card-flag--' + statusKey + '">' + statusLabel + '</span>';
   }
+  if (isNew && statusKey !== 'expired') {
+    flags += '<span class="med-card-new">New</span>';
+  }
+  flags += '</div>';
 
   const photo = imageUrl
     ? '<img src="' + imageUrl + '" alt="' + name + '" class="med-card-photo' + (requiresRx ? ' med-card-photo--rx' : '') + '">'
@@ -111,11 +111,11 @@ function buildInventoryCardHtml(card, featured){
     : '<div class="med-card-frame"><div class="med-card-store"><img src="' + logo + '" alt="" class="med-card-store-logo" width="18" height="18"><span title="' + store + '">' + store + '</span></div><div class="med-card-visual">' + photo + '</div></div>';
 
   return (
-    '<article class="med-card' + rxClass + expiredClass + featuredOn + '" data-medicine-id="' + id + '" data-search="' + search + '" data-category="' + categoryKey + '" data-status="' + statusKey + '" data-featured="' + (featured ? '1' : '0') + '">' +
+    '<article class="med-card' + rxClass + alertClass + featuredOn + '" data-medicine-id="' + id + '" data-search="' + search + '" data-category="' + categoryKey + '" data-status="' + statusKey + '" data-featured="' + (featured ? '1' : '0') + '">' +
       '<button type="button" class="med-card-heart' + featuredClass + '" data-feature-medicine="' + id + '" aria-pressed="' + featuredPressed + '" aria-label="' + featuredLabel + '" title="' + featuredTitle + '">' +
         '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>' +
       '</button>' +
-      flag +
+      flags +
       '<div class="med-card-product">' + productVisual +
         '<h3 class="med-card-name">' + name + '</h3>' +
         '<p class="med-card-price">' + price + '</p>' +
