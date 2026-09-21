@@ -68,12 +68,10 @@
 
           <section class="product-detail-related" id="product-detail-related" hidden aria-labelledby="product-detail-related-title">
             <div class="product-detail-related-head">
-              <div>
-                <h2 id="product-detail-related-title">More from this pharmacy</h2>
-                <p class="product-detail-related-copy">Other items available at <button type="button" class="product-detail-related-pharmacy" id="product-detail-related-sub" onclick="openPharmacyProfile(this.dataset.pharmacyId)" aria-label="View pharmacy profile"></button></p>
-              </div>
-              <button type="button" class="product-detail-related-view-all" id="product-detail-related-view-all" hidden onclick="openPharmacyProfile(this.dataset.pharmacyId)">View all</button>
+              <h2 id="product-detail-related-title">More from this pharmacy</h2>
+              <p class="product-detail-related-copy">Other items available at <button type="button" class="product-detail-related-pharmacy" id="product-detail-related-sub" onclick="openPharmacyProfile(this.dataset.pharmacyId)" aria-label="View pharmacy profile"></button></p>
             </div>
             <div class="product-detail-related-grid" id="product-detail-related-grid"></div>
+            <button type="button" class="product-detail-related-view-all" id="product-detail-related-view-all" hidden onclick="openPharmacyProfile(this.dataset.pharmacyId)">View all products</button>
           </section>
         </article>

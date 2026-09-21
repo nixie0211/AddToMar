@@ -3831,6 +3831,25 @@ article.med-card--rx:hover .med-card-frame--rx{
   gap:18px;
 }
 
+.product-detail-related-view-all{
+  display:block;
+  width:auto;
+  margin:28px auto 8px;
+  padding:0 0 6px;
+  border:0;
+  border-bottom:1px solid currentColor;
+  background:none;
+  color:#5a7380;
+  font:600 13px var(--font-body);
+  letter-spacing:.04em;
+  text-transform:none;
+  cursor:pointer;
+}
+.product-detail-related-view-all[hidden]{ display:none !important; }
+.product-detail-related-view-all:hover{
+  color:#087e6d;
+}
+
 .product-detail-related-grid .med-card,
 .product-detail-related-grid .med-card.med-card--spotlight,
 .product-detail-related-grid .med-card.med-card--related{

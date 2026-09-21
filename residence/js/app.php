@@ -2129,6 +2129,7 @@ function renderRelatedProducts(card){
   const section = document.getElementById('product-detail-related');
   const grid = document.getElementById('product-detail-related-grid');
   const subEl = document.getElementById('product-detail-related-sub');
+  const viewAll = document.getElementById('product-detail-related-view-all');
   const pharmacy = card.dataset.pharmacy || '';
   const currentSub = card.dataset.shopSub || '';
   const currentCategory = card.dataset.shopCategory || '';
@@ -2165,13 +2166,22 @@ function renderRelatedProducts(card){
   if(!pharmacy || suggestions.length === 0){
     section.hidden = true;
     if(subEl) subEl.textContent = '';
+    if(viewAll){
+      viewAll.hidden = true;
+      viewAll.dataset.pharmacyId = '';
+    }
     return;
   }
 
   section.hidden = false;
+  const relatedPharmacyId = pharmacyId || suggestions[0]?.dataset?.pharmacyId || '';
   if(subEl){
     subEl.textContent = pharmacy;
-    subEl.dataset.pharmacyId = suggestions[0]?.dataset?.pharmacyId || '';
+    subEl.dataset.pharmacyId = relatedPharmacyId;
+  }
+  if(viewAll){
+    viewAll.hidden = !relatedPharmacyId;
+    viewAll.dataset.pharmacyId = relatedPharmacyId;
   }
 
   suggestions.forEach(sourceCard => {
