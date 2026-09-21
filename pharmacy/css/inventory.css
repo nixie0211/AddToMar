@@ -26,3 +26,14 @@
   text-overflow:ellipsis;
   white-space:nowrap;
 }
+.inventory-pagination{
+  justify-content:center;
+  gap:16px;
+  margin:22px 0 6px;
+  font-weight:600;
+}
+.inventory-pagination[hidden]{display:none!important;}
+.inventory-page-meta{font-size:12.5px;color:var(--text-soft);}
+.inventory-page-ellipsis{display:grid;place-items:center;min-width:20px;color:var(--text-soft);font-weight:700;}
+.inventory-pagination .page-btns{align-items:center;}
+.inventory-pagination .page-btns button:disabled{opacity:.35;cursor:default;}

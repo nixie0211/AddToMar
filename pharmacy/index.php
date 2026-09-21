@@ -36,7 +36,7 @@ require_once dirname(__DIR__) . '/includes/maps.php';
 <link rel="stylesheet" href="css/reports.css?v=analytics-detail-1">
 <link rel="stylesheet" href="css/settings.css?v=settings-save-center-1">
 <link rel="stylesheet" href="css/add-medicine.css?v=saving-overlay-1">
-<link rel="stylesheet" href="css/inventory.css?v=stock-alert-flags-1">
+<link rel="stylesheet" href="css/inventory.css?v=inventory-pagination-1">
 </head>
 <body>
 
@@ -56,7 +56,7 @@ window.PHARMACY_CHART_DATA = <?= json_encode($chartData ?? [], JSON_UNESCAPED_UN
 </script>
 <script src="js/dashboard.php"></script>
 <script src="js/add-medicine.php?v=low-stock-threshold-1"></script>
-<script src="js/inventory.php?v=stock-alert-flags-1"></script>
+<script src="js/inventory.php?v=inventory-pagination-1"></script>
 <script src="<?= htmlspecialchars(app_url('js/rx-crop-preview.js'), ENT_QUOTES, 'UTF-8') ?>?v=rx-crop-preload-1"></script>
 <script src="js/orders.php?v=pharmacy-order-actions-top-1"></script>
 <script src="js/sales.php"></script>

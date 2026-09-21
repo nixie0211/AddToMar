@@ -41,7 +41,8 @@ function ensureInventoryGrid(){
         '<span>Unit price</span><span>Selling price</span><span>Expiration date</span><span>Batch no.</span><span>Actions</span>' +
       '</div>' +
     '</div>' +
-    '<p class="inventory-empty-filter" id="inventory-empty-filter" hidden>No medicines match your search.</p>';
+    '<p class="inventory-empty-filter" id="inventory-empty-filter" hidden>No medicines match your search.</p>' +
+    '<nav class="pagination inventory-pagination" id="inventory-pagination" hidden aria-label="Inventory pages"></nav>';
 
   grid = document.getElementById('inventory-grid');
   if (grid) delete grid.dataset.invBound;
@@ -166,12 +167,51 @@ function applyInventoryMedicineCard(card){
   return true;
 }
 
+const INVENTORY_PAGE_SIZE = 20;
+
+function inventoryPageNumbers(current, total){
+  if (total <= 7) {
+    return Array.from({length: total}, function(_, i){ return i + 1; });
+  }
+  const pages = [1];
+  const start = Math.max(2, current - 1);
+  const end = Math.min(total - 1, current + 1);
+  if (start > 2) pages.push('…');
+  for (let page = start; page <= end; page++) pages.push(page);
+  if (end < total - 1) pages.push('…');
+  pages.push(total);
+  return pages;
+}
+
+function renderInventoryPagination(pager, page, pages, matched){
+  if (!pager) return;
+  if (matched <= INVENTORY_PAGE_SIZE) {
+    pager.hidden = true;
+    pager.innerHTML = '';
+    return;
+  }
+  pager.hidden = false;
+  const start = (page - 1) * INVENTORY_PAGE_SIZE + 1;
+  const end = Math.min(page * INVENTORY_PAGE_SIZE, matched);
+  let buttons = '<button type="button" data-inventory-page="prev"' + (page <= 1 ? ' disabled' : '') + ' aria-label="Previous page">‹</button>';
+  inventoryPageNumbers(page, pages).forEach(function(item){
+    if (item === '…') {
+      buttons += '<span class="inventory-page-ellipsis">…</span>';
+      return;
+    }
+    buttons += '<button type="button" data-inventory-page="' + item + '"' + (item === page ? ' class="active" aria-current="page"' : '') + '>' + item + '</button>';
+  });
+  buttons += '<button type="button" data-inventory-page="next"' + (page >= pages ? ' disabled' : '') + ' aria-label="Next page">›</button>';
+  pager.innerHTML = '<span class="inventory-page-meta">' + start + '–' + end + ' of ' + matched + '</span><div class="page-btns">' + buttons + '</div>';
+}
+
 function initInventoryFilters(){
   const grid = document.getElementById('inventory-grid');
   const searchInput = document.getElementById('inventory-search');
   const categoryFilter = document.getElementById('inventory-category-filter');
   const statusFilter = document.getElementById('inventory-status-filter');
   const emptyFilter = document.getElementById('inventory-empty-filter');
+  const pager = document.getElementById('inventory-pagination');
 
   if(!grid) return;
 
@@ -180,21 +220,33 @@ function initInventoryFilters(){
     const query = (searchInput?.value || '').trim().toLowerCase();
     const category = (categoryFilter?.value || '').trim().toLowerCase();
     const status = (statusFilter?.value || '').trim().toLowerCase();
-    let visible = 0;
+    const matching = [];
 
     cards.forEach(function(card){
       const matchesSearch = !query || (card.dataset.search || '').includes(query);
       const matchesCategory = !category || (card.dataset.category || '') === category;
       const matchesStatus = !status || (card.dataset.status || '') === status;
-      const show = matchesSearch && matchesCategory && matchesStatus;
-      card.hidden = !show;
-      if(show) visible++;
+      if (matchesSearch && matchesCategory && matchesStatus) matching.push(card);
+      else card.hidden = true;
+    });
+
+    const pages = Math.max(1, Math.ceil(matching.length / INVENTORY_PAGE_SIZE));
+    let page = parseInt(grid.dataset.page || '1', 10);
+    if (!Number.isFinite(page) || page < 1) page = 1;
+    if (page > pages) page = pages;
+    grid.dataset.page = String(page);
+
+    const start = (page - 1) * INVENTORY_PAGE_SIZE;
+    const end = start + INVENTORY_PAGE_SIZE;
+    matching.forEach(function(card, index){
+      card.hidden = index < start || index >= end;
     });
 
     if(emptyFilter){
-      emptyFilter.hidden = visible > 0;
+      emptyFilter.hidden = matching.length > 0;
     }
-    grid.hidden = visible === 0;
+    grid.hidden = matching.length === 0;
+    renderInventoryPagination(pager, page, pages, matching.length);
   }
 
   if(grid.dataset.invBound === '1') {
@@ -237,9 +289,30 @@ function initInventoryFilters(){
       });
   }
 
-  searchInput?.addEventListener('input', applyFilters);
-  categoryFilter?.addEventListener('change', applyFilters);
-  statusFilter?.addEventListener('change', applyFilters);
+  function resetInventoryPage(){
+    grid.dataset.page = '1';
+    applyFilters();
+  }
+
+  searchInput?.addEventListener('input', resetInventoryPage);
+  categoryFilter?.addEventListener('change', resetInventoryPage);
+  statusFilter?.addEventListener('change', resetInventoryPage);
+
+  if (pager && pager.dataset.invPageBound !== '1') {
+    pager.dataset.invPageBound = '1';
+    pager.addEventListener('click', function(event){
+      const button = event.target.closest('[data-inventory-page]');
+      if (!button || button.disabled) return;
+      const raw = button.getAttribute('data-inventory-page');
+      let page = parseInt(grid.dataset.page || '1', 10);
+      if (raw === 'prev') page -= 1;
+      else if (raw === 'next') page += 1;
+      else page = parseInt(raw, 10);
+      if (!Number.isFinite(page) || page < 1) return;
+      grid.dataset.page = String(page);
+      applyFilters();
+    });
+  }
 
   grid.addEventListener('click', function(e){
     const heartBtn = e.target.closest('[data-feature-medicine]');
@@ -267,6 +340,8 @@ document.addEventListener('livesync:applied', function () {
   const searchInput = document.getElementById('inventory-search');
   if (grid) delete grid.dataset.invBound;
   if (searchInput) delete searchInput.dataset.liveBound;
+  const pager = document.getElementById('inventory-pagination');
+  if (pager) delete pager.dataset.invPageBound;
   initInventoryFilters();
   if (typeof loadMedicineCatalog === 'function') loadMedicineCatalog();
 });

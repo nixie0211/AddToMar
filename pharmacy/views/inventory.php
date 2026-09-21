@@ -145,6 +145,7 @@
             <?php endforeach; ?>
           </div>
           <p class="inventory-empty-filter" id="inventory-empty-filter" hidden>No medicines match your search.</p>
+          <nav class="pagination inventory-pagination" id="inventory-pagination" hidden aria-label="Inventory pages"></nav>
           <?php endif; ?>
           </div>
         </div>
