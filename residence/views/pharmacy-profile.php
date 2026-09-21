@@ -1,7 +1,9 @@
       <section class="page" data-page="pharmacy-profile" data-live-region="residence-pharmacy-profile" data-live-keys="pharmacies,catalog" data-live-skip-active="1">
         <style>
           /* View-local fallback: keeps the pharmacy hero correct even if shared CSS is cached. */
-          [data-page="pharmacy-profile"] .pharmacy-profile-dialog{position:relative}
+          [data-page="pharmacy-profile"] .pharmacy-profile-dialog{position:relative;padding-top:24px}
+          [data-page="pharmacy-profile"] .pharmacy-profile-hero{position:relative}
+          [data-page="pharmacy-profile"] .pharmacy-profile-banner{border-radius:20px 20px 0 0}
           [data-page="pharmacy-profile"] .pharmacy-profile-top-status{position:absolute;top:108px;left:144px;z-index:10;display:flex;align-items:center;gap:9px;font-size:12px;font-weight:800}
           [data-page="pharmacy-profile"] .pharmacy-profile-top-status .profile-state{display:inline-flex;align-items:center;gap:7px;color:#bf3a45}
           [data-page="pharmacy-profile"] .pharmacy-profile-top-status .profile-state.is-open{color:#087c5d}
@@ -14,6 +16,7 @@
         </style>
         <div class="pharmacy-profile-page">
           <section class="pharmacy-profile-dialog" aria-labelledby="pharmacy-profile-name">
+            <div class="pharmacy-profile-hero">
             <div class="pharmacy-profile-banner"></div>
             <div class="pharmacy-profile-top-status" id="pharmacy-profile-status"></div>
             <button type="button" class="pharmacy-profile-report pharmacy-profile-report--hero" onclick="reportPharmacy()">
@@ -21,6 +24,7 @@
               <span>Report</span>
             </button>
             <div class="pharmacy-profile-logo"><img id="pharmacy-profile-logo" alt=""></div>
+            </div>
             <div class="pharmacy-profile-content">
               <div class="pharmacy-profile-title-row">
                 <h2 id="pharmacy-profile-name">Pharmacy</h2>
