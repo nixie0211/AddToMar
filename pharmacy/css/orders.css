@@ -366,6 +366,8 @@
   min-width:148px;
   padding:9px 18px;
   font-size:13px;
+  justify-content:center;
+  text-align:center;
 }
 .ph-order-head h2,
 .ph-order-head #order-drawer-title{
