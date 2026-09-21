@@ -137,7 +137,7 @@ a{text-decoration:none; color:inherit;}
   border-radius:7px;
   font-size:14px;
   font-weight:600;
-  color:#365467;
+  color:#E11D48;
   text-decoration:none;
   transition:background .15s ease, color .15s ease;
 }
@@ -147,8 +147,8 @@ a{text-decoration:none; color:inherit;}
   flex-shrink:0;
 }
 .sidebar-logout:hover{
-  background:#effaf8;
-  color:#087e70;
+  background:#FEE2E2;
+  color:#BE123C;
 }
 .avatar{width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg,var(--teal),var(--teal-light)); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:13px; flex-shrink:0;}
 .avatar--profile{width:32px; height:32px; font-size:12px; overflow:hidden;}
