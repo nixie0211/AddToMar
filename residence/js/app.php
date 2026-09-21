@@ -2267,21 +2267,25 @@ function setProductPreviewMode(isOpen){
   const detail = document.getElementById('product-detail');
   const relatedGrid = document.getElementById('product-detail-related-grid');
   const main = document.querySelector('.home-main');
+  const dashboard = document.querySelector('.page[data-page="dashboard"]');
 
   main?.classList.toggle('is-product-open', isOpen);
   document.body.classList.toggle('is-product-open', isOpen);
+  detail?.classList.toggle('is-visible', isOpen);
+  if(isOpen) dashboard?.setAttribute('data-live-skip', '1');
+  else dashboard?.removeAttribute('data-live-skip');
 
   if(catalog){
     catalog.hidden = false;
     catalog.removeAttribute('hidden');
-    catalog.inert = isOpen;
+    if('inert' in catalog) catalog.inert = false;
   }
 
   if(detail){
     detail.hidden = !isOpen;
     if(isOpen) detail.removeAttribute('hidden');
     else detail.setAttribute('hidden', '');
-    detail.inert = !isOpen;
+    if('inert' in detail) detail.inert = false;
   }
 
   if(!isOpen && relatedGrid) relatedGrid.innerHTML = '';
@@ -2298,24 +2302,12 @@ function resetStuckProductPreview(){
   activePreviewCard = null;
 }
 
-function bindCatalogPreviewClicks(){
-  const dashboard = document.querySelector('.page[data-page="dashboard"]');
-  if(!dashboard || dashboard.dataset.previewBound === '1') return;
-  dashboard.dataset.previewBound = '1';
-  dashboard.addEventListener('click', event => {
-    if(event.target.closest('.med-add, .qty-ctrl, a, button:not(.med-card)')) return;
-    const card = event.target.closest('.med-card');
-    if(!card) return;
-    openProductPreview(card);
-  });
-}
-
 function openProductPreview(card){
   if(productPreviewOpening) return;
   const source = catalogCardForPreview(card);
   if(!source) return;
   productPreviewOpening = true;
-  requestAnimationFrame(() => { productPreviewOpening = false; });
+  window.setTimeout(() => { productPreviewOpening = false; }, 0);
 
   activePreviewCard = source;
   const fromPage = currentResidencePage();
@@ -2331,7 +2323,10 @@ function openProductPreview(card){
   }
 
   const detail = document.getElementById('product-detail');
-  if(!detail) return;
+  if(!detail){
+    productPreviewOpening = false;
+    return;
+  }
 
   populateProductDetail(source);
   setProductPreviewMode(true);
@@ -2363,6 +2358,19 @@ function closeProductPreview(options = {}){
 window.openProductPreview = openProductPreview;
 window.closeProductPreview = closeProductPreview;
 window.go = go;
+
+document.addEventListener('pointerdown', function(event){
+  const detail = document.getElementById('product-detail');
+  const previewOpen = Boolean(detail && !detail.hidden && detail.classList.contains('is-visible'));
+  if(previewOpen) return;
+  const catalog = document.getElementById('med-catalog');
+  if(catalog && catalog.inert) catalog.inert = false;
+  if(detail && detail.inert) detail.inert = false;
+  document.body.classList.remove('is-product-open');
+  document.querySelector('.home-main')?.classList.remove('is-product-open');
+  detail?.classList.remove('is-visible');
+  document.querySelector('.page[data-page="dashboard"]')?.removeAttribute('data-live-skip');
+}, true);
 
 function addPreviewToCart(){
   if(!activePreviewCard) return;
@@ -3048,7 +3056,6 @@ document.addEventListener('livesync:applied', function(event){
   if(typeof initPharmacyMarquee === 'function') initPharmacyMarquee();
   document.querySelectorAll('.med-catalog .med-card').forEach(applySpotlightBadge);
   if(typeof resetStuckProductPreview === 'function') resetStuckProductPreview();
-  if(typeof bindCatalogPreviewClicks === 'function') bindCatalogPreviewClicks();
   if(typeof updateStoreBrowseView === 'function' && document.querySelector('.page[data-page="dashboard"].active')){
     updateStoreBrowseView();
   }
@@ -4932,7 +4939,6 @@ function initLocatorMap(){
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  bindCatalogPreviewClicks();
   bindResidenceOrdersTools();
   renderResidenceOrders();
   const trackOrder = new URLSearchParams(location.search).get('track');

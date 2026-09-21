@@ -3370,6 +3370,7 @@ article.med-card--rx:hover .med-card-frame--rx{
    PRODUCT DETAIL (inline main panel)
    ============================================================ */
 .product-detail[hidden],
+.product-detail:not(.is-visible),
 .home-main:not(.is-product-open) #product-detail{
   display:none !important;
   visibility:hidden !important;

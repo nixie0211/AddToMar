@@ -32,7 +32,7 @@
   }
 
   function isUiBusy() {
-    if (document.body.classList.contains('is-product-open')) return true;
+    if (document.querySelector('.home-main.is-product-open, #product-detail:not([hidden])')) return true;
     if (document.body.classList.contains('modal-open') && document.querySelector(busySelectors())) {
       return true;
     }
@@ -278,9 +278,15 @@
       }
       if (pageUnlocked.length) {
         const doc = await fetchHtmlDoc(window.location.href);
-        mergeResidenceConfig(doc);
-        mergeScriptJson(doc, 'pharmacy-chart-data', 'PHARMACY_CHART_DATA');
-        if (swapFromDoc(doc, pageUnlocked)) swapped = true;
+        const stillUnlocked = pageUnlocked.filter((el) => el.isConnected && !regionLocked(el));
+        if (stillUnlocked.length !== pageUnlocked.length) {
+          pendingKeys = Array.from(new Set(pendingKeys.concat(keys)));
+        }
+        if (stillUnlocked.length) {
+          mergeResidenceConfig(doc);
+          mergeScriptJson(doc, 'pharmacy-chart-data', 'PHARMACY_CHART_DATA');
+          if (swapFromDoc(doc, stillUnlocked)) swapped = true;
+        }
       }
       if (swapped) {
         document.dispatchEvent(new CustomEvent('livesync:applied', { detail: { keys } }));
@@ -340,7 +346,8 @@
     }
   });
 
-  document.addEventListener('click', function () {
+  document.addEventListener('click', function (event) {
+    if (event.target && event.target.closest && event.target.closest('.med-card, #product-detail, .product-detail-back, .home-browse')) return;
     if (pendingKeys.length && !isUiBusy()) {
       const keys = pendingKeys.slice();
       pendingKeys = [];
