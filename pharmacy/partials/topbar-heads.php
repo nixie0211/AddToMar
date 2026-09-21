@@ -30,7 +30,7 @@ declare(strict_types=1);
 
         <div class="topbar-head" data-topbar-head="analytics" hidden>
           <h1>Inventory &amp; Sales Analytics</h1>
-          <p class="desc">Deeper trends across inventory turnover and demand.</p>
+          <p class="desc">Stock health, demand, and medicines that need attention.</p>
         </div>
 
         <div class="topbar-head" data-topbar-head="customers" hidden>

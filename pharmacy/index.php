@@ -33,7 +33,7 @@ require_once dirname(__DIR__) . '/includes/maps.php';
 <link rel="stylesheet" href="css/base.css?v=pharmacy-topbar-email-1">
 <link rel="stylesheet" href="<?= htmlspecialchars(app_url('css/rx-crop-preview.css'), ENT_QUOTES, 'UTF-8') ?>?v=rx-crop-contain-1">
 <link rel="stylesheet" href="css/orders.css?v=pharmacy-status-colors-1">
-<link rel="stylesheet" href="css/reports.css">
+<link rel="stylesheet" href="css/reports.css?v=analytics-detail-1">
 <link rel="stylesheet" href="css/settings.css?v=settings-save-center-1">
 <link rel="stylesheet" href="css/add-medicine.css?v=saving-overlay-1">
 <link rel="stylesheet" href="css/inventory.css?v=stock-alert-flags-1">
@@ -60,7 +60,7 @@ window.PHARMACY_CHART_DATA = <?= json_encode($chartData ?? [], JSON_UNESCAPED_UN
 <script src="<?= htmlspecialchars(app_url('js/rx-crop-preview.js'), ENT_QUOTES, 'UTF-8') ?>?v=rx-crop-preload-1"></script>
 <script src="js/orders.php?v=pharmacy-order-actions-top-1"></script>
 <script src="js/sales.php"></script>
-<script src="js/analytics.php"></script>
+<script src="js/analytics.php?v=analytics-detail-1"></script>
 <script src="js/reports.php"></script>
 <script>
 window.PHARMACY_REGISTER_MAP_CONFIG = <?= json_encode([

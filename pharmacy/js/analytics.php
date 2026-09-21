@@ -7,11 +7,16 @@ header('Content-Type: application/javascript; charset=UTF-8');
 
 let analyticsChartsInitialized = false;
 let analyticsTrendChart = null;
+let analyticsStockChart = null;
 window.resetPharmacyAnalyticsCharts = function(){
   if (analyticsTrendChart && typeof analyticsTrendChart.destroy === 'function') {
     analyticsTrendChart.destroy();
   }
+  if (analyticsStockChart && typeof analyticsStockChart.destroy === 'function') {
+    analyticsStockChart.destroy();
+  }
   analyticsTrendChart = null;
+  analyticsStockChart = null;
   analyticsChartsInitialized = false;
 };
 function drawAnalyticsFallback(canvas, trend){
@@ -48,6 +53,25 @@ function initAnalyticsCharts(){
       scales:{y:{grid:{color:'#F1F5F9'}, ticks:{font:{size:11}}}, x:{grid:{display:false}, ticks:{font:{size:11}}}}
     }
   });
+
+  const mixNode = document.getElementById('pharmacy-analytics-stock');
+  const mixCanvas = document.getElementById('chartStockMix');
+  if (mixCanvas && mixNode && mixNode.textContent) {
+    let mix = {labels:[], values:[], colors:[]};
+    try { mix = JSON.parse(mixNode.textContent) || mix; } catch (e) {}
+    analyticsStockChart = new Chart(mixCanvas, {
+      type:'doughnut',
+      data:{
+        labels: mix.labels || [],
+        datasets:[{data: mix.values || [], backgroundColor: mix.colors || [], borderWidth:0}]
+      },
+      options:{
+        responsive:true,
+        cutout:'62%',
+        plugins:{legend:{position:'bottom', labels:{boxWidth:9, boxHeight:9, usePointStyle:true, pointStyle:'circle', font:{size:11, weight:600}, padding:12}}}
+      }
+    });
+  }
 }
 
 document.addEventListener('change', function(event){

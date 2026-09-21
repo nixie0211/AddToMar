@@ -1380,15 +1380,46 @@ function pharmacy_get_analytics_stats(): array
     $low = 0;
     $out = 0;
     $expiring = 0;
+    $expired = 0;
+    $rx = 0;
+    $categories = [];
     foreach ($medicines as $medicine) {
-        match ($medicine['status']) {
+        match ((string) ($medicine['status'] ?? 'ok')) {
             'low' => $low++,
             'out' => $out++,
             'expiring' => $expiring++,
+            'expired' => $expired++,
             default => $inStock++,
         };
+        if (!empty($medicine['prescription_required'])) {
+            $rx++;
+        }
+        $category = trim((string) ($medicine['category'] ?? ''));
+        if ($category === '') {
+            $category = 'Uncategorized';
+        }
+        $categories[$category] = (int) ($categories[$category] ?? 0) + 1;
     }
-    return compact('inStock', 'low', 'out', 'expiring');
+    arsort($categories);
+
+    return [
+        'inStock' => $inStock,
+        'low' => $low,
+        'out' => $out,
+        'expiring' => $expiring,
+        'expired' => $expired,
+        'rx' => $rx,
+        'otc' => max(0, count($medicines) - $rx),
+        'total' => count($medicines),
+        'categories' => $categories,
+    ];
+}
+
+function pharmacy_get_expired_medicines(int $limit = 10): array
+{
+    $medicines = array_values(array_filter(pharmacy_get_medicines(), static fn(array $m): bool => ($m['status'] ?? '') === 'expired'));
+    usort($medicines, static fn(array $a, array $b): int => strcmp((string) ($a['expiration_date'] ?? ''), (string) ($b['expiration_date'] ?? '')));
+    return array_slice($medicines, 0, $limit);
 }
 
 function pharmacy_report_buttons(string $report): string
