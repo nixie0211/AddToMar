@@ -2135,12 +2135,19 @@ function renderRelatedProducts(card){
 
   if(!section || !grid) return;
 
-  const candidates = Array.from(document.querySelectorAll('.med-grid .med-card')).filter(item =>
-    item !== card &&
-    item.dataset.pharmacy === pharmacy &&
-    !item.hidden &&
-    !item.classList.contains('is-search-hidden')
-  );
+  const medicineId = String(card.dataset.medicineId || '');
+  const pharmacyId = String(card.dataset.pharmacyId || '');
+  const seen = new Set();
+  const candidates = Array.from(document.querySelectorAll('.med-catalog .med-grid .med-card')).filter(item => {
+    const id = String(item.dataset.medicineId || '');
+    if(id && seen.has(id)) return false;
+    const samePharmacy = pharmacyId
+      ? String(item.dataset.pharmacyId || '') === pharmacyId
+      : item.dataset.pharmacy === pharmacy;
+    if(!samePharmacy || item === card || (medicineId && id === medicineId)) return false;
+    if(id) seen.add(id);
+    return true;
+  });
 
   candidates.sort((a, b) => {
     const aScore =
@@ -2152,7 +2159,7 @@ function renderRelatedProducts(card){
     return aScore - bScore;
   });
 
-  const suggestions = candidates.slice(0, 4);
+  const suggestions = candidates.slice(0, 10);
   grid.innerHTML = '';
 
   if(!pharmacy || suggestions.length === 0){

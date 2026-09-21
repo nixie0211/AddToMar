@@ -3826,20 +3826,20 @@ article.med-card--rx:hover .med-card-frame--rx{
 
 .product-detail-related-grid{
   display:grid;
-  grid-template-columns:repeat(auto-fill, 280px);
-  justify-content:start;
-  gap:22px;
+  grid-template-columns:repeat(5, minmax(0, 1fr));
+  justify-content:stretch;
+  gap:18px;
 }
 
 .product-detail-related-grid .med-card,
 .product-detail-related-grid .med-card.med-card--spotlight,
 .product-detail-related-grid .med-card.med-card--related{
   flex:none;
-  width:280px;
-  min-width:280px;
-  max-width:280px;
-  min-height:430px;
-  padding:18px 22px 20px;
+  width:100%;
+  min-width:0;
+  max-width:none;
+  min-height:0;
+  padding:18px 16px 20px;
   border:1px solid #e4ebed;
   border-radius:15px;
   background:linear-gradient(145deg,#fff,#fdfefe);
@@ -3999,7 +3999,7 @@ article.med-card--rx:hover .med-card-frame--rx{
   }
 
   .product-detail-related-grid{
-    grid-template-columns:repeat(auto-fill, minmax(260px, 280px));
+    grid-template-columns:repeat(3, minmax(0, 1fr));
   }
 }
 
@@ -4015,7 +4015,7 @@ article.med-card--rx:hover .med-card-frame--rx{
   }
 
   .product-detail-related-grid{
-    grid-template-columns:minmax(0, 1fr);
+    grid-template-columns:repeat(2, minmax(0, 1fr));
   }
   .product-detail-related-grid .med-card,
   .product-detail-related-grid .med-card.med-card--spotlight,
