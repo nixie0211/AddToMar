@@ -2278,19 +2278,20 @@ function openProductPreview(card){
 
   const catalog = document.getElementById('med-catalog');
   const detail = document.getElementById('product-detail');
-  const partnerHero = document.getElementById('home-partner-hero');
-  const storeHero = document.getElementById('home-store-hero');
   const main = document.querySelector('.home-main');
 
   if(!detail) return;
 
   populateProductDetail(source);
 
-  if(catalog) catalog.hidden = true;
+  if(catalog){
+    catalog.hidden = false;
+    catalog.removeAttribute('hidden');
+  }
   detail.hidden = false;
-  if(partnerHero) partnerHero.hidden = true;
-  if(storeHero) storeHero.hidden = true;
+  if(typeof closeSearchSuggestions === 'function') closeSearchSuggestions();
   main?.classList.add('is-product-open');
+  document.body.classList.add('is-product-open');
 
   document.querySelector('.content')?.scrollTo({ top: 0, behavior: 'smooth' });
   main?.scrollTo({ top: 0, behavior: 'smooth' });
@@ -2305,9 +2306,17 @@ function closeProductPreview(options = {}){
   const returnPharmacyId = productPreviewReturnPharmacyId;
   const skipPharmacyReturn = Boolean(options.skipPharmacyReturn);
 
-  if(detail) detail.hidden = true;
-  if(catalog) catalog.hidden = false;
+  if(detail){
+    detail.hidden = true;
+    detail.setAttribute('hidden', '');
+  }
+  if(catalog){
+    catalog.hidden = false;
+    catalog.removeAttribute('hidden');
+  }
   main?.classList.remove('is-product-open');
+  document.body.classList.remove('is-product-open');
+  if(typeof closeSearchSuggestions === 'function') closeSearchSuggestions();
   updateStoreBrowseView();
 
   activePreviewCard = null;
@@ -2321,6 +2330,7 @@ function closeProductPreview(options = {}){
 }
 
 window.openProductPreview = openProductPreview;
+window.closeProductPreview = closeProductPreview;
 window.go = go;
 
 function addPreviewToCart(){

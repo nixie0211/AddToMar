@@ -3371,6 +3371,26 @@ article.med-card--rx:hover .med-card-frame--rx{
    ============================================================ */
 .product-detail[hidden]{
   display:none !important;
+  pointer-events:none !important;
+}
+.home-main.is-product-open #med-catalog{
+  display:none !important;
+  pointer-events:none !important;
+}
+.home-main:not(.is-product-open) #product-detail{
+  display:none !important;
+  pointer-events:none !important;
+}
+.home-main:not(.is-product-open) #med-catalog{
+  display:block !important;
+  pointer-events:auto !important;
+}
+.home-main:not(.is-product-open).is-catalog-filtered.is-catalog-empty #med-catalog{
+  display:flex !important;
+}
+.home-main:not(.is-product-open) .home-spotlights,
+.home-main:not(.is-product-open) .home-spotlights .med-card{
+  pointer-events:auto;
 }
 
 .product-detail-back{

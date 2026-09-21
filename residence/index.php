@@ -147,12 +147,13 @@ window.nearbyPharmacies = window.RESIDENCE_CONFIG.pharmacies || [];
   'topSellerIds' => array_values(array_map(static fn(array $item): int => (int) ($item['id'] ?? 0), $residenceTopSellers)),
 ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>
 <script src="<?= htmlspecialchars(function_exists('app_url') ? app_url('js/rx-crop-preview.js') : '../js/rx-crop-preview.js', ENT_QUOTES, 'UTF-8') ?>?v=rx-crop-preload-1"></script>
-<script src="<?= residence_asset('js/app.php') ?>?v=product-preview-no-store-chip-1"></script>
+<script src="<?= residence_asset('js/app.php') ?>?v=product-preview-click-fix-1"></script>
 <?php live_sync_render_script('residence'); ?>
 <script>
 window.openProductPreview = window.openProductPreview || function(card) {
   if (typeof window.go === 'function') window.go('browse');
 };
+window.closeProductPreview = window.closeProductPreview || function(){};
 </script>
 </body>
 </html>
