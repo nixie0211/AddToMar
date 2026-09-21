@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/database.php';
-require_once dirname(__DIR__, 2) . '/includes/object-storage.php';
 require_once __DIR__ . '/pharmacy-context.php';
 
 function pharmacy_settings(): array
@@ -1920,14 +1919,6 @@ function pharmacy_medicine_store_image(int $medicineId, string $filename, string
 {
     if ($medicineId <= 0 || $content === '') {
         return '';
-    }
-
-    if (function_exists('addtomar_object_storage_put') && addtomar_object_storage_enabled()) {
-        $safe = preg_replace('/[^a-zA-Z0-9._-]+/', '-', $filename) ?: ('image-' . $medicineId . '.jpg');
-        $url = addtomar_object_storage_put('medicines/' . $medicineId . '/' . $safe, $content, $mime);
-        if ($url !== '') {
-            return $url;
-        }
     }
 
     $stmt = pharmacy_db()->prepare(

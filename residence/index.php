@@ -116,7 +116,7 @@ window.RESIDENCE_CONFIG = <?= json_encode([
   'reverseGeocodeUrl' => app_url('ajax/reverse-geocode.php'),
   'savedAddresses' => customer_addresses_list($residenceProfile['email']),
   'reports' => array_map(static function (array $report): array {
-      $report['proof_url'] = !empty($report['proof_path']) ? addtomar_file_public_url((string) $report['proof_path']) : '';
+      $report['proof_url'] = !empty($report['proof_path']) ? app_url((string) $report['proof_path']) : '';
       return $report;
   }, $residenceReports),
   'orders' => $residenceOrders,
@@ -138,7 +138,7 @@ window.nearbyPharmacies = window.RESIDENCE_CONFIG.pharmacies || [];
   'marketplacePharmacies' => $residenceMarketplacePharmacies,
   'orders' => $residenceOrders,
   'reports' => array_map(static function (array $report): array {
-      $report['proof_url'] = !empty($report['proof_path']) ? addtomar_file_public_url((string) $report['proof_path']) : '';
+      $report['proof_url'] = !empty($report['proof_path']) ? app_url((string) $report['proof_path']) : '';
       return $report;
   }, $residenceReports),
   'savedAddresses' => customer_addresses_list($residenceProfile['email']),

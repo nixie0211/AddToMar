@@ -92,20 +92,10 @@ if (!is_dir($uploadDir) && !mkdir($uploadDir, 0775, true) && !is_dir($uploadDir)
 }
 
 $fileName = 'report-' . bin2hex(random_bytes(12)) . '.' . $extensions[$mime];
-$proofBytes = (string) file_get_contents((string) $proof['tmp_name']);
-$proofPath = 'uploads/reports/' . $fileName;
-if (function_exists('addtomar_object_storage_put') && addtomar_object_storage_enabled() && $proofBytes !== '') {
-    $stored = addtomar_object_storage_put('reports/' . $fileName, $proofBytes, (string) $mime);
-    if ($stored !== '') {
-        $proofPath = $stored;
-    }
-}
-if ($proofPath === 'uploads/reports/' . $fileName) {
-    if (!move_uploaded_file((string) $proof['tmp_name'], $uploadDir . '/' . $fileName)) {
-        http_response_code(500);
-        echo json_encode(['ok' => false, 'error' => 'Could not save the proof file.']);
-        exit;
-    }
+if (!move_uploaded_file((string) $proof['tmp_name'], $uploadDir . '/' . $fileName)) {
+    http_response_code(500);
+    echo json_encode(['ok' => false, 'error' => 'Could not save the proof file.']);
+    exit;
 }
 
 $email = (string) ($_SESSION['user_email'] ?? '');
@@ -120,7 +110,7 @@ $report = [
     'reporter_email' => $email,
     'reason' => $reason,
     'details' => $details,
-    'proof_path' => $proofPath,
+    'proof_path' => 'uploads/reports/' . $fileName,
     'status' => 'under_review',
     'created_at' => date('c'),
     'updated_at' => date('c'),
