@@ -401,10 +401,13 @@ tbody tr:hover{background:#F8FAFC;}
 
 .badge{display:inline-flex; align-items:center; gap:5px; padding:4px 10px; border-radius:20px; font-size:11.5px; font-weight:700;}
 .badge::before{content:''; width:6px; height:6px; border-radius:50%;}
-.badge-green{background:#DCFCE7; color:#15803D;} .badge-green::before{background:#22C55E;}
+.badge-green{background:#DCFCE7; color:#16A34A;} .badge-green::before{background:#22C55E;}
 .badge-amber{background:#FEF3C7; color:#B45309;} .badge-amber::before{background:#F59E0B;}
-.badge-red{background:#FEE2E2; color:#B91C1C;} .badge-red::before{background:#EF4444;}
-.badge-blue{background:var(--teal-soft); color:var(--teal-dark);} .badge-blue::before{background:var(--teal);}
+.badge-orange{background:#FFF4E5; color:#EA580C;} .badge-orange::before{background:#F97316;}
+.badge-red{background:#FEE2E2; color:#E11D48;} .badge-red::before{background:#EF4444;}
+.badge-blue{background:#E8F1FF; color:#2563EB;} .badge-blue::before{background:#3B82F6;}
+.badge-purple{background:#F3E8FF; color:#7C3AED;} .badge-purple::before{background:#A855F7;}
+.badge-cyan{background:#E0F9FF; color:#0891B2;} .badge-cyan::before{background:#22D3EE;}
 .badge-gray{background:#F1F5F9; color:#475569;} .badge-gray::before{background:#94A3B8;}
 
 .row-actions{display:flex; gap:6px;}

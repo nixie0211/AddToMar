@@ -129,10 +129,10 @@ function pharmacy_status_map(): array
 function pharmacy_order_status_map(): array
 {
     return [
-        'pending' => ['c' => 'badge-amber', 't' => 'Pending'],
+        'pending' => ['c' => 'badge-orange', 't' => 'Pending'],
         'confirmed' => ['c' => 'badge-blue', 't' => 'Confirmed'],
-        'preparing' => ['c' => 'badge-blue', 't' => 'Preparing'],
-        'ready' => ['c' => 'badge-blue', 't' => 'Ready for Pickup'],
+        'preparing' => ['c' => 'badge-purple', 't' => 'Preparing'],
+        'ready' => ['c' => 'badge-cyan', 't' => 'Ready for Pickup'],
         'delivered' => ['c' => 'badge-green', 't' => 'Completed'],
         'cancelled' => ['c' => 'badge-red', 't' => 'Cancelled'],
     ];

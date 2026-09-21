@@ -4864,7 +4864,7 @@ table.hist-table tr:hover td{ background:var(--bg);}
 .orders-reference-head h2{font-size:29px}.orders-reference-head h2 span{width:42px;height:42px;margin-right:12px;border:0;border-radius:11px;background:#e2f8f0;color:#087e6b}.orders-reference-head h2 span svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}.orders-reference-head p{margin-left:55px;font-size:14px}.orders-reference-tools{margin:21px 0 18px}.orders-reference-tabs{gap:16px}.orders-reference-tabs button{padding:12px 18px;font-size:13px}.orders-reference-actions label{width:320px;height:44px}.orders-reference-actions input{height:42px;font-size:13px}.orders-reference-actions button{height:44px;padding:0 20px;font-size:13px}.orders-reference-list{gap:14px}.order-reference-card{min-height:145px;gap:26px;padding:20px 25px;border-radius:16px}.order-reference-card>div+div{padding-left:24px}.order-reference-icon{border-radius:12px;background:linear-gradient(135deg,#e4fbf3,#d4f5ea)}.order-reference-product b{font-size:15px}.order-reference-product small,.order-reference-address span,.order-reference-status small,.order-reference-total small{font-size:12.5px}.order-reference-address b{font-size:12.5px}.order-reference-status strong{font-size:13px}.order-reference-total>b{font-size:19px}.order-reference-total button{height:42px;font-size:13px}
 
 /* My Orders reference layout */
-[data-page="orders"] .filter-chip-row,[data-page="orders"] .filter-chip-row + .card{display:none!important}.orders-reference-head{margin:0 0 14px}.orders-reference-head h2{margin:0;color:#153744;font-family:var(--font-display);font-size:25px;font-weight:800}.orders-reference-head h2 span{display:inline-grid;place-items:center;width:34px;height:34px;margin-right:10px;border:2px solid #087e6b;border-radius:6px;color:#087e6b;font-size:21px;vertical-align:middle}.orders-reference-head p{margin:4px 0 0 45px;color:#6f8390;font-size:12px}.orders-reference-tools{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:14px}.orders-reference-tabs{display:flex;gap:10px}.orders-reference-tabs button{border:0;border-bottom:2px solid transparent;padding:10px 15px;background:transparent;color:#6c8090;font-size:12px;font-weight:800;cursor:pointer}.orders-reference-tabs button.is-active{border-color:#07836d;border-radius:10px 10px 0 0;background:#e4f8f1;color:#087d68}.orders-reference-actions{display:flex;gap:10px}.orders-reference-actions label{position:relative;display:flex;align-items:center;width:275px;border:1px solid #d6e8e8;border-radius:13px;background:#fff}.orders-reference-actions label span{margin-left:13px;color:#4b7180;font-size:19px}.orders-reference-actions input{width:100%;height:38px;border:0;outline:0;padding:0 12px;background:transparent;color:#294651;font:inherit;font-size:12px}.orders-reference-actions button{height:38px;padding:0 17px;border:1px solid #d6e8e8;border-radius:12px;background:#fff;color:#4b6574;font:700 12px var(--font-body);cursor:pointer}.orders-reference-list{display:grid;gap:10px}.order-reference-card{display:grid;grid-template-columns:1.45fr 1.1fr .95fr .78fr;align-items:center;gap:18px;padding:13px 19px;border:1px solid #d9eeee;border-radius:13px;background:#fff;box-shadow:0 3px 12px rgba(13,67,72,.05)}.order-reference-card>div+div{border-left:1px solid #e1eeee;padding-left:18px}.order-reference-product{display:flex;align-items:flex-start;gap:12px}.order-reference-icon{display:grid;place-items:center;width:47px;height:47px;flex:0 0 47px;border-radius:9px;background:#e1faf1;font-size:24px}.order-reference-product b,.order-reference-status b,.order-reference-total b{display:block;color:#1c4656;font-size:12px;font-weight:800}.order-reference-product small,.order-reference-address span,.order-reference-status small,.order-reference-total small{display:block;margin-top:4px;color:#708493;font-size:10.5px;font-weight:600;line-height:1.35}.order-reference-thumbs{display:flex;gap:5px;margin-top:9px}.order-reference-thumbs i{display:block;width:29px;height:29px;border:1px solid #e0ebea;border-radius:5px;background:linear-gradient(135deg,#eaf5f2,#fff)}.order-reference-thumbs em{display:grid;place-items:center;width:29px;height:29px;border:1px solid #def0ed;border-radius:50%;background:#f7fdfb;color:#397080;font-size:10px;font-style:normal;font-weight:800}.order-reference-address{display:grid;gap:1px}.order-reference-address b{margin-top:7px;color:#63808f;font-size:10px}.order-reference-address b:first-child{margin-top:0}.order-reference-status{display:grid;gap:5px}.order-reference-status strong{display:inline-flex;width:max-content;padding:7px 11px;border-radius:999px;font-size:11px}.order-reference-status .ship{background:#dff8e9;color:#087c5d}.order-reference-status .processing{background:#e2efff;color:#1a73df}.order-reference-status .delivered{background:#eee8ff;color:#6136c8}.order-reference-status .cancelled{background:#ffe4ec;color:#c61f54}.order-reference-total{display:grid;gap:5px}.order-reference-total>b{font-size:14px}.order-reference-total button{margin-top:7px;height:35px;border:1px solid #29a78b;border-radius:18px;background:#fff;color:#087b69;font-size:11px;font-weight:800;cursor:pointer}.order-reference-total button:hover{background:#effbf7}@media(max-width:1050px){.orders-reference-tools{align-items:flex-start;flex-direction:column}.order-reference-card{grid-template-columns:1fr 1fr}.order-reference-card>div+div{border-left:0;padding-left:0}}@media(max-width:620px){.orders-reference-tabs{max-width:100%;overflow:auto}.orders-reference-actions{width:100%}.orders-reference-actions label{flex:1;width:auto}.order-reference-card{grid-template-columns:1fr;padding:16px}.order-reference-card>div{border-left:0!important;padding-left:0!important;border-top:1px solid #e1eeee;padding-top:12px}.order-reference-product{border-top:0!important;padding-top:0!important}}
+[data-page="orders"] .filter-chip-row,[data-page="orders"] .filter-chip-row + .card{display:none!important}.orders-reference-head{margin:0 0 14px}.orders-reference-head h2{margin:0;color:#153744;font-family:var(--font-display);font-size:25px;font-weight:800}.orders-reference-head h2 span{display:inline-grid;place-items:center;width:34px;height:34px;margin-right:10px;border:2px solid #087e6b;border-radius:6px;color:#087e6b;font-size:21px;vertical-align:middle}.orders-reference-head p{margin:4px 0 0 45px;color:#6f8390;font-size:12px}.orders-reference-tools{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:14px}.orders-reference-tabs{display:flex;gap:10px}.orders-reference-tabs button{border:0;border-bottom:2px solid transparent;padding:10px 15px;background:transparent;color:#6c8090;font-size:12px;font-weight:800;cursor:pointer}.orders-reference-tabs button.is-active{border-color:#07836d;border-radius:10px 10px 0 0;background:#e4f8f1;color:#087d68}.orders-reference-actions{display:flex;gap:10px}.orders-reference-actions label{position:relative;display:flex;align-items:center;width:275px;border:1px solid #d6e8e8;border-radius:13px;background:#fff}.orders-reference-actions label span{margin-left:13px;color:#4b7180;font-size:19px}.orders-reference-actions input{width:100%;height:38px;border:0;outline:0;padding:0 12px;background:transparent;color:#294651;font:inherit;font-size:12px}.orders-reference-actions button{height:38px;padding:0 17px;border:1px solid #d6e8e8;border-radius:12px;background:#fff;color:#4b6574;font:700 12px var(--font-body);cursor:pointer}.orders-reference-list{display:grid;gap:10px}.order-reference-card{display:grid;grid-template-columns:1.45fr 1.1fr .95fr .78fr;align-items:center;gap:18px;padding:13px 19px;border:1px solid #d9eeee;border-radius:13px;background:#fff;box-shadow:0 3px 12px rgba(13,67,72,.05)}.order-reference-card>div+div{border-left:1px solid #e1eeee;padding-left:18px}.order-reference-product{display:flex;align-items:flex-start;gap:12px}.order-reference-icon{display:grid;place-items:center;width:47px;height:47px;flex:0 0 47px;border-radius:9px;background:#e1faf1;font-size:24px}.order-reference-product b,.order-reference-status b,.order-reference-total b{display:block;color:#1c4656;font-size:12px;font-weight:800}.order-reference-product small,.order-reference-address span,.order-reference-status small,.order-reference-total small{display:block;margin-top:4px;color:#708493;font-size:10.5px;font-weight:600;line-height:1.35}.order-reference-thumbs{display:flex;gap:5px;margin-top:9px}.order-reference-thumbs i{display:block;width:29px;height:29px;border:1px solid #e0ebea;border-radius:5px;background:linear-gradient(135deg,#eaf5f2,#fff)}.order-reference-thumbs em{display:grid;place-items:center;width:29px;height:29px;border:1px solid #def0ed;border-radius:50%;background:#f7fdfb;color:#397080;font-size:10px;font-style:normal;font-weight:800}.order-reference-address{display:grid;gap:1px}.order-reference-address b{margin-top:7px;color:#63808f;font-size:10px}.order-reference-address b:first-child{margin-top:0}.order-reference-status{display:grid;gap:5px}.order-reference-status strong{display:inline-flex;width:max-content;padding:7px 11px;border-radius:999px;font-size:11px}.order-reference-status .processing,.order-reference-status .pending{background:#FFF4E5;color:#EA580C}.order-reference-status .confirmed{background:#E8F1FF;color:#2563EB}.order-reference-status .preparing{background:#F3E8FF;color:#7C3AED}.order-reference-status .ready,.order-reference-status .ship{background:#E0F9FF;color:#0891B2}.order-reference-status .delivered,.order-reference-status .completed,.order-reference-status .picked-up{background:#DCFCE7;color:#16A34A}.order-reference-status .cancelled{background:#FEE2E2;color:#E11D48}.order-reference-total{display:grid;gap:5px}.order-reference-total>b{font-size:14px}.order-reference-total button{margin-top:7px;height:35px;border:1px solid #29a78b;border-radius:18px;background:#fff;color:#087b69;font-size:11px;font-weight:800;cursor:pointer}.order-reference-total button:hover{background:#effbf7}@media(max-width:1050px){.orders-reference-tools{align-items:flex-start;flex-direction:column}.order-reference-card{grid-template-columns:1fr 1fr}.order-reference-card>div+div{border-left:0;padding-left:0}}@media(max-width:620px){.orders-reference-tabs{max-width:100%;overflow:auto}.orders-reference-actions{width:100%}.orders-reference-actions label{flex:1;width:auto}.order-reference-card{grid-template-columns:1fr;padding:16px}.order-reference-card>div{border-left:0!important;padding-left:0!important;border-top:1px solid #e1eeee;padding-top:12px}.order-reference-product{border-top:0!important;padding-top:0!important}}
 .oid{ font-family:var(--font-mono); font-size:12.5px; color:var(--ink-soft);}
 
 /* ============================================================
@@ -7153,10 +7153,14 @@ body.is-pharmacy-empty.is-pharmacy-profile-page .page[data-page="pharmacy-profil
 }
 #orders-list-view .order-reference-status strong,
 #orders-list-view .order-reference-status .processing,
+#orders-list-view .order-reference-status .pending,
 #orders-list-view .order-reference-status .confirmed,
 #orders-list-view .order-reference-status .preparing,
 #orders-list-view .order-reference-status .ready,
 #orders-list-view .order-reference-status .picked-up,
+#orders-list-view .order-reference-status .completed,
+#orders-list-view .order-reference-status .delivered,
+#orders-list-view .order-reference-status .cancelled,
 #orders-list-view .order-reference-status .ship{
   display:inline-flex !important;
   align-items:center !important;
@@ -7164,22 +7168,22 @@ body.is-pharmacy-empty.is-pharmacy-profile-page .page[data-page="pharmacy-profil
   width:max-content !important;
   padding:8px 14px !important;
   border-radius:999px !important;
-  background:#e4f7ef !important;
-  color:#0a6b54 !important;
   font:700 13px var(--font-body) !important;
 }
 #orders-list-view .order-reference-status strong svg{
   width:15px !important;
   height:15px !important;
 }
-#orders-list-view .order-reference-status .cancelled{background:#fdecee !important;color:#c13d47 !important;}
-#orders-list-view .order-reference-status .delivered,
-#orders-list-view .order-reference-status .completed{background:#eef6ff !important;color:#1d5fa8 !important;}
+#orders-list-view .order-reference-status .processing,
+#orders-list-view .order-reference-status .pending{background:#FFF4E5 !important;color:#EA580C !important;}
+#orders-list-view .order-reference-status .confirmed{background:#E8F1FF !important;color:#2563EB !important;}
+#orders-list-view .order-reference-status .preparing{background:#F3E8FF !important;color:#7C3AED !important;}
 #orders-list-view .order-reference-status .ready,
-#orders-list-view .order-reference-status .ship{background:#e4f7ef !important;color:#0a6b54 !important;}
-#orders-list-view .order-reference-status .confirmed{background:#e2efff !important;color:#1a73df !important;}
-#orders-list-view .order-reference-status .preparing{background:#fff6e5 !important;color:#b45309 !important;}
-#orders-list-view .order-reference-status .picked-up{background:#eee8ff !important;color:#6136c8 !important;}
+#orders-list-view .order-reference-status .ship{background:#E0F9FF !important;color:#0891B2 !important;}
+#orders-list-view .order-reference-status .delivered,
+#orders-list-view .order-reference-status .completed,
+#orders-list-view .order-reference-status .picked-up{background:#DCFCE7 !important;color:#16A34A !important;}
+#orders-list-view .order-reference-status .cancelled{background:#FEE2E2 !important;color:#E11D48 !important;}
 #orders-list-view .order-reference-status small{
   margin:4px 0 0 !important;
   color:#7a8f9b !important;
@@ -7280,12 +7284,15 @@ body.is-pharmacy-empty.is-pharmacy-profile-page .page[data-page="pharmacy-profil
   font-size:12px;
   font-weight:800;
 }
-.mo-parent-badge strong.partial{background:#e8f1ff;color:#2457d6;}
-.mo-parent-badge strong.preparing{background:#fff6e5;color:#c47b12;}
-.mo-parent-badge strong.processing{background:#fff6e5;color:#c47b12;}
-.mo-parent-badge strong.ready{background:#e7f6ef;color:#087c66;}
-.mo-parent-badge strong.completed{background:#e7f6ef;color:#087c66;}
-.mo-parent-badge strong.cancelled{background:#fdecee;color:#c13d47;}
+.mo-parent-badge strong.partial{background:#E8F1FF;color:#2563EB;}
+.mo-parent-badge strong.preparing{background:#F3E8FF;color:#7C3AED;}
+.mo-parent-badge strong.processing,
+.mo-parent-badge strong.pending{background:#FFF4E5;color:#EA580C;}
+.mo-parent-badge strong.confirmed{background:#E8F1FF;color:#2563EB;}
+.mo-parent-badge strong.ready{background:#E0F9FF;color:#0891B2;}
+.mo-parent-badge strong.completed,
+.mo-parent-badge strong.picked-up{background:#DCFCE7;color:#16A34A;}
+.mo-parent-badge strong.cancelled{background:#FEE2E2;color:#E11D48;}
 .mo-parent-badge small{color:#6b8290;font-size:11px;}
 .mo-parent-note{
   margin:0 0 16px;
@@ -7322,15 +7329,21 @@ body.is-pharmacy-empty.is-pharmacy-profile-page .page[data-page="pharmacy-profil
   margin-left:auto;
   padding:6px 10px;
   border-radius:999px;
-  background:#fff6e5;
-  color:#c47b12;
+  background:#FFF4E5;
+  color:#EA580C;
   font-size:11px;
   font-weight:800;
   white-space:nowrap;
 }
-.mo-store-status.ready,.mo-store-status.completed,.mo-store-status.picked-up{background:#e7f6ef;color:#087c66;}
-.mo-store-status.confirmed{background:#e8f1ff;color:#2457d6;}
-.mo-store-status.cancelled{background:#fdecee;color:#c13d47;}
+.mo-store-status.processing,
+.mo-store-status.pending{background:#FFF4E5;color:#EA580C;}
+.mo-store-status.confirmed{background:#E8F1FF;color:#2563EB;}
+.mo-store-status.preparing{background:#F3E8FF;color:#7C3AED;}
+.mo-store-status.ready{background:#E0F9FF;color:#0891B2;}
+.mo-store-status.completed,
+.mo-store-status.picked-up,
+.mo-store-status.delivered{background:#DCFCE7;color:#16A34A;}
+.mo-store-status.cancelled{background:#FEE2E2;color:#E11D48;}
 .mo-store-items{display:grid;gap:10px;margin:14px 0 10px;}
 .mo-store-item{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:10px;align-items:center;}
 .mo-store-item img{width:44px;height:44px;object-fit:contain;border:1px solid #edf3f1;border-radius:8px;background:#f8fbfa;}

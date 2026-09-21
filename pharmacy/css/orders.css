@@ -161,12 +161,12 @@
   font-weight:800;
   white-space:nowrap;
 }
-.ot-pill--pending{ background:#fff6e5; color:#c47b12; }
-.ot-pill--confirmed{ background:#e8f1ff; color:#2563eb; }
-.ot-pill--preparing{ background:#fff1e6; color:#d97706; }
-.ot-pill--ready{ background:#e7f8f2; color:#0d9488; }
-.ot-pill--delivered{ background:#dcfce7; color:#15803d; }
-.ot-pill--cancelled{ background:#fdecee; color:#c13d47; }
+.ot-pill--pending{ background:#FFF4E5; color:#EA580C; }
+.ot-pill--confirmed{ background:#E8F1FF; color:#2563EB; }
+.ot-pill--preparing{ background:#F3E8FF; color:#7C3AED; }
+.ot-pill--ready{ background:#E0F9FF; color:#0891B2; }
+.ot-pill--delivered{ background:#DCFCE7; color:#16A34A; }
+.ot-pill--cancelled{ background:#FEE2E2; color:#E11D48; }
 
 #view-orders.view.active{
   display:flex;
