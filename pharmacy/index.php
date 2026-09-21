@@ -30,9 +30,9 @@ require_once dirname(__DIR__) . '/includes/maps.php';
 <?php include PHARMACY_ROOT . '/partials/head.php'; ?>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 <link rel="stylesheet" href="<?= htmlspecialchars(app_url('css/map-service-overlay.css'), ENT_QUOTES, 'UTF-8') ?>?v=street-map-2">
-<link rel="stylesheet" href="css/base.css?v=pharmacy-topbar-email-1">
+<link rel="stylesheet" href="css/base.css?v=orders-table-scroll-1">
 <link rel="stylesheet" href="<?= htmlspecialchars(app_url('css/rx-crop-preview.css'), ENT_QUOTES, 'UTF-8') ?>?v=rx-crop-contain-1">
-<link rel="stylesheet" href="css/orders.css?v=pharmacy-status-colors-1">
+<link rel="stylesheet" href="css/orders.css?v=orders-table-scroll-1">
 <link rel="stylesheet" href="css/reports.css?v=analytics-detail-1">
 <link rel="stylesheet" href="css/settings.css?v=settings-save-center-1">
 <link rel="stylesheet" href="css/add-medicine.css?v=saving-overlay-1">
