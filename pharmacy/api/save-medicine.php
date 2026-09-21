@@ -57,6 +57,7 @@ $description = trim((string) ($_POST['description'] ?? ''));
 $ingredients = trim((string) ($_POST['ingredients'] ?? ''));
 $batchNumber = trim((string) ($_POST['batch_number'] ?? ''));
 $stockQuantity = max(0, (int) ($_POST['stock_quantity'] ?? 0));
+$minimumStock = max(0, (int) ($_POST['minimum_stock'] ?? 0));
 $unitPrice = max(0, (float) ($_POST['unit_price'] ?? 0));
 $sellingPrice = max(0, (float) ($_POST['selling_price'] ?? 0));
 
@@ -136,6 +137,7 @@ $fields = [
     'batch_number' => $batchNumber,
     'expiration_date' => $expiration,
     'stock_quantity' => $stockQuantity,
+    'minimum_stock' => $minimumStock,
     'unit_price' => $unitPrice,
     'selling_price' => $sellingPrice,
     'prescription_required' => isset($_POST['prescription_required']) ? 1 : 0,
@@ -176,7 +178,7 @@ try {
             UPDATE medicines SET
                 pharmacy_id = COALESCE(NULLIF(pharmacy_id, ""), ?),
                 name = ?, generic_name = ?, brand = ?, dosage_form = ?, strength = ?, unit = ?, category = ?, dosage = ?,
-                description = ?, ingredients = ?, batch_number = ?, expiration_date = ?, stock_quantity = ?,
+                description = ?, ingredients = ?, batch_number = ?, expiration_date = ?, stock_quantity = ?, minimum_stock = ?,
                 unit_price = ?, selling_price = ?, prescription_required = ?, is_active = ?
         ';
         $params = [
@@ -194,6 +196,7 @@ try {
             $batchNumber,
             $expiration,
             $stockQuantity,
+            $minimumStock,
             $unitPrice,
             $sellingPrice,
             $fields['prescription_required'],
@@ -239,7 +242,7 @@ try {
             pharmacy_id, name, generic_name, brand, dosage_form, strength, unit, category, dosage,
             description, ingredients, batch_number, expiration_date, stock_quantity, minimum_stock,
             unit_price, selling_price, prescription_required, is_active, image_path, listed_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ');
 
     $listedAt = date('Y-m-d H:i:s');
@@ -259,6 +262,7 @@ try {
             $batchNumber,
             $expiration,
             $stockQuantity,
+            $minimumStock,
             $unitPrice,
             $sellingPrice,
             isset($_POST['prescription_required']) ? 1 : 0,
@@ -275,7 +279,7 @@ try {
                 pharmacy_id, name, generic_name, brand, dosage_form, strength, unit, category, dosage,
                 description, ingredients, batch_number, expiration_date, stock_quantity, minimum_stock,
                 unit_price, selling_price, prescription_required, is_active, image_path
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ');
         $stmt->execute([
             $pharmacyId,
@@ -292,6 +296,7 @@ try {
             $batchNumber,
             $expiration,
             $stockQuantity,
+            $minimumStock,
             $unitPrice,
             $sellingPrice,
             isset($_POST['prescription_required']) ? 1 : 0,

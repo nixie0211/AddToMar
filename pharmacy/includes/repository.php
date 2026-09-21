@@ -256,6 +256,7 @@ function pharmacy_medicine_editor_payload(array $medicine): array
         'batch_number' => (string) ($medicine['batch_number'] ?? ''),
         'expiration_date' => (string) ($medicine['expiration_date'] ?? ''),
         'stock_quantity' => (int) ($medicine['stock_quantity'] ?? 0),
+        'minimum_stock' => (int) ($medicine['minimum_stock'] ?? 0),
         'unit_price' => (float) ($medicine['unit_price'] ?? 0),
         'selling_price' => (float) ($medicine['selling_price'] ?? 0),
         'prescription_required' => !empty($medicine['prescription_required']),

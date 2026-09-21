@@ -207,6 +207,7 @@ function populateMedicineForm(medicine){
   const isoExpiry = expiry.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   setValue('expiration_date', isoExpiry ? isoExpiry[2] + '/' + isoExpiry[3] + '/' + isoExpiry[1] : expiry);
   setValue('stock_quantity', medicine.stock_quantity);
+  setValue('minimum_stock', medicine.minimum_stock || 0);
   setValue('unit_price', Number(medicine.unit_price || 0).toFixed(2));
   setValue('selling_price', Number(medicine.selling_price || 0).toFixed(2));
 

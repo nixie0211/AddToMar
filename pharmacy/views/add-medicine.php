@@ -126,6 +126,10 @@ foreach ($categories as $category) {
                     <input id="med-qty" name="stock_quantity" type="number" min="0" step="1" placeholder="0" value="0">
                   </div>
                   <div class="field">
+                    <label for="med-min-stock">Low stock at</label>
+                    <input id="med-min-stock" name="minimum_stock" type="number" min="0" step="1" placeholder="e.g. 10" value="0">
+                  </div>
+                  <div class="field">
                     <label for="med-expiration">Expiration date</label>
                     <input id="med-expiration" name="expiration_date" type="text" inputmode="numeric" placeholder="mm/dd/yyyy or 02/mm/2027" pattern="^(?:\d{4}-\d{2}-\d{2}|\d{1,2}\/\d{1,2}\/\d{4}|\d{1,2}\/(?:mm|MM)\/\d{4})$">
                   </div>

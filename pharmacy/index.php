@@ -55,7 +55,7 @@ require_once dirname(__DIR__) . '/includes/maps.php';
 window.PHARMACY_CHART_DATA = <?= json_encode($chartData ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
 </script>
 <script src="js/dashboard.php"></script>
-<script src="js/add-medicine.php?v=hide-visible-toggle-1"></script>
+<script src="js/add-medicine.php?v=low-stock-threshold-1"></script>
 <script src="js/inventory.php?v=new-badge-7d"></script>
 <script src="<?= htmlspecialchars(app_url('js/rx-crop-preview.js'), ENT_QUOTES, 'UTF-8') ?>?v=rx-crop-preload-1"></script>
 <script src="js/orders.php?v=pharmacy-order-actions-top-1"></script>
