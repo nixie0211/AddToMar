@@ -1,5 +1,5 @@
 <div id="app-shell">
-  <aside class="sidebar" data-live-region="pharmacy-nav" data-live-keys="shell,orders,inventory" data-orders-seen-url="<?= htmlspecialchars(function_exists('app_url') ? app_url('ajax/pharmacy-orders-seen.php') : '../ajax/pharmacy-orders-seen.php', ENT_QUOTES, 'UTF-8') ?>">
+  <aside class="sidebar" data-live-region="pharmacy-nav" data-live-keys="shell,orders,inventory" data-orders-seen-url="<?= htmlspecialchars(function_exists('app_url') ? app_url('ajax/pharmacy-orders-seen.php') : '../ajax/pharmacy-orders-seen.php', ENT_QUOTES, 'UTF-8') ?>" data-inventory-seen-url="<?= htmlspecialchars(function_exists('app_url') ? app_url('ajax/pharmacy-inventory-seen.php') : '../ajax/pharmacy-inventory-seen.php', ENT_QUOTES, 'UTF-8') ?>">
     <a class="brand-mark" href="<?= htmlspecialchars(function_exists('app_url') ? app_url('pharmacy/') : './', ENT_QUOTES, 'UTF-8') ?>" aria-label="AddToMar home">
       <span class="brand-logo" aria-hidden="true">
         <img src="<?= htmlspecialchars(function_exists('app_url') ? app_url('2.png') : '../2.png', ENT_QUOTES, 'UTF-8') ?>" alt="" width="40" height="40">
@@ -13,10 +13,13 @@
       Dashboard
     </div>
     <?php
-      $inventoryAlertCount = (int) ($stats['lowStock'] ?? 0) + (int) ($stats['expiring'] ?? 0);
       if (($activeView ?? '') === 'orders') {
           pharmacy_mark_pending_orders_seen();
       }
+      if (($activeView ?? '') === 'inventory') {
+          pharmacy_mark_inventory_alerts_seen();
+      }
+      $inventoryAlertCount = pharmacy_inventory_badge_count();
       $ordersAlertCount = pharmacy_new_order_badge_count();
     ?>
     <div class="nav-item<?= $activeView === 'inventory' ? ' active' : '' ?>" data-view="inventory" onclick="showView('inventory', this)">

@@ -1070,6 +1070,72 @@ function pharmacy_mark_pending_orders_seen(): int
     return pharmacy_new_order_badge_count();
 }
 
+function pharmacy_inventory_alert_notice_ids(): array
+{
+    $ids = [];
+    try {
+        $medicines = pharmacy_get_medicines();
+    } catch (Throwable) {
+        return [];
+    }
+
+    foreach ($medicines as $medicine) {
+        $medicineId = (int) ($medicine['id'] ?? 0);
+        if ($medicineId <= 0) {
+            continue;
+        }
+        $status = (string) ($medicine['status'] ?? '');
+        if ($status === 'low') {
+            $ids[] = pharmacy_notification_id('low-stock', (string) $medicineId);
+        } elseif ($status === 'expiring') {
+            $ids[] = pharmacy_notification_id('expiring', (string) $medicineId);
+        } elseif ($status === 'expired') {
+            $ids[] = pharmacy_notification_id('expired', (string) $medicineId);
+        }
+    }
+
+    return $ids;
+}
+
+function pharmacy_inventory_badge_count(): int
+{
+    $alerts = pharmacy_inventory_alert_notice_ids();
+    if ($alerts === []) {
+        return 0;
+    }
+
+    $readIds = pharmacy_notification_read_ids();
+    $unread = 0;
+    foreach ($alerts as $noticeId) {
+        if (!pharmacy_notification_is_read($noticeId, $readIds)) {
+            $unread++;
+        }
+    }
+
+    return $unread;
+}
+
+function pharmacy_mark_inventory_alerts_seen(): int
+{
+    $pharmacyId = pharmacy_current_id();
+    if ($pharmacyId === '') {
+        return pharmacy_inventory_badge_count();
+    }
+
+    $now = date('Y-m-d H:i:s');
+    try {
+        $stmt = pharmacy_db()->prepare(
+            'INSERT IGNORE INTO pharmacy_notification_reads (pharmacy_id, notice_id, read_at) VALUES (?, ?, ?)'
+        );
+        foreach (pharmacy_inventory_alert_notice_ids() as $noticeId) {
+            $stmt->execute([$pharmacyId, $noticeId, $now]);
+        }
+    } catch (Throwable) {
+    }
+
+    return pharmacy_inventory_badge_count();
+}
+
 function pharmacy_get_notifications(): array
 {
     $notifications = [];

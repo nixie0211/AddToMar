@@ -42,6 +42,9 @@ function showView(name, el, options){
   if(name === 'orders'){
     markPharmacyOrdersSeen();
   }
+  if(name === 'inventory'){
+    markPharmacyInventorySeen();
+  }
 }
 
 function buildViewUrl(name){
@@ -88,6 +91,28 @@ function setPharmacyOrdersBadge(count){
 function markPharmacyOrdersSeen(){
   setPharmacyOrdersBadge(0);
   const url = document.querySelector('.sidebar')?.getAttribute('data-orders-seen-url') || '';
+  if(!url) return;
+  fetch(url, { method:'POST', credentials:'same-origin' }).catch(function(){});
+}
+
+function setPharmacyInventoryBadge(count){
+  const badge = document.getElementById('nav-inventory-badge');
+  if(!badge) return;
+  count = Math.max(0, Number(count) || 0);
+  if(count < 1){
+    badge.hidden = true;
+    badge.textContent = '0';
+    badge.setAttribute('aria-label', '0 inventory alerts');
+    return;
+  }
+  badge.hidden = false;
+  badge.textContent = count > 99 ? '99+' : String(count);
+  badge.setAttribute('aria-label', count + ' inventory alerts');
+}
+
+function markPharmacyInventorySeen(){
+  setPharmacyInventoryBadge(0);
+  const url = document.querySelector('.sidebar')?.getAttribute('data-inventory-seen-url') || '';
   if(!url) return;
   fetch(url, { method:'POST', credentials:'same-origin' }).catch(function(){});
 }
