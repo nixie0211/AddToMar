@@ -24,10 +24,20 @@ $residenceReports = resident_reports_for_user((string) ($residenceProfile['email
 $userLat = $residenceProfile['latitude'];
 $userLng = $residenceProfile['longitude'];
 $sortedResidencePharmacies = residence_pharmacies_for_user($userLat, $userLng);
+$nearestPharmacy = residence_nearest_pharmacy($sortedResidencePharmacies);
+$nearestPharmacyId = (string) ($nearestPharmacy['id'] ?? '');
+$nearestPharmacyName = $nearestPharmacy
+    ? trim((string) ($nearestPharmacy['name'] ?? 'Pharmacy') . (!empty($nearestPharmacy['branch']) ? ' — ' . $nearestPharmacy['branch'] : ''))
+    : '';
 $residenceCatalogMedicines = residence_catalog_medicines();
-$residenceNewProducts = residence_catalog_new_products($residenceCatalogMedicines);
-$residenceFeaturedProducts = residence_catalog_featured_products($residenceCatalogMedicines);
-$residenceTopSellers = residence_catalog_top_sellers();
+$residenceNewProductsAll = residence_catalog_new_products($residenceCatalogMedicines, 0, false);
+$residenceNewProducts = array_slice(residence_catalog_spread_pharmacies($residenceNewProductsAll), 0, 10);
+$residenceNewProductsHasMore = count($residenceNewProductsAll) > 10;
+$residenceFeaturedProducts = residence_catalog_featured_products($residenceCatalogMedicines, 20, $nearestPharmacyId);
+$residenceFeaturedAllCount = count(residence_catalog_featured_products($residenceCatalogMedicines, 0, ''));
+$residenceTopSellersAll = residence_catalog_top_sellers($residenceCatalogMedicines, 0, false);
+$residenceTopSellers = array_slice(residence_catalog_spread_pharmacies($residenceTopSellersAll), 0, 10);
+$residenceTopSellersHasMore = count($residenceTopSellersAll) > 10;
 $residenceMarketplacePharmacies = $sortedResidencePharmacies;
 $nearbyPharmacies = $sortedResidencePharmacies;
 $residencePharmacyCatalog = array_map(static function (array $pharmacy): array {
@@ -84,7 +94,8 @@ window.USER_LOCATION = <?= json_encode([
   'lat' => $userLat,
   'lng' => $userLng,
   'address' => $residenceProfile['address'],
-  'hasLocation' => $userLat !== null && $userLng !== null,
+  'hasLocation' => trim((string) ($residenceProfile['address'] ?? '')) !== '' && $userLat !== null && $userLng !== null,
+  'needsLocation' => customers_needs_location($residenceProfile),
 ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
 window.RESIDENCE_CONFIG = <?= json_encode([
   'nearbyUrl' => app_url('ajax/nearby-pharmacies.php'),
@@ -101,6 +112,9 @@ window.RESIDENCE_CONFIG = <?= json_encode([
   'serviceOverlay' => maps_service_overlay(),
   'pharmacies' => $residencePharmacyCatalog,
   'marketplacePharmacies' => $residenceMarketplacePharmacies,
+  'laoagCityBannerUrl' => app_url('images/cities/laoag-city.jpg') . '?v=crop-5',
+  'sanNicolasBannerUrl' => app_url('images/cities/san-nicolas.jpg') . '?v=crop-4',
+  'batacCityBannerUrl' => app_url('images/cities/batac-city.jpg') . '?v=1',
   'placeOrderUrl' => app_url('ajax/place-order.php'),
   'cartUrl' => app_url('ajax/resident-cart.php'),
   'paymongoCheckoutUrl' => app_url('ajax/paymongo-checkout.php'),
@@ -127,7 +141,7 @@ window.RESIDENCE_CONFIG = <?= json_encode([
 window.nearbyPharmacies = window.RESIDENCE_CONFIG.pharmacies || [];
 </script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
-<link rel="stylesheet" href="<?= htmlspecialchars(app_url('css/map-service-overlay.css'), ENT_QUOTES, 'UTF-8') ?>?v=street-map-2">
+<link rel="stylesheet" href="<?= htmlspecialchars(app_url('css/map-service-overlay.css'), ENT_QUOTES, 'UTF-8') ?>?v=city-red-1">
 <?php include dirname(__DIR__) . '/partials/map-area-modal.php'; ?>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="<?= htmlspecialchars(app_url('js/map-service-overlay.js'), ENT_QUOTES, 'UTF-8') ?>?v=street-map-2"></script>
@@ -147,7 +161,7 @@ window.nearbyPharmacies = window.RESIDENCE_CONFIG.pharmacies || [];
   'topSellerIds' => array_values(array_map(static fn(array $item): int => (int) ($item['id'] ?? 0), $residenceTopSellers)),
 ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>
 <script src="<?= htmlspecialchars(function_exists('app_url') ? app_url('js/rx-crop-preview.js') : '../js/rx-crop-preview.js', ENT_QUOTES, 'UTF-8') ?>?v=rx-crop-preload-1"></script>
-<script src="<?= residence_asset('js/app.php') ?>?v=pharmacy-profile-pager-1"></script>
+<script src="<?= residence_asset('js/app.php') ?>?v=order-drawer-780-1"></script>
 <?php live_sync_render_script('residence'); ?>
 <script>
 window.openProductPreview = window.openProductPreview || function(card) {

@@ -32,6 +32,6 @@
             </div>
           </div>
           <div class="orders-reference-list" id="orders-reference-list"></div>
+          <nav class="catalog-pagination" id="orders-pagination" hidden aria-label="Orders pages"></nav>
         </div>
-        <div id="orders-detail-view" style="display:none;"></div>
       </section>

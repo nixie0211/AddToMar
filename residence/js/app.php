@@ -58,7 +58,75 @@ function closeNotificationMenu(){
     if(footer && dropdown.getAttribute('data-has-more') === '1') footer.hidden = false;
   }
   menu?.querySelector('.topbar-nav-item')?.setAttribute('aria-expanded', 'false');
+  closeNotificationOptions();
 }
+
+function notificationOptionsMenu(){
+  return document.querySelector('#topbar-notification-menu .topbar-notification-options-menu');
+}
+
+function toggleNotificationOptions(event){
+  event?.preventDefault?.();
+  event?.stopPropagation?.();
+  const menu = notificationOptionsMenu();
+  const button = event?.currentTarget || document.querySelector('#topbar-notification-menu .topbar-notification-options');
+  if(!menu) return;
+  const open = menu.hidden !== false;
+  menu.hidden = !open;
+  button?.setAttribute('aria-expanded', String(open));
+}
+window.toggleNotificationOptions = toggleNotificationOptions;
+
+function closeNotificationOptions(){
+  const menu = notificationOptionsMenu();
+  if(menu) menu.hidden = true;
+  document.querySelector('#topbar-notification-menu .topbar-notification-options')?.setAttribute('aria-expanded', 'false');
+}
+
+function markAllResidentNotificationsRead(event){
+  event?.preventDefault?.();
+  event?.stopPropagation?.();
+  closeNotificationOptions();
+  document.querySelectorAll('.topbar-notification-item.is-unread, .topbar-notification-item.unread, .topbar-notification-item[data-unread="1"], .notif-full.unread').forEach(item => {
+    const id = String(item.getAttribute('data-notification-id') || '').trim();
+    if(id === '' || id.startsWith('sample-')){
+      try{ localStorage.setItem('residence_sample_notif_read_' + (id || 'pickup'), '1'); }catch(e){}
+    }
+    item.classList.remove('is-unread', 'unread');
+    item.classList.add('is-read');
+    item.setAttribute('data-unread', '0');
+    item.querySelector('.topbar-notification-dot')?.remove();
+  });
+  document.querySelectorAll('.topbar-notification-dropdown, [data-page="notifications"]').forEach(scope => {
+    applyResidentNotificationFilter(scope, activeResidentNotificationMode(scope));
+  });
+  updateResidentNotifBadge(0);
+  const url = window.RESIDENCE_CONFIG?.markNotificationReadUrl;
+  if(!url) return;
+  const form = new FormData();
+  form.append('mark_all', '1');
+  fetch(url, { method:'POST', body:form, credentials:'same-origin' })
+    .then(response => response.json())
+    .then(data => {
+      if(data && typeof data.unread === 'number') updateResidentNotifBadge(data.unread);
+    })
+    .catch(() => {});
+}
+window.markAllResidentNotificationsRead = markAllResidentNotificationsRead;
+
+function openResidentNotificationsPage(event){
+  event?.preventDefault?.();
+  event?.stopPropagation?.();
+  closeNotificationOptions();
+  closeNotificationMenu();
+  go('notifications');
+  const page = document.querySelector('.page[data-page="notifications"]');
+  if(!page) return;
+  const tabs = page.querySelectorAll('.topbar-notification-tabs button');
+  tabs.forEach((tab, index) => tab.classList.toggle('is-active', index === 0));
+  applyResidentNotificationFilter(page, 'all');
+}
+window.openResidentNotificationsPage = openResidentNotificationsPage;
 
 function expandNotificationHistory(event){
   event?.preventDefault?.();
@@ -81,7 +149,7 @@ function openResidentReport(reportId){
   const reportReason = String(report.reason || '').replace(/^Other:\s*/i, '');
   const isResolved = status.toLowerCase() === 'resolved';
   const submitted = report.created_at ? new Date(report.created_at).toLocaleString() : '—';
-  const proof = report.proof_url ? `<a href="${escapeHtml(report.proof_url)}" target="_blank" rel="noopener" class="resident-report-proof-link">Open submitted proof <span>›</span></a>` : '<span class="resident-report-none">No proof attached</span>';
+  const proof = report.proof_url ? `<button type="button" class="resident-report-proof-link" data-preview-url="${escapeHtml(report.proof_url)}" data-preview-title="Submitted proof">Open submitted proof <span>›</span></button>` : '<span class="resident-report-none">No proof attached</span>';
   root.innerHTML = `<button type="button" class="resident-report-panel-close" onclick="closeResidentReportDetails()" aria-label="Close report details">×</button><div class="resident-report-panel-heading"><span class="resident-report-panel-icon">💊</span><div><p>Pharmacy report</p><h2>${escapeHtml(report.pharmacy_name || 'Pharmacy')}</h2><span class="resident-report-panel-status ${isResolved ? 'is-resolved' : ''}">${escapeHtml(status)}</span></div></div><div class="resident-report-panel-details"><div><span class="resident-report-detail-label">Reason</span><strong>${escapeHtml(reportReason || '—')}</strong></div><div><span class="resident-report-detail-label">Your details</span><strong>${escapeHtml(report.details || 'No additional details provided.')}</strong></div><div><span class="resident-report-detail-label">Submitted</span><strong>${escapeHtml(submitted)}</strong></div><div><span class="resident-report-detail-label">Proof</span>${proof}</div><div class="resident-report-panel-reply"><span class="resident-report-detail-label">Admin reply</span><strong>${escapeHtml(report.admin_note || 'Your report is still being reviewed.')}</strong></div></div><div class="resident-report-panel-footer ${isResolved ? 'is-resolved' : ''}"><b>${isResolved ? '✓ Resolved' : '◷ Under review'}</b><span>${isResolved ? 'This report has been reviewed and marked as resolved.' : 'We will notify you once this report has been reviewed.'}</span></div>`;
   root.hidden = false;
 }
@@ -398,10 +466,49 @@ function toggleProductDetailInfo(button, contentId){
   content.hidden = isExpanded;
 }
 
+function pharmacyAreaKey(pharmacy){
+  const blob = [
+    pharmacy?.city,
+    pharmacy?.branch,
+    pharmacy?.address,
+    pharmacy?.label,
+    pharmacy?.name,
+  ].join(' ').toLowerCase();
+  if(blob.includes('laoag') || blob.includes('castro street') || blob.includes('m.g. castro')) return 'laoag';
+  if(blob.includes('san nicolas') || blob.includes('sannicolas')) return 'san-nicolas';
+  if(blob.includes('batac')) return 'batac';
+  const lat = Number(pharmacy?.latitude);
+  if(!Number.isFinite(lat)) return '';
+  if(lat >= 18.185) return 'laoag';
+  if(lat >= 18.12) return 'san-nicolas';
+  if(lat >= 18.02) return 'batac';
+  return '';
+}
+
+function applyPharmacyCityBanner(pharmacy){
+  const banner = document.getElementById('pharmacy-profile-banner');
+  if(!banner) return;
+  const cfg = window.RESIDENCE_CONFIG || {};
+  const urls = {
+    laoag: String(banner.dataset.laoagSrc || cfg.laoagCityBannerUrl || '').trim(),
+    'san-nicolas': String(banner.dataset.sanNicolasSrc || cfg.sanNicolasBannerUrl || '').trim(),
+    batac: String(banner.dataset.batacSrc || cfg.batacCityBannerUrl || '').trim(),
+  };
+  const url = urls[pharmacyAreaKey(pharmacy)] || '';
+  if(url){
+    banner.classList.add('is-city-photo');
+    banner.style.backgroundImage = `url("${url}")`;
+    return;
+  }
+  banner.classList.remove('is-city-photo');
+  banner.style.backgroundImage = '';
+}
+
 function openPharmacyProfile(pharmacyId){
   const pharmacy = getMarketplacePharmacy(pharmacyId);
   if(!pharmacy) return;
   activePharmacyProfileId = pharmacyId;
+  applyPharmacyCityBanner(pharmacy);
 
   document.getElementById('pharmacy-profile-name').textContent = pharmacy.name || 'Pharmacy';
   document.getElementById('pharmacy-profile-contact').textContent = formatPharmacyContact(pharmacy.contact) || 'Contact information unavailable';
@@ -417,9 +524,50 @@ function openPharmacyProfile(pharmacyId){
   document.getElementById('pharmacy-profile-status').innerHTML = `<span class="profile-state ${isOpen ? 'is-open' : ''}"><i></i>${isOpen ? 'Open now' : 'Currently closed'}</span><span class="pharmacy-profile-status-distance">${distanceLabel}</span>`;
   document.getElementById('pharmacy-profile-sold').textContent = `${totalSold.toLocaleString()} sold`;
   pharmacyProfilePage = 1;
+  pharmacyProfileCategory = '';
+  pharmacyProfilePriceSort = '';
+  pharmacyProfilePriceMin = null;
+  pharmacyProfilePriceMax = null;
+  const categorySelect = document.getElementById('pharmacy-profile-category-sort');
+  if(categorySelect) categorySelect.value = '';
+  const priceSort = document.getElementById('pharmacy-profile-price-sort');
+  if(priceSort) priceSort.value = '';
+  const priceMin = document.getElementById('pharmacy-profile-price-min');
+  const priceMax = document.getElementById('pharmacy-profile-price-max');
+  if(priceMin) priceMin.value = '';
+  if(priceMax) priceMax.value = '';
   showPharmacyProfileHome();
 
   go('pharmacy-profile');
+}
+
+function viewAllPharmacyProducts(pharmacyId){
+  catalogCollection = '';
+  const id = String(pharmacyId || document.querySelector('.home-nearest-pharmacy-bar[data-pharmacy-id]')?.dataset.pharmacyId || '').trim();
+  if(id){
+    openPharmacyProfile(id);
+    return;
+  }
+  go('dashboard');
+  document.getElementById('home-browse')?.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+function viewAllCatalogCollection(mode){
+  const next = mode === 'new' || mode === 'top' || mode === 'featured' ? mode : '';
+  catalogCollection = next;
+  activePharmacyFilter = '';
+  activePharmacyName = '';
+  activePharmacyAccountId = '';
+  activeShopCategory = '';
+  activeShopSub = '';
+  const input = document.getElementById('medicine-search');
+  if(input) input.value = '';
+  closeSearchSuggestions();
+  updateCategoryNavState();
+  updateStoreBrowseView();
+  go('dashboard');
+  filterMedicines('');
+  document.getElementById('home-browse')?.scrollIntoView({ behavior:'smooth', block:'start' });
 }
 
 function reportPharmacy(){
@@ -429,6 +577,7 @@ function reportPharmacy(){
   if(!modal || !form || !pharmacy) return;
   form.reset();
   updatePharmacyReportFileName({ files: [] });
+  bindPharmacyReportDrop();
   document.getElementById('pharmacy-report-pharmacy-id').value = pharmacy.id || '';
   document.getElementById('pharmacy-report-target').textContent = `Reporting: ${pharmacy.name || 'Pharmacy'}`;
   document.getElementById('pharmacy-report-error').hidden = true;
@@ -438,6 +587,9 @@ function reportPharmacy(){
 
 function closePharmacyReportModal(){
   const modal = document.getElementById('pharmacy-report-modal');
+  const input = document.getElementById('pharmacy-report-proof');
+  if(input) input.value = '';
+  updatePharmacyReportFileName({ files: [] });
   if(modal) modal.hidden = true;
 }
 
@@ -450,9 +602,85 @@ function togglePharmacyReportOtherReason(){
   if(input) input.required = isOther;
 }
 
+function clearPharmacyReportPreview(){
+  const drop = document.getElementById('pharmacy-report-drop');
+  const img = document.getElementById('pharmacy-report-preview-img');
+  const fileCard = document.getElementById('pharmacy-report-preview-file');
+  if(drop?.dataset.previewUrl){
+    URL.revokeObjectURL(drop.dataset.previewUrl);
+    delete drop.dataset.previewUrl;
+  }
+  if(img){
+    img.removeAttribute('src');
+    img.hidden = true;
+  }
+  if(fileCard){
+    fileCard.hidden = true;
+    fileCard.textContent = '';
+  }
+}
+
 function updatePharmacyReportFileName(input){
   const label = document.getElementById('pharmacy-report-file-name');
-  if(label) label.textContent = input.files?.[0]?.name || 'No file chosen';
+  const drop = document.getElementById('pharmacy-report-drop');
+  const img = document.getElementById('pharmacy-report-preview-img');
+  const fileCard = document.getElementById('pharmacy-report-preview-file');
+  const file = input.files?.[0] || null;
+  const name = file?.name || '';
+  if(label) label.textContent = name || 'No file chosen';
+  drop?.classList.toggle('has-file', !!file);
+  clearPharmacyReportPreview();
+  if(!file || !drop) return;
+  drop.classList.add('has-file');
+  const isImage = /^image\/(jpeg|png|webp|gif)$/i.test(file.type) || /\.(jpe?g|png|webp|gif)$/i.test(name);
+  if(isImage && img){
+    const url = URL.createObjectURL(file);
+    drop.dataset.previewUrl = url;
+    img.src = url;
+    img.hidden = false;
+    if(fileCard) fileCard.hidden = true;
+    return;
+  }
+  if(img) img.hidden = true;
+  if(fileCard){
+    fileCard.hidden = false;
+    fileCard.textContent = name;
+  }
+}
+
+function removePharmacyReportProof(event){
+  event.preventDefault();
+  event.stopPropagation();
+  const input = document.getElementById('pharmacy-report-proof');
+  if(input) input.value = '';
+  updatePharmacyReportFileName({ files: [] });
+}
+
+function bindPharmacyReportDrop(){
+  const drop = document.getElementById('pharmacy-report-drop');
+  const input = document.getElementById('pharmacy-report-proof');
+  if(!drop || !input || drop.dataset.bound === '1') return;
+  drop.dataset.bound = '1';
+  ['dragenter','dragover'].forEach((eventName) => {
+    drop.addEventListener(eventName, (event) => {
+      event.preventDefault();
+      drop.classList.add('is-dragover');
+    });
+  });
+  ['dragleave','drop'].forEach((eventName) => {
+    drop.addEventListener(eventName, (event) => {
+      event.preventDefault();
+      drop.classList.remove('is-dragover');
+    });
+  });
+  drop.addEventListener('drop', (event) => {
+    const file = event.dataTransfer?.files?.[0];
+    if(!file) return;
+    const transfer = new DataTransfer();
+    transfer.items.add(file);
+    input.files = transfer.files;
+    updatePharmacyReportFileName(input);
+  });
 }
 
 async function submitPharmacyReport(event){
@@ -523,40 +751,230 @@ function applySpotlightBadge(card){
 function pharmacyProfileCardHtml(card){
   const copy = card.cloneNode(true);
   copy.classList.add('med-card--spotlight');
+  copy.classList.remove('is-search-hidden');
+  copy.hidden = false;
+  copy.removeAttribute('hidden');
+  copy.style.removeProperty('display');
   copy.removeAttribute('onclick');
   copy.removeAttribute('onkeydown');
-  copy.querySelector('.med-add')?.remove();
   applySpotlightBadge(copy);
   return copy.outerHTML;
 }
 
 function setPharmacyProfileEmpty(isEmpty){
-  document.body.classList.toggle('is-pharmacy-empty', Boolean(isEmpty));
-  document.querySelector('.page[data-page="pharmacy-profile"]')?.classList.toggle('is-pharmacy-empty', Boolean(isEmpty));
+  const page = document.querySelector('.page[data-page="pharmacy-profile"]');
+  page?.classList.toggle('is-pharmacy-empty', Boolean(isEmpty));
 }
 
-const PHARMACY_PROFILE_PAGE_SIZE = 8;
+const PHARMACY_PROFILE_PAGE_SIZE = 12;
 let pharmacyProfilePage = 1;
+let pharmacyProfileCategory = '';
+let pharmacyProfilePriceSort = '';
+let pharmacyProfilePriceMin = null;
+let pharmacyProfilePriceMax = null;
 
-function pharmacyProfilePagerHtml(page, pages){
-  if(pages <= 1) return '';
-  const numbers = [];
-  for(let i = 1; i <= pages; i += 1){
-    if(pages <= 7 || i === 1 || i === pages || Math.abs(i - page) <= 1){
-      numbers.push(i);
-    }else if(numbers[numbers.length - 1] !== '…'){
-      numbers.push('…');
-    }
+function parsePharmacyProfilePriceInput(value){
+  const cleaned = String(value || '').replace(/[^\d.]/g, '');
+  if(cleaned === '' || cleaned === '.') return null;
+  const amount = Number(cleaned);
+  return Number.isFinite(amount) ? amount : null;
+}
+
+function pharmacyProfilePriceBounds(){
+  let min = pharmacyProfilePriceMin;
+  let max = pharmacyProfilePriceMax;
+  if(min != null && max != null && min > max){
+    return { min: max, max: min };
   }
-  const buttons = numbers.map(item => item === '…'
-    ? '<span class="pharmacy-profile-pager-gap">…</span>'
-    : `<button type="button" data-pharmacy-page="${item}"${item === page ? ' class="is-active" aria-current="page"' : ''}>${item}</button>`
+  return { min, max };
+}
+
+function pharmacyProfileMatchesPrice(card){
+  const { min, max } = pharmacyProfilePriceBounds();
+  if(min == null && max == null) return true;
+  const price = getMedicinePrice(card);
+  if(min != null && price < min) return false;
+  if(max != null && price > max) return false;
+  return true;
+}
+
+function pharmacyProfileCategoryLabel(card){
+  const labeled = (card?.dataset?.categoryLabel || '').trim();
+  if(labeled) return labeled;
+  return (card?.querySelector('.med-cat')?.textContent || '').replace(/^[·•]\s*/, '').trim();
+}
+
+function pharmacyProfileCategorySlug(label){
+  const slug = String(label || '').trim().toLowerCase();
+  if(!slug) return '';
+  if(slug === 'pain relief' || slug === 'pain-relief') return 'pain-relief';
+  if(slug === 'antibiotic' || slug === 'antibiotics') return 'antibiotic';
+  if(slug === 'cold & flu' || slug === 'cold-flu') return 'cold-flu';
+  if(slug === 'vitamins' || slug === 'vitamins & supplements') return 'vitamins';
+  return slug.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || '';
+}
+
+function pharmacyProfileCardMatchesCategory(card, wanted){
+  const needle = String(wanted || '').trim().toLowerCase();
+  if(!needle) return true;
+  const wantedSlug = pharmacyProfileCategorySlug(needle);
+  const label = pharmacyProfileCategoryLabel(card);
+  const labelSlug = pharmacyProfileCategorySlug(label);
+  const shopSub = String(card?.dataset?.shopSub || '').trim().toLowerCase();
+  return label.toLowerCase() === needle
+    || (wantedSlug !== '' && (labelSlug === wantedSlug || shopSub === wantedSlug))
+    || shopSub === needle;
+}
+
+function pharmacyProfileStoreCards(){
+  const pharmacyId = String(activePharmacyProfileId || '').trim();
+  if(!pharmacyId) return [];
+  return Array.from(document.querySelectorAll('.med-catalog .med-grid .med-card')).filter(card =>
+    String(card.dataset.pharmacyId || '').trim() === pharmacyId
+  );
+}
+
+function pharmacyProfileSearchQuery(){
+  return (document.getElementById('medicine-search')?.value || '').trim();
+}
+
+function pharmacyProfileMatchesSearch(card){
+  const q = pharmacyProfileSearchQuery();
+  if(!q) return true;
+  return medicineMatchesQuery(getMedicineSearchText(card), q);
+}
+
+function pharmacyProfileProducts(){
+  const wanted = pharmacyProfileCategory.trim();
+  return pharmacyProfileStoreCards()
+    .filter(card => pharmacyProfileCardMatchesCategory(card, wanted) && pharmacyProfileMatchesPrice(card) && pharmacyProfileMatchesSearch(card))
+    .sort((a, b) => {
+      if(pharmacyProfilePriceSort === 'asc' || pharmacyProfilePriceSort === 'desc'){
+        const byPrice = getMedicinePrice(a) - getMedicinePrice(b);
+        if(byPrice !== 0) return pharmacyProfilePriceSort === 'asc' ? byPrice : -byPrice;
+        return medicineCardName(a).localeCompare(medicineCardName(b), undefined, { sensitivity: 'base' });
+      }
+      const byCategory = pharmacyProfileCategoryLabel(a).localeCompare(pharmacyProfileCategoryLabel(b), undefined, { sensitivity: 'base' });
+      if(byCategory !== 0) return byCategory;
+      return medicineCardName(a).localeCompare(medicineCardName(b), undefined, { sensitivity: 'base' });
+    });
+}
+
+function refreshPharmacyProfileCategoryOptions(){
+  const select = document.getElementById('pharmacy-profile-category-sort');
+  if(!select) return;
+  const seen = new Map();
+  pharmacyProfileStoreCards().forEach(card => {
+    const label = pharmacyProfileCategoryLabel(card);
+    const shopSub = String(card.dataset.shopSub || '').trim();
+    const slug = pharmacyProfileCategorySlug(label) || shopSub.toLowerCase();
+    if(!slug) return;
+    const display = label || shopCategoryLabels[shopSub] || shopSub.replace(/-/g, ' ').replace(/\b\w/g, ch => ch.toUpperCase());
+    if(!display || seen.has(slug)) return;
+    seen.set(slug, display);
+  });
+  const options = Array.from(seen.entries()).map(([slug, label]) => ({ slug, label }));
+  options.sort((a, b) => {
+    const aOther = a.label.toLowerCase() === 'other';
+    const bOther = b.label.toLowerCase() === 'other';
+    if(aOther !== bOther) return aOther ? 1 : -1;
+    return a.label.localeCompare(b.label, undefined, { sensitivity: 'base' });
+  });
+  const current = pharmacyProfileCategory.trim().toLowerCase();
+  select.innerHTML = '<option value="">All categories</option>' + options.map(item =>
+    `<option value="${escapeHtml(item.slug)}">${escapeHtml(item.label)}</option>`
   ).join('');
-  return `<nav class="pharmacy-profile-pager" aria-label="Product pages">
-    <button type="button" data-pharmacy-page="prev"${page <= 1 ? ' disabled' : ''} aria-label="Previous page">‹</button>
-    ${buttons}
-    <button type="button" data-pharmacy-page="next"${page >= pages ? ' disabled' : ''} aria-label="Next page">›</button>
-  </nav>`;
+  const keep = options.find(item => item.slug === current || item.label.toLowerCase() === current);
+  select.value = keep ? keep.slug : '';
+  pharmacyProfileCategory = select.value;
+}
+
+function applyPharmacyProfileFilters(){
+  pharmacyProfilePage = 1;
+  renderPharmacyProfileProductPage(pharmacyProfileProducts());
+}
+
+function initPharmacyProfileCategorySort(){
+  const select = document.getElementById('pharmacy-profile-category-sort');
+  if(select && !select._categorySortReady){
+    select._categorySortReady = true;
+    select.addEventListener('change', () => {
+      pharmacyProfileCategory = select.value || '';
+      applyPharmacyProfileFilters();
+    });
+  }
+  const priceSort = document.getElementById('pharmacy-profile-price-sort');
+  if(priceSort && !priceSort._priceSortReady){
+    priceSort._priceSortReady = true;
+    priceSort.addEventListener('change', () => {
+      pharmacyProfilePriceSort = priceSort.value || '';
+      applyPharmacyProfileFilters();
+    });
+  }
+  const priceMin = document.getElementById('pharmacy-profile-price-min');
+  const priceMax = document.getElementById('pharmacy-profile-price-max');
+  const bindRange = (input, assign) => {
+    if(!input || input._priceRangeReady) return;
+    input._priceRangeReady = true;
+    let timer = 0;
+    const apply = () => {
+      assign(parsePharmacyProfilePriceInput(input.value));
+      applyPharmacyProfileFilters();
+    };
+    input.addEventListener('input', () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(apply, 200);
+    });
+    input.addEventListener('change', apply);
+    input.addEventListener('keydown', event => {
+      if(event.key === 'Enter'){
+        event.preventDefault();
+        window.clearTimeout(timer);
+        apply();
+      }
+    });
+  };
+  bindRange(priceMin, value => { pharmacyProfilePriceMin = value; });
+  bindRange(priceMax, value => { pharmacyProfilePriceMax = value; });
+}
+
+function residencePageNumbers(current, total){
+  if(total <= 7){
+    return Array.from({length: total}, (_, i) => i + 1);
+  }
+  const set = new Set([1, 2, 3, total - 2, total - 1, total, current - 1, current, current + 1]);
+  const nums = Array.from(set).filter(n => n >= 1 && n <= total).sort((a, b) => a - b);
+  const out = [];
+  nums.forEach((n, i) => {
+    if(i > 0 && n - nums[i - 1] > 1) out.push('…');
+    out.push(n);
+  });
+  return out;
+}
+
+function residencePagerControls(page, pages, attr){
+  const chevronLeft = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>';
+  const chevronRight = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>';
+  let html = `<button type="button" class="pager-step" data-${attr}="prev"${page <= 1 ? ' disabled' : ''} aria-label="Previous page"><span class="pager-chevron">${chevronLeft}</span><span>Prev</span></button>`;
+  residencePageNumbers(page, pages).forEach(item => {
+    if(item === '…'){
+      html += '<span class="pager-ellipsis">…</span>';
+      return;
+    }
+    html += `<button type="button" class="pager-num${item === page ? ' is-active' : ''}" data-${attr}="${item}"${item === page ? ' aria-current="page"' : ''}>${item}</button>`;
+  });
+  html += `<button type="button" class="pager-step" data-${attr}="next"${page >= pages ? ' disabled' : ''} aria-label="Next page"><span>Next</span><span class="pager-chevron">${chevronRight}</span></button>`;
+  return html;
+}
+
+function pharmacyProfilePagerHtml(page, pages, total){
+  if(total < 1) return '';
+  const from = (page - 1) * PHARMACY_PROFILE_PAGE_SIZE + 1;
+  const to = Math.min(page * PHARMACY_PROFILE_PAGE_SIZE, total);
+  const controls = pages > 1
+    ? `<div class="page-btns pager-pill">${residencePagerControls(page, pages, 'pharmacy-page')}</div>`
+    : '';
+  return `<nav class="pharmacy-profile-pager" aria-label="Product pages">${controls}<span class="catalog-page-meta">${from}–${to} of ${total}</span></nav>`;
 }
 
 function renderPharmacyProfileProductPage(products, heading = ''){
@@ -564,10 +982,17 @@ function renderPharmacyProfileProductPage(products, heading = ''){
   if(!root) return;
   bindPharmacyProfileProductClicks();
   if(products.length === 0){
-    setPharmacyProfileEmpty(!heading);
-    root.innerHTML = heading
-      ? `<section><div class="pharmacy-profile-section-head"><h3>${heading}</h3></div><p class="pharmacy-profile-empty">No products in this category yet.</p></section>`
-      : '<div class="pharmacy-profile-empty-state"><p class="pharmacy-profile-empty">No products listed yet.</p></div>';
+    const hasStoreProducts = pharmacyProfileStoreCards().length > 0;
+    setPharmacyProfileEmpty(!hasStoreProducts);
+    if(!hasStoreProducts){
+      root.innerHTML = heading
+        ? `<section><div class="pharmacy-profile-section-head"><h3>${heading}</h3></div><p class="pharmacy-profile-empty">No products in this category yet.</p></section>`
+        : '<div class="pharmacy-profile-empty-state"><p class="pharmacy-profile-empty">No products listed yet.</p></div>';
+      return;
+    }
+    root.innerHTML = pharmacyProfileSearchQuery()
+      ? '<p class="pharmacy-profile-empty">No medicines in this pharmacy match your search.</p>'
+      : '<p class="pharmacy-profile-empty">No products match these filters.</p>';
     return;
   }
   setPharmacyProfileEmpty(false);
@@ -576,12 +1001,12 @@ function renderPharmacyProfileProductPage(products, heading = ''){
   const start = (pharmacyProfilePage - 1) * PHARMACY_PROFILE_PAGE_SIZE;
   const pageItems = products.slice(start, start + PHARMACY_PROFILE_PAGE_SIZE);
   const head = heading ? `<div class="pharmacy-profile-section-head"><h3>${heading}</h3></div>` : '';
-  root.innerHTML = `<section>${head}<div class="med-grid pharmacy-profile-product-grid">${pageItems.map(pharmacyProfileCardHtml).join('')}</div>${pharmacyProfilePagerHtml(pharmacyProfilePage, pages)}</section>`;
+  root.innerHTML = `<section>${head}<div class="med-grid pharmacy-profile-product-grid">${pageItems.map(pharmacyProfileCardHtml).join('')}</div>${pharmacyProfilePagerHtml(pharmacyProfilePage, pages, products.length)}</section>`;
 }
 
 function showPharmacyProfileHome(){
-  const products = Array.from(document.querySelectorAll(`.med-catalog .med-card[data-pharmacy-id="${activePharmacyProfileId}"]`));
-  renderPharmacyProfileProductPage(products);
+  refreshPharmacyProfileCategoryOptions();
+  renderPharmacyProfileProductPage(pharmacyProfileProducts());
 }
 
 function bindPharmacyProfileProductClicks(){
@@ -598,12 +1023,11 @@ function bindPharmacyProfileProductClicks(){
       if(raw === 'prev') pharmacyProfilePage -= 1;
       else if(raw === 'next') pharmacyProfilePage += 1;
       else pharmacyProfilePage = parseInt(raw, 10) || 1;
-      const heading = root.querySelector('.pharmacy-profile-section-head h3')?.textContent || '';
-      if(heading) showPharmacyProfileCategoryProducts(heading);
-      else showPharmacyProfileHome();
+      renderPharmacyProfileProductPage(pharmacyProfileProducts());
       root.scrollIntoView({ behavior: 'smooth', block: 'start' });
       return;
     }
+    if(event.target.closest('.med-add, .med-buy, .med-card-actions')) return;
     const card = event.target.closest('.med-card');
     if(!card || !root.contains(card)) return;
     event.preventDefault();
@@ -612,6 +1036,7 @@ function bindPharmacyProfileProductClicks(){
   });
   root.addEventListener('keydown', event => {
     if(event.key !== 'Enter' && event.key !== ' ') return;
+    if(event.target.closest('.med-add, .med-buy, .med-card-actions')) return;
     const card = event.target.closest('.med-card');
     if(!card || !root.contains(card)) return;
     event.preventDefault();
@@ -630,9 +1055,11 @@ function browsePharmacyProfileCategories(){
 }
 
 function showPharmacyProfileCategoryProducts(category){
-  const products = Array.from(document.querySelectorAll(`.med-catalog .med-card[data-pharmacy-id="${activePharmacyProfileId}"]`))
-    .filter(card => (card.querySelector('.med-cat')?.textContent || '').replace(/^[^\w]+\s*/, '').trim() === category);
-  renderPharmacyProfileProductPage(products, category);
+  pharmacyProfileCategory = category || '';
+  pharmacyProfilePage = 1;
+  const select = document.getElementById('pharmacy-profile-category-sort');
+  if(select) select.value = pharmacyProfileCategory;
+  renderPharmacyProfileProductPage(pharmacyProfileProducts());
 }
 
 function closePharmacyProfile(){
@@ -773,10 +1200,113 @@ function checkoutItemNoteSelector(key){
 function rememberCheckoutItemNote(field){
   const key = String(field?.dataset?.itemKey || '');
   const note = String(field?.value || '').slice(0, 500);
-  (cart.items || []).forEach(item => {
-    if(checkoutRxItemKey(item) === key) item.note = note;
+  setCheckoutItemNote(key, note);
+}
+
+function checkoutNoteKeySelector(key){
+  const safe = (window.CSS && typeof CSS.escape === 'function') ? CSS.escape(String(key || '')) : String(key || '').replace(/["\\]/g, '');
+  return `.checkout-item-note-btn[data-item-key="${safe}"]`;
+}
+
+function checkoutNoteButtonLabel(note){
+  return String(note || '').trim() ? 'Edit note' : 'Add note';
+}
+
+function checkoutNoteButtonMarkup(note){
+  return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>${checkoutNoteButtonLabel(note)}`;
+}
+
+function refreshCheckoutItemNoteUi(key, note){
+  const value = String(note || '').trim();
+  document.querySelectorAll(checkoutNoteKeySelector(key)).forEach(btn => {
+    const row = btn.closest('.checkout-summary-item');
+    btn.classList.toggle('has-note', value !== '');
+    btn.innerHTML = checkoutNoteButtonMarkup(value);
+    if(!row) return;
+    row.classList.toggle('has-note', value !== '');
+    const copy = row.querySelector('.checkout-summary-item-copy');
+    let preview = row.querySelector('.checkout-item-note-preview');
+    if(value){
+      if(!preview && copy){
+        preview = document.createElement('p');
+        preview.className = 'checkout-item-note-preview';
+        copy.appendChild(preview);
+      }
+      if(preview) preview.textContent = value;
+    }else if(preview){
+      preview.remove();
+    }
   });
 }
+
+function setCheckoutItemNote(key, note){
+  const value = String(note || '').trim().slice(0, 500);
+  (cart.items || []).forEach(item => {
+    if(checkoutRxItemKey(item) === key) item.note = value;
+  });
+  if(window.buyNowCheckout?.item && checkoutRxItemKey(window.buyNowCheckout.item) === key){
+    window.buyNowCheckout.item.note = value;
+  }
+  saveCart();
+  refreshCheckoutItemNoteUi(key, value);
+}
+
+let checkoutNoteItemKey = '';
+
+function syncCheckoutNoteCount(){
+  const field = document.getElementById('checkout-note-field');
+  const count = document.getElementById('checkout-note-count');
+  const removeBtn = document.getElementById('checkout-note-remove');
+  const length = String(field?.value || '').length;
+  if(count) count.textContent = length + ' / 500';
+  if(removeBtn) removeBtn.hidden = !checkoutNoteHasSaved();
+}
+
+function checkoutNoteHasSaved(){
+  const item = cartCheckoutItems().find(entry => checkoutRxItemKey(entry) === checkoutNoteItemKey);
+  return String(item?.note || '').trim() !== '';
+}
+
+function openCheckoutNoteModal(key){
+  checkoutNoteItemKey = String(key || '');
+  const modal = document.getElementById('checkout-note-modal');
+  const field = document.getElementById('checkout-note-field');
+  const nameEl = document.getElementById('checkout-note-item-name');
+  const titleEl = document.getElementById('checkout-note-title');
+  const item = cartCheckoutItems().find(entry => checkoutRxItemKey(entry) === checkoutNoteItemKey);
+  if(!modal || !field) return;
+  const saved = String(item?.note || '').slice(0, 500);
+  if(titleEl) titleEl.textContent = saved.trim() ? 'Edit note' : 'Add a note';
+  if(nameEl) nameEl.textContent = item?.name || 'Medicine';
+  field.value = saved;
+  modal.hidden = false;
+  document.body.classList.add('modal-open');
+  syncCheckoutNoteCount();
+  setTimeout(() => field.focus(), 40);
+}
+
+function closeCheckoutNoteModal(){
+  const modal = document.getElementById('checkout-note-modal');
+  if(modal) modal.hidden = true;
+  document.body.classList.remove('modal-open');
+  checkoutNoteItemKey = '';
+}
+
+function saveCheckoutNoteModal(){
+  const field = document.getElementById('checkout-note-field');
+  if(checkoutNoteItemKey) setCheckoutItemNote(checkoutNoteItemKey, field?.value || '');
+  closeCheckoutNoteModal();
+}
+
+function clearCheckoutNoteModal(){
+  if(checkoutNoteItemKey) setCheckoutItemNote(checkoutNoteItemKey, '');
+  closeCheckoutNoteModal();
+}
+
+window.openCheckoutNoteModal = openCheckoutNoteModal;
+window.closeCheckoutNoteModal = closeCheckoutNoteModal;
+window.saveCheckoutNoteModal = saveCheckoutNoteModal;
+window.clearCheckoutNoteModal = clearCheckoutNoteModal;
 
 function captureCheckoutItemNotes(){
   document.querySelectorAll('.checkout-item-note').forEach(field => rememberCheckoutItemNote(field));
@@ -931,7 +1461,7 @@ function renderCartPage(){
       <div class="ci-product">
         <img src="${image}" alt="" onerror="this.onerror=null;this.src='${fallbackImage}'">
         <div class="ci-info">
-          <div class="ci-name">${item.name}${item.rxRequired ? ' <span class="badge badge-amber" style="margin-left:6px;">Rx</span>' : ''}</div>
+          <div class="ci-name">${item.name}</div>
           <div class="ci-shop">${item.pharmacyName || cart.pharmacyName || item.pharmacyLabel || 'Pharmacy'}</div>
           <div class="ci-unit">${formatMoney(item.price)} × ${item.quantity} PHP</div>
           <button type="button" class="ci-remove" onclick="removeCartItem(${index})">
@@ -992,16 +1522,21 @@ function removeCartItem(index){
   renderCartPage();
 }
 
+function removeCheckoutPrescriptionUploads(){
+  document.querySelectorAll('.checkout-item-rx, .checkout-item-rx-btn, .checkout-item-rx-clear').forEach(el => el.remove());
+}
+
 function renderCheckoutPage(){
   const fallbackImage = cartMedicineFallbackImage();
   const summaryLines = document.querySelector('.checkout-summary-card #checkout-summary-lines');
-  const totalEl = document.querySelector('.checkout-summary-card #checkout-total');
+  const totalEl = document.getElementById('checkout-total');
   const downEl = document.getElementById('checkout-down-payment');
   const balanceNote = document.getElementById('checkout-balance-note');
   const placeBtn = document.getElementById('checkout-place-order-btn');
   const dateInput = document.getElementById('checkout-pickup-date');
 
   if(!summaryLines) return;
+  removeCheckoutPrescriptionUploads();
   document.querySelectorAll('.payment-tab[data-method]').forEach(tab => {
     tab.onclick = () => {
       document.querySelectorAll('.payment-tab[data-method]').forEach(t => t.classList.toggle('active', t === tab));
@@ -1017,6 +1552,7 @@ function renderCheckoutPage(){
   }
   captureCheckoutItemNotes();
   if(summaryLines.dataset.checkoutSignature === checkoutSignature && checkoutItems.length > 0){
+    removeCheckoutPrescriptionUploads();
     return;
   }
   summaryLines.dataset.checkoutSignature = checkoutSignature;
@@ -1031,36 +1567,23 @@ function renderCheckoutPage(){
     if(downEl) downEl.textContent = formatMoney(0);
     const emptyLater = document.getElementById('checkout-pay-later');
     if(emptyLater) emptyLater.textContent = formatMoney(0);
+    renderCheckoutPayButton();
     if(placeBtn) placeBtn.disabled = true;
     return;
   }
 
   const totals = checkoutPriceTotals(cartSubtotal());
   summaryLines.innerHTML = checkoutItems.map(item => {
-    const needsRx = !!item.rxRequired && item.pharmacyId && item.medicineId;
     const itemKey = escapeHtml(checkoutRxItemKey(item));
-    const pharmacyId = escapeHtml(item.pharmacyId || '');
-    const medicineId = escapeHtml(String(item.medicineId || ''));
     return `
-    <div class="checkout-summary-item${needsRx ? ' has-rx' : ''}">
+    <div class="checkout-summary-item${item.note ? ' has-note' : ''}">
+      <button type="button" class="checkout-item-note-btn${item.note ? ' has-note' : ''}" data-item-key="${itemKey}">${checkoutNoteButtonMarkup(item.note)}</button>
       <img src="${item.image || fallbackImage}" alt="" onerror="this.onerror=null;this.src='${fallbackImage}'">
-      <div class="checkout-summary-item-copy"><strong>${item.name}</strong><span>${item.pharmacyName || checkoutPharmacyName()}</span><b><em>${formatMoney(item.price)} × ${item.quantity}</em><strong>${formatMoney(item.price * item.quantity)}</strong></b></div>
-      ${needsRx ? `
-        <div class="checkout-item-rx">
-          <label class="checkout-item-rx-btn">
-            <input type="file" class="checkout-prescription-file" data-item-key="${itemKey}" data-pharmacy-id="${pharmacyId}" data-medicine-id="${medicineId}" accept="image/jpeg,image/png,application/pdf" hidden>
-            <span class="checkout-item-rx-text">Upload prescription</span>
-          </label>
-          <button type="button" class="checkout-item-rx-clear" hidden onclick="clearPrescriptionUpload(this)" aria-label="Remove prescription">×</button>
-        </div>
-      ` : ''}
-      <label class="checkout-item-note-wrap">
-        <span>Additional note (optional)</span>
-        <textarea class="checkout-item-note" data-item-key="${itemKey}" maxlength="500" rows="2" placeholder="e.g. no generic substitute, extra packaging">${escapeHtml(item.note || '')}</textarea>
-      </label>
+      <div class="checkout-summary-item-copy"><strong>${item.name}</strong><span>${item.pharmacyName || checkoutPharmacyName()}</span><b><em>${formatMoney(item.price)} × ${item.quantity}</em><strong>${formatMoney(item.price * item.quantity)}</strong></b>${item.note ? `<p class="checkout-item-note-preview">${escapeHtml(item.note)}</p>` : ''}</div>
     </div>
   `;
   }).join('');
+  removeCheckoutPrescriptionUploads();
   restoreCheckoutPrescriptions();
   if(totalEl) totalEl.textContent = formatMoney(totals.total);
   const subtotalEl = document.getElementById('checkout-subtotal');
@@ -1074,8 +1597,8 @@ function renderCheckoutPage(){
   const payLaterEl = document.getElementById('checkout-pay-later');
   if(payNowEl) payNowEl.textContent = formatMoney(totals.downPayment);
   if(payLaterEl) payLaterEl.textContent = formatMoney(totals.remaining);
-  if(balanceNote) balanceNote.textContent = `Remaining 40% will be paid upon pick up.`;
 
+  renderCheckoutPayButton();
   syncCheckoutConfirmButton();
 
   if(dateInput && !dateInput.value){
@@ -1370,21 +1893,9 @@ function receiptWithCheckoutItems(order){
 
 function receiptCourierSvg(){
   return `<svg class="order-receipt-hero-art" viewBox="0 0 160 160" aria-hidden="true">
-    <circle cx="80" cy="80" r="72" fill="#F3F1EC"/>
-    <path d="M46 104c18-6 38-8 58-4 8 2 18 8 24 14" fill="none" stroke="#E8E4DC" stroke-width="6" stroke-linecap="round"/>
-    <circle cx="58" cy="118" r="12" fill="#1f1f1f"/>
-    <circle cx="58" cy="118" r="5" fill="#f4f4f4"/>
-    <circle cx="118" cy="118" r="12" fill="#1f1f1f"/>
-    <circle cx="118" cy="118" r="5" fill="#f4f4f4"/>
-    <path d="M70 118h36l8-22H78l-10 10H62l8 12Z" fill="#F4A24A"/>
-    <path d="M84 96h22l6 12H88Z" fill="#E8892E"/>
-    <rect x="96" y="78" width="22" height="18" rx="3" fill="#C9A227"/>
-    <rect x="98" y="72" width="18" height="8" rx="2" fill="#B8911E"/>
-    <circle cx="78" cy="70" r="12" fill="#F1C7A8"/>
-    <path d="M68 66c4-10 16-12 22-4" fill="#E24B4B"/>
-    <path d="M70 68h18v6H70Z" fill="#fff" opacity=".85"/>
-    <path d="M72 92c4-14 20-16 26-4l-8 18H78Z" fill="#2E6B8A"/>
-    <path d="M74 108h20l-4 10H78Z" fill="#1F4E66"/>
+    <circle cx="80" cy="80" r="72" fill="#e7f6f2"/>
+    <circle cx="80" cy="80" r="54" fill="#068a78"/>
+    <path d="M52 82.5 70 100l38-46" fill="none" stroke="#fff" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
   </svg>`;
 }
 
@@ -1430,8 +1941,6 @@ function renderTrackingPage(order){
     <div class="order-receipt">
       <div class="order-receipt-hero">
         ${receiptCourierSvg()}
-        <h2>Order Status</h2>
-        <p>Your medicines are being prepared</p>
       </div>
       <div class="order-receipt-items">${itemCards || '<p class="hint">No items on this receipt.</p>'}</div>
       <section class="order-receipt-summary">
@@ -1502,18 +2011,67 @@ function checkoutPayControls(){
   };
 }
 
+function checkoutPayCheckSvg(){
+  return '<svg class="pd-pay-check" viewBox="0 0 52 52" aria-hidden="true"><circle class="pd-pay-check-ring" cx="26" cy="26" r="23" fill="none"/><path class="pd-pay-check-mark" fill="none" d="M15.5 26.8l7.1 7.1 14.2-14.6"/></svg>';
+}
+
+function checkoutPayButtonAmount(){
+  const totals = checkoutPriceTotals(cartSubtotal());
+  return formatMoney(totals.downPayment);
+}
+
+function renderCheckoutPayButton(){
+  const payBtn = document.getElementById('checkout-gcash-pay');
+  const wrap = payBtn?.closest('.pd-pay-wrap');
+  if(!payBtn) return;
+  payBtn.classList.remove('is-verifying', 'is-success');
+  if(window.paymongoPaid){
+    payBtn.hidden = true;
+    if(wrap) wrap.hidden = true;
+    return;
+  }
+  payBtn.hidden = false;
+  if(wrap) wrap.hidden = false;
+  payBtn.disabled = !!checkoutPaying;
+  payBtn.setAttribute('aria-busy', checkoutPaying ? 'true' : 'false');
+  payBtn.textContent = 'PAY ' + checkoutPayButtonAmount();
+  payBtn.style.pointerEvents = checkoutPaying ? 'none' : 'auto';
+}
+
+let checkoutVerifyHideTimer = null;
+
+function setCheckoutVerifyOverlay(mode){
+  const overlay = document.getElementById('checkout-verify-overlay');
+  if(!overlay) return;
+  const busy = overlay.querySelector('.checkout-verify-busy');
+  const done = overlay.querySelector('.checkout-verify-done');
+  if(checkoutVerifyHideTimer){
+    clearTimeout(checkoutVerifyHideTimer);
+    checkoutVerifyHideTimer = null;
+  }
+  if(!mode){
+    overlay.hidden = true;
+    overlay.classList.remove('is-success');
+    document.body.classList.remove('checkout-verifying');
+    return;
+  }
+  overlay.hidden = false;
+  document.body.classList.add('checkout-verifying');
+  const success = mode === 'success';
+  overlay.classList.toggle('is-success', success);
+  if(busy) busy.hidden = success;
+  if(done) done.hidden = !success;
+  if(success){
+    checkoutVerifyHideTimer = setTimeout(function(){ setCheckoutVerifyOverlay(''); }, 1600);
+  }
+}
+
 function setCheckoutPayBusy(paying){
   checkoutPaying = !!paying;
-  const { payBtn, gcashBtn, hiddenBtn } = checkoutPayControls();
-  if(payBtn){
-    payBtn.disabled = checkoutPaying || !!window.paymongoPaid;
-    payBtn.setAttribute('aria-busy', checkoutPaying ? 'true' : 'false');
-    if(!window.paymongoPaid){
-      payBtn.hidden = false;
-      payBtn.textContent = checkoutPaying ? 'Paying...' : 'Pay';
-      payBtn.style.pointerEvents = checkoutPaying ? 'none' : 'auto';
-    }
-  }
+  const { gcashBtn, hiddenBtn } = checkoutPayControls();
+  renderCheckoutPayButton();
+  if(checkoutPaying && !window.paymongoPaid) setCheckoutVerifyOverlay('verifying');
+  else if(!window.paymongoPaid) setCheckoutVerifyOverlay('');
   if(gcashBtn){
     gcashBtn.disabled = checkoutPaying || !!window.paymongoPaid;
     gcashBtn.style.pointerEvents = (checkoutPaying || window.paymongoPaid) ? 'none' : 'auto';
@@ -1576,10 +2134,6 @@ async function startPayMongoPayment(){
 
   const checkoutItems=cartCheckoutItems();
   if(checkoutItems.length===0){ toast('Check the items you want to check out.'); return; }
-  if(missingPrescriptionItems().length){
-    toast('Upload a prescription for each medicine that requires one.');
-    return;
-  }
   const totals = checkoutPriceTotals(cartSubtotal());
   const amount = Math.max(totals.downPayment, 20);
   setCheckoutPayBusy(true);
@@ -1759,10 +2313,6 @@ async function completePayMongoPayment(intentId, fromPoll){
     closePayMongoPopup();
     setPayModalOpen('paymongo-auth-modal', false);
     setCheckoutPaymentStatus('failed');
-    const payBtn = document.getElementById('checkout-gcash-pay');
-    if(payBtn){
-      payBtn.hidden = false;
-    }
     setCheckoutPayBusy(false);
     toast(d.error || 'Payment was not completed. Click Pay to try again.');
   }catch(err){
@@ -1798,7 +2348,8 @@ function syncCheckoutConfirmButton(){
   const placeBtn = document.getElementById('checkout-place-order-btn');
   if(!placeBtn) return;
   const hasItems = cartCheckoutItems().length > 0;
-  const paid = checkoutPaymentStatus === 'paid' || checkoutPaymentStatus === 'verified' || checkoutPaymentStatus === 'succeeded';
+  const paid = checkoutPaymentStatus === 'paid' || checkoutPaymentStatus === 'verified' || checkoutPaymentStatus === 'succeeded' || !!window.paymongoPaid;
+  placeBtn.hidden = !paid;
   placeBtn.disabled = !hasItems || !paid;
 }
 
@@ -1813,38 +2364,11 @@ function startGCashFromCard(){
 function setCheckoutPaymentStatus(status){
   checkoutPaymentStatus = status || 'pending';
   window.paymongoPaid = checkoutPaymentStatus === 'paid' || checkoutPaymentStatus === 'verified' || checkoutPaymentStatus === 'succeeded';
-  const badge = document.getElementById('checkout-payment-status');
-  const copy = document.getElementById('checkout-payment-status-copy');
-  const payBtn = document.getElementById('checkout-gcash-pay');
   const card = document.getElementById('checkout-payment-card');
   card?.classList.toggle('is-paid', !!window.paymongoPaid);
-  if(payBtn){
-    payBtn.hidden = !!window.paymongoPaid;
-    if(window.paymongoPaid){
-      payBtn.disabled = true;
-      payBtn.textContent = 'Pay';
-      payBtn.style.pointerEvents = 'none';
-    }else if(!checkoutPaying){
-      payBtn.disabled = false;
-      payBtn.textContent = 'Pay';
-      payBtn.style.pointerEvents = 'auto';
-    }
-  }
-  if(badge){
-    if(window.paymongoPaid){
-      badge.className = 'pd-status-badge is-confirmed';
-      badge.textContent = 'Confirmed';
-      if(copy) copy.textContent = 'Confirmed via GCash';
-    }else if(checkoutPaymentStatus === 'failed'){
-      badge.className = 'pd-status-badge is-failed';
-      badge.textContent = 'Failed';
-      if(copy) copy.textContent = 'GCash payment failed';
-    }else{
-      badge.className = 'pd-status-badge';
-      badge.textContent = 'Pending';
-      if(copy) copy.textContent = 'Waiting for GCash';
-    }
-  }
+  renderCheckoutPayButton();
+  if(window.paymongoPaid) setCheckoutVerifyOverlay('success');
+  else if(!checkoutPaying) setCheckoutVerifyOverlay('');
   syncCheckoutConfirmButton();
 }
 
@@ -1852,28 +2376,14 @@ function applyPaidPayment(d){
   window.paymongoPaid = true;
   checkoutPaying = false;
   checkoutPaidSignature = cartItemsSignature(cartCheckoutItems());
+  if(d?.intent_id) paymongoIntentId = d.intent_id;
   setCheckoutPaymentStatus('paid');
   const btn = document.querySelector('.paymongo-wallet-btn');
   if(btn){
     btn.disabled = true;
     btn.textContent = 'Payment authorized';
   }
-  if(d?.order || (Array.isArray(d?.orders) && d.orders.length)){
-    const receipt = receiptWithCheckoutItems({
-      ...(d.order || {}),
-      orders: d.orders || d.order?.orders || [],
-    });
-    if(receipt) sessionStorage.setItem('residence_last_order', JSON.stringify(receipt));
-    const childOrders = (d.orders || (d.order ? [d.order] : [])).map(order => presentResidenceOrder(order, { skipStores:true }));
-    rememberResidenceOrder({
-      ...(receipt || d.order || {}),
-      stores: childOrders,
-      is_group: childOrders.length > 1,
-      store_count: childOrders.length || 1,
-    });
-    refreshResidenceOrders();
-  }
-  toast('Payment authorized. Status updated.');
+  toast('Payment confirmed. Click Complete Order to send it to the pharmacy.');
 }
 
 function showPayMongoReceipt(d){
@@ -1927,42 +2437,17 @@ async function placeOrder(){
     return;
   }
   if(!window.paymongoPaid){
-    toast('Authorize payment first. Confirm order is available after Payment status is Paid.');
+    toast('Authorize payment first. Click Pay to complete GCash, then confirm your order.');
     return;
   }
   const details = validateCheckoutPaymentDetails();
   if(!details) return;
-
-  try{
-    const lastOrder = JSON.parse(sessionStorage.getItem('residence_last_order') || 'null');
-    if(lastOrder){
-      const receiptOrder = receiptWithCheckoutItems(lastOrder);
-      sessionStorage.setItem('residence_last_order', JSON.stringify(receiptOrder));
-      const childOrders = (lastOrder.orders || [lastOrder]).map(order => presentResidenceOrder(order, { skipStores:true }));
-      rememberResidenceOrder({
-        ...receiptOrder,
-        stores: childOrders,
-        is_group: childOrders.length > 1,
-        store_count: childOrders.length || 1,
-      });
-      clearPaidCheckoutItems();
-      renderCheckoutPage();
-      renderTrackingPage(receiptOrder);
-      go('tracking');
-      return;
-    }
-  }catch(e){}
 
   const cfg = window.RESIDENCE_CONFIG || {};
   const pickupDate = document.getElementById('checkout-pickup-date')?.value || new Date().toISOString().slice(0, 10);
   const pickupTime = '';
   const paymentProof = document.getElementById('checkout-payment-proof');
   const placeBtn = document.getElementById('checkout-place-order-btn');
-
-  if(missingPrescriptionItems().length){
-    toast('Upload a prescription for each medicine that requires one.');
-    return;
-  }
 
   const form = new FormData();
   form.append('pharmacy_id', checkoutPharmacyId());
@@ -1974,6 +2459,7 @@ async function placeOrder(){
   form.append('payment_payer_address', details.address);
   form.append('payment_receipt_email', details.email);
   form.append('items', JSON.stringify(checkoutItemPayload()));
+  if(paymongoIntentId) form.append('payment_intent_id', paymongoIntentId);
   if(paymentProof?.files?.length) form.append('payment_proof', paymentProof.files[0]);
   appendCheckoutPrescriptions(form);
 
@@ -2021,13 +2507,38 @@ async function placeOrder(){
   }finally{
     if(placeBtn){
       placeBtn.disabled = false;
-      placeBtn.textContent = 'Place Order';
+      placeBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3h8v4H8z"/><path d="M6 7h12v14H6z"/><path d="M9 12h6M9 16h4"/></svg> Complete Order <span aria-hidden="true">›</span>';
     }
   }
 }
 
+document.addEventListener('click', (event) => {
+  const noteBtn = event.target instanceof Element ? event.target.closest('.checkout-item-note-btn') : null;
+  if(noteBtn){
+    openCheckoutNoteModal(noteBtn.dataset.itemKey || '');
+    return;
+  }
+  const preview = event.target instanceof Element ? event.target.closest('.checkout-item-note-preview') : null;
+  if(preview){
+    const rowBtn = preview.closest('.checkout-summary-item')?.querySelector('.checkout-item-note-btn');
+    openCheckoutNoteModal(rowBtn?.dataset.itemKey || '');
+    return;
+  }
+  if(event.target instanceof Element && event.target.id === 'checkout-note-backdrop'){
+    closeCheckoutNoteModal();
+  }
+});
+document.addEventListener('keydown', (event) => {
+  if(event.key === 'Escape' && !document.getElementById('checkout-note-modal')?.hidden){
+    closeCheckoutNoteModal();
+  }
+});
 document.addEventListener('input', (event) => {
   const target = event.target;
+  if(target instanceof HTMLTextAreaElement && target.id === 'checkout-note-field'){
+    syncCheckoutNoteCount();
+    return;
+  }
   if(target instanceof HTMLTextAreaElement && target.classList.contains('checkout-item-note')){
     rememberCheckoutItemNote(target);
     return;
@@ -2131,6 +2642,26 @@ function addToCart(btn){
   flyToCart(btn);
 }
 
+function buyNowFromCard(btn){
+  if(!btn) return;
+  const card = btn.closest('.med-card');
+  const data = getMedicineCardData(card);
+  if(!data || Number(data.medicineId) <= 0 || !data.pharmacyId){
+    toast('This medicine is not available for ordering yet.');
+    return;
+  }
+  window.buyNowCheckout = {
+    pharmacyId: data.pharmacyId,
+    pharmacyName: (getMarketplacePharmacy(data.pharmacyId)?.name || data.pharmacyName || data.pharmacyLabel || 'Pharmacy'),
+    item: { ...data, quantity: 1, selected: true },
+  };
+  closeProductPreview({ skipPharmacyReturn: true });
+  resetCheckoutPaymentSession();
+  go('checkout');
+  toast('Proceeding to checkout');
+}
+window.buyNowFromCard = buyNowFromCard;
+
 function updateProductDetailAddLabel(){
   const label = document.getElementById('product-detail-add-label');
   if(!label) return;
@@ -2189,31 +2720,32 @@ function renderRelatedProducts(card){
   const medicineId = String(card.dataset.medicineId || '');
   const pharmacyId = String(card.dataset.pharmacyId || '');
   const seen = new Set();
-  const candidates = Array.from(document.querySelectorAll('.med-catalog .med-grid .med-card')).filter(item => {
+  const fromThisPharmacy = [];
+  const fromOtherPharmacies = [];
+
+  Array.from(document.querySelectorAll('.med-catalog .med-grid .med-card')).forEach(item => {
     const id = String(item.dataset.medicineId || '');
-    if(id && seen.has(id)) return false;
+    if(id && seen.has(id)) return;
+    const sameItem = item === card || (medicineId && id === medicineId);
+    if(sameItem) return;
+    if(id) seen.add(id);
     const samePharmacy = pharmacyId
       ? String(item.dataset.pharmacyId || '') === pharmacyId
       : item.dataset.pharmacy === pharmacy;
-    if(!samePharmacy || item === card || (medicineId && id === medicineId)) return false;
-    if(id) seen.add(id);
-    return true;
+    if(samePharmacy) fromThisPharmacy.push(item);
+    else fromOtherPharmacies.push(item);
   });
 
-  candidates.sort((a, b) => {
-    const aScore =
-      (a.dataset.shopSub === currentSub ? 0 : 2) +
-      (a.dataset.shopCategory === currentCategory ? 0 : 1);
-    const bScore =
-      (b.dataset.shopSub === currentSub ? 0 : 2) +
-      (b.dataset.shopCategory === currentCategory ? 0 : 1);
-    return aScore - bScore;
-  });
+  const scoreCard = item =>
+    (item.dataset.shopSub === currentSub ? 0 : 2) +
+    (item.dataset.shopCategory === currentCategory ? 0 : 1);
+  fromThisPharmacy.sort((a, b) => scoreCard(a) - scoreCard(b));
+  fromOtherPharmacies.sort((a, b) => scoreCard(a) - scoreCard(b));
 
-  const suggestions = candidates.slice(0, 10);
+  const suggestions = [...fromThisPharmacy, ...fromOtherPharmacies].slice(0, 10);
   grid.innerHTML = '';
 
-  if(!pharmacy || suggestions.length === 0){
+  if(suggestions.length === 0){
     section.hidden = true;
     if(subEl) subEl.textContent = '';
     if(viewAll){
@@ -2225,8 +2757,11 @@ function renderRelatedProducts(card){
 
   section.hidden = false;
   const relatedPharmacyId = pharmacyId || suggestions[0]?.dataset?.pharmacyId || '';
+  const mixedStores = suggestions.some(item => String(item.dataset.pharmacyId || '') !== pharmacyId);
   if(subEl){
-    subEl.textContent = pharmacy;
+    subEl.textContent = mixedStores && fromThisPharmacy.length < 10
+      ? 'partner pharmacies'
+      : pharmacy;
     subEl.dataset.pharmacyId = relatedPharmacyId;
   }
   if(viewAll){
@@ -2242,7 +2777,10 @@ function renderRelatedProducts(card){
 function buildRelatedProductCard(sourceCard){
   const item = sourceCard.cloneNode(true);
   item.classList.add('med-card--spotlight', 'med-card--related');
-  item.querySelector('.med-add')?.remove();
+  item.classList.remove('is-search-hidden');
+  item.hidden = false;
+  item.removeAttribute('hidden');
+  item.style.removeProperty('display');
   applySpotlightBadge(item);
 
   const open = () => openProductPreview(sourceCard);
@@ -2479,6 +3017,10 @@ function initPharmacyMarquee(){
   const track = document.getElementById('pharmacy-logo-track');
   const sets = track ? track.querySelectorAll('.home-pharmacy-mall-set') : [];
   if(!track || !sets.length) return;
+  if(window.matchMedia('(max-width: 760px)').matches){
+    track.style.setProperty('--marquee-duration', '0s');
+    return;
+  }
   const first = sets[0];
   const pixelsPerSecond = 42;
   const duration = Math.max(18, Math.round((first.scrollWidth || 480) / pixelsPerSecond));
@@ -2596,6 +3138,7 @@ function go(pageId, options = {}){
 
   document.querySelector('.content').scrollTop = 0;
   window.scrollTo({top:0, behavior:'smooth'});
+  updateMedicineSearchPlaceholder();
 
   if(pageId === 'locator'){
     setTimeout(initLocatorMap, 120);
@@ -2603,6 +3146,9 @@ function go(pageId, options = {}){
 
   if(pageId === 'dashboard'){
     updateStoreBrowseView();
+    if(!options.keepProductPreview){
+      filterMedicines(document.getElementById('medicine-search')?.value || '', true);
+    }
   }
 
   if(pageId === 'cart'){
@@ -2631,6 +3177,7 @@ function go(pageId, options = {}){
 }
 
 function goHome(){
+  catalogCollection = '';
   activeShopCategory = '';
   activeShopSub = '';
   activePharmacyFilter = '';
@@ -2752,8 +3299,9 @@ function presentResidenceOrder(order, options = {}){
     down_payment: roundMoney(Number(order.down_payment) > 0 ? order.down_payment : Number(order.total_amount ?? order.total ?? 0) * CHECKOUT_DOWN_RATE),
     payment_method: order.payment_method || 'gcash',
     created_at: order.created_at || '',
-    date_label: order.date_label || (Number.isNaN(created.getTime()) ? '' : created.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' })),
-    time_label: order.time_label || (Number.isNaN(created.getTime()) ? '' : created.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' })),
+    date_label: order.date_label || (Number.isNaN(created.getTime()) ? '' : created.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric', timeZone:'Asia/Manila' })),
+    time_label: order.time_label || (Number.isNaN(created.getTime()) ? '' : created.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit', timeZone:'Asia/Manila' })),
+    progress_stamps: Array.isArray(order.progress_stamps) ? order.progress_stamps : [],
     item_count: items.length || Number(order.item_count) || 0,
     items,
     prescription_path: String(order.prescription_path || ''),
@@ -2868,9 +3416,32 @@ function orderMatchesSearch(order, query){
     || (order.stores || []).some(store => String(store.order_number || '').toLowerCase().includes(raw) || String(store.pharmacy_name || '').toLowerCase().includes(raw));
 }
 
-function renderResidenceOrders(){
+const ORDERS_PAGE_SIZE = 10;
+let ordersPage = 1;
+
+function renderOrdersPagination(total){
+  const pager = document.getElementById('orders-pagination');
+  if(!pager) return;
+  if(total < 1){
+    pager.hidden = true;
+    pager.innerHTML = '';
+    return;
+  }
+  const pages = Math.max(1, Math.ceil(total / ORDERS_PAGE_SIZE));
+  ordersPage = Math.min(Math.max(1, ordersPage), pages);
+  const from = (ordersPage - 1) * ORDERS_PAGE_SIZE + 1;
+  const to = Math.min(ordersPage * ORDERS_PAGE_SIZE, total);
+  pager.hidden = false;
+  pager.innerHTML = (total > ORDERS_PAGE_SIZE
+    ? `<div class="page-btns pager-pill">${residencePagerControls(ordersPage, pages, 'orders-page')}</div>`
+    : '')
+    + `<span class="catalog-page-meta">${from}–${to} of ${total}</span>`;
+}
+
+function renderResidenceOrders(keepPage = true){
   const root = document.getElementById('orders-reference-list');
   if(!root) return;
+  if(!keepPage) ordersPage = 1;
   updateOrdersTabCounts();
   const query = document.getElementById('orders-search')?.value || '';
   const hasQuery = normalizeOrderSearch(query) !== '';
@@ -2886,10 +3457,15 @@ function renderResidenceOrders(){
       : (tab === 'cancelled'
         ? '<p class="orders-empty">No cancelled orders.</p>'
         : '<p class="orders-empty">No orders yet. Medicines you check out will appear here and at the pharmacy.</p>');
+    renderOrdersPagination(0);
     return;
   }
+  const pages = Math.max(1, Math.ceil(orders.length / ORDERS_PAGE_SIZE));
+  ordersPage = Math.min(Math.max(1, ordersPage), pages);
+  const start = (ordersPage - 1) * ORDERS_PAGE_SIZE;
+  const pageOrders = orders.slice(start, start + ORDERS_PAGE_SIZE);
   root.classList.remove('is-empty');
-  root.innerHTML = orders.map(order => {
+  root.innerHTML = pageOrders.map(order => {
     const thumbs = (order.items || []).slice(0, 3).map(item => {
       const src = escapeHtml(item.image || item.image_url || '');
       const alt = escapeHtml(item.name || 'Medicine');
@@ -2936,6 +3512,7 @@ function renderResidenceOrders(){
         </div>
       </article>`;
   }).join('');
+  renderOrdersPagination(orders.length);
 }
 
 function bindResidenceOrdersTools(){
@@ -2946,13 +3523,13 @@ function bindResidenceOrdersTools(){
       const button = event.target.closest('button[data-order-tab]');
       if(!button) return;
       tabs.querySelectorAll('button').forEach(tab => tab.classList.toggle('is-active', tab === button));
-      renderResidenceOrders();
+      renderResidenceOrders(false);
     });
   }
   const search = document.getElementById('orders-search');
   if(search && search.dataset.bound !== '1'){
     search.dataset.bound = '1';
-    const runSearch = () => renderResidenceOrders();
+    const runSearch = () => renderResidenceOrders(false);
     search.addEventListener('input', runSearch);
     search.addEventListener('search', runSearch);
     search.addEventListener('keyup', runSearch);
@@ -2961,16 +3538,45 @@ function bindResidenceOrdersTools(){
       if(event.key === 'Enter') event.preventDefault();
     });
   }
+  const pager = document.getElementById('orders-pagination');
+  if(pager && pager.dataset.bound !== '1'){
+    pager.dataset.bound = '1';
+    pager.addEventListener('click', (event) => {
+      const button = event.target.closest('[data-orders-page]');
+      if(!button || button.disabled) return;
+      const raw = button.getAttribute('data-orders-page');
+      if(raw === 'prev') ordersPage -= 1;
+      else if(raw === 'next') ordersPage += 1;
+      else ordersPage = parseInt(raw, 10) || 1;
+      renderResidenceOrders(true);
+      document.getElementById('orders-list-view')?.scrollIntoView({ behavior:'smooth', block:'start' });
+    });
+  }
   const list = document.getElementById('orders-reference-list');
   if(list && list.dataset.bound !== '1'){
     list.dataset.bound = '1';
     list.addEventListener('click', (event) => {
       const button = event.target.closest('[data-view-order]');
-      if(!button) return;
+      if(button){
+        event.preventDefault();
+        viewOrder(button.getAttribute('data-view-order'));
+        return;
+      }
+      const card = event.target.closest('.order-reference-card[data-order-number]');
+      if(!card) return;
       event.preventDefault();
-      viewOrder(button.getAttribute('data-view-order'));
+      viewOrder(card.getAttribute('data-order-number'));
     });
   }
+  ['orders-detail-backdrop', 'orders-detail-edge'].forEach(function(id){
+    const el = document.getElementById(id);
+    if(!el || el.dataset.bound === '1') return;
+    el.dataset.bound = '1';
+    el.addEventListener('click', function(event){
+      event.preventDefault();
+      closeOrderDetail();
+    });
+  });
 }
 
 function bindResidenceRxCropZoom(root){
@@ -3011,9 +3617,10 @@ function openOrderDocumentPreview(url, title){
     if(frame) frame.hidden = true;
     if(missing){
       missing.hidden = false;
-      missing.textContent = heading.toLowerCase().indexOf('pickup') !== -1
+      const headingLower = heading.toLowerCase();
+      missing.textContent = headingLower.indexOf('pickup') !== -1
         ? 'No pickup proof file is available.'
-        : 'No prescription file is available.';
+        : (headingLower.indexOf('proof') !== -1 ? 'No proof file is available.' : 'No prescription file is available.');
     }
     resetResidenceRxCropZoom(modal, { empty:true });
     modal.hidden = false;
@@ -3064,16 +3671,27 @@ window.openOrderPrescription = openOrderPrescription;
 window.openOrderDocumentPreview = openOrderDocumentPreview;
 window.closeOrderPrescription = closeOrderPrescription;
 
-function viewOrder(id){
-  const list = document.getElementById('orders-list-view');
+function syncResidenceOrderDrawer(open){
   const detail = document.getElementById('orders-detail-view');
-  if(list) list.style.display = 'none';
-  if(detail) detail.style.display = 'block';
-  document.querySelector('[data-page="orders"]')?.classList.add('is-order-detail');
+  const backdrop = document.getElementById('orders-detail-backdrop');
+  const page = document.querySelector('[data-page="orders"]');
+  if(detail) detail.hidden = !open;
+  if(backdrop) backdrop.hidden = !open;
+  page?.classList.toggle('is-order-detail', !!open);
+  document.body.classList.toggle('res-order-drawer-open', !!open);
+}
+
+function markActiveResidenceOrder(id){
+  const needle = String(id || '');
+  document.querySelectorAll('#orders-reference-list .order-reference-card').forEach(card => {
+    card.classList.toggle('is-active', needle !== '' && card.getAttribute('data-order-number') === needle);
+  });
+}
+
+function viewOrder(id){
+  syncResidenceOrderDrawer(true);
   renderOrderDetail(id);
-  const content = document.querySelector('.content');
-  if(content) content.scrollTop = 0;
-  window.scrollTo({top:0, behavior:'smooth'});
+  markActiveResidenceOrder(id);
 }
 
 let residenceOrdersRefreshTimer = null;
@@ -3091,8 +3709,11 @@ async function refreshResidenceOrders(){
     cfg.orders = data.orders;
     renderResidenceOrders();
     const detail = document.getElementById('orders-detail-view');
-    const current = detail?.dataset?.orderId;
-    if(current) renderOrderDetail(current);
+    const current = detail?.hidden === false ? (detail.dataset?.orderId || '') : '';
+    if(current){
+      renderOrderDetail(current);
+      markActiveResidenceOrder(current);
+    }
   }catch(e){}
 }
 function startResidenceOrdersRefresh(){
@@ -3136,6 +3757,8 @@ startResidenceOrdersRefresh();
 window.renderResidenceOrders = renderResidenceOrders;
 window.refreshResidenceOrders = refreshResidenceOrders;
 window.renderOrderDetail = renderOrderDetail;
+window.viewOrder = viewOrder;
+window.closeOrderDetail = closeOrderDetail;
 
 function odIcon(name){
   const icons = {
@@ -3179,8 +3802,10 @@ function orderProgressIndex(status){
   return 1;
 }
 
-function orderTimelineHtml(status, stamp){
+function orderTimelineHtml(status, stamp, stamps, options){
   const current = orderProgressIndex(status);
+  const times = Array.isArray(stamps) ? stamps : [];
+  const proofUrl = String(options?.pickupProofUrl || '').trim();
   const steps = [
     {name:'Order placed', icon:'check'},
     {name:'Processing', icon:'clock'},
@@ -3193,13 +3818,17 @@ function orderTimelineHtml(status, stamp){
       ? 'is-muted'
       : (index < current ? 'is-done' : index === current ? 'is-current' : 'is-muted');
     const icon = (state === 'is-done' || (state === 'is-current' && index === 5)) ? 'check' : step.icon;
-    return { ...step, state, icon, time: state !== 'is-muted' ? stamp : '' };
+    const time = state !== 'is-muted' ? String(times[index] || (index === 0 ? stamp : '') || '') : '';
+    return { ...step, state, icon, time };
   });
   return steps.map((step, index) => {
     const rail = index < steps.length - 1
       ? `<span class="od-rail${index < current ? ' is-done' : ''}"></span>`
       : '';
-    return `<div class="od-step ${step.state}${step.time ? ' is-dated' : ''}"><span class="od-node">${odIcon(step.icon)}</span><strong>${step.name}</strong><small>${step.time ? escapeHtml(step.time) : '&nbsp;'}</small></div>${rail}`;
+    const proofBtn = (index === 5 && step.state !== 'is-muted' && proofUrl)
+      ? `<button type="button" class="od-view-proof-btn" data-preview-url="${escHtml(proofUrl)}" data-preview-title="Proof of pickup">View pickup proof</button>`
+      : '';
+    return `<div class="od-step ${step.state}${step.time ? ' is-dated' : ''}${proofBtn ? ' has-proof-action' : ''}"><span class="od-node">${odIcon(step.icon)}</span><strong>${step.name}</strong><small>${step.time ? escapeHtml(step.time) : '&nbsp;'}</small>${proofBtn}</div>${rail}`;
   }).join('');
 }
 
@@ -3214,14 +3843,23 @@ function bindGroupedOrderDetail(root){
   });
 }
 
+function setResidenceOrderHeadActions(html){
+  const headActions = document.getElementById('orders-detail-head-actions');
+  if(headActions) headActions.innerHTML = html || '';
+}
+
 function renderOrderDetail(id){
-  const root = document.getElementById('orders-detail-view');
+  const drawer = document.getElementById('orders-detail-view');
+  const root = document.getElementById('orders-detail-body') || drawer;
+  const title = document.getElementById('orders-detail-title');
   if(!root) return;
-  root.dataset.orderId = String(id);
+  if(drawer) drawer.dataset.orderId = String(id);
 
   const order = findResidenceOrder(id);
   if(!order){
-    root.innerHTML = `<button type="button" class="od-back" onclick="closeOrderDetail()">${odIcon('back')} Back to Orders</button><p class="orders-empty">This order was not found.</p>`;
+    if(title) title.textContent = 'Order details';
+    setResidenceOrderHeadActions('');
+    root.innerHTML = `<p class="orders-empty">This order was not found.</p>`;
     return;
   }
 
@@ -3231,7 +3869,6 @@ function renderOrderDetail(id){
   const fullyPaid = data.balance_paid || ['picked_up','pickedup','delivered','completed'].includes(String(data.status).toLowerCase());
   const peso = (n) => formatMoney(n);
   const stamp = `${data.date_label} • ${data.time_label}`;
-  const timelineHtml = orderTimelineHtml(data.status, stamp);
   const fallbackImage = cartMedicineFallbackImage();
   const stores = Array.isArray(data.stores) && data.stores.length ? data.stores : [data];
   const storeCount = stores.length;
@@ -3245,17 +3882,19 @@ function renderOrderDetail(id){
     const thumb = looksPdf
       ? `<span class="od-pickup-proof-thumb is-pdf" aria-hidden="true">PDF</span>`
       : `<span class="od-pickup-proof-thumb"><img src="${escHtml(src)}" alt="Pickup proof"></span>`;
-    return `<button type="button" class="od-pickup-proof" data-preview-url="${escHtml(src)}" data-preview-title="Proof of pickup">${thumb}<span><strong>Pickup completed</strong><small>${escapeHtml(label)}</small></span>${odIcon('chevron')}</button>`;
+    return `<button type="button" class="od-pickup-proof od-pickup-proof--head" data-preview-url="${escHtml(src)}" data-preview-title="Proof of pickup">${thumb}<span><strong>Pickup completed</strong><small>${escapeHtml(label)}</small></span>${odIcon('chevron')}</button>`;
   };
   const pickupProofEntries = [];
   stores.forEach(store => {
     if(store.pickup_proof_url) pickupProofEntries.push({ url: store.pickup_proof_url, kind: store.pickup_proof_kind });
   });
   if(data.pickup_proof_url) pickupProofEntries.unshift({ url: data.pickup_proof_url, kind: data.pickup_proof_kind });
-  const pickupProofHtml = Array.from(new Map(pickupProofEntries.filter(item => item.url).map(item => [item.url, item])).values())
-    .map(item => pickupProofButton(item.url, item.kind))
-    .join('');
-  const pickupProofUrls = pickupProofEntries.map(item => item.url).filter(Boolean);
+  const uniqueProofs = Array.from(new Map(pickupProofEntries.filter(item => item.url).map(item => [item.url, item])).values());
+  const pickupProofHtml = uniqueProofs.map(item => pickupProofButton(item.url, item.kind)).join('');
+  const pickupProofUrls = uniqueProofs.map(item => item.url);
+  const timelineHtml = orderTimelineHtml(data.status, stamp, data.progress_stamps, {
+    pickupProofUrl: pickupProofUrls[0] || ''
+  });
 
   const storeCards = stores.map(store => {
     const pharmacy = getMarketplacePharmacy(store.pharmacy_id) || {};
@@ -3288,7 +3927,7 @@ function renderOrderDetail(id){
     const vatPercent = Math.round(CHECKOUT_VAT_RATE * 100);
     const storeTrackHtml = storeCount > 1
       ? `<div class="mo-store-track">
-          <div class="od-timeline mo-store-timeline">${orderTimelineHtml(store.status, `${store.date_label || data.date_label} • ${store.time_label || data.time_label}`)}</div>
+          <div class="od-timeline mo-store-timeline">${orderTimelineHtml(store.status, `${store.date_label || data.date_label} • ${store.time_label || data.time_label}`, store.progress_stamps || data.progress_stamps)}</div>
         </div>
         <button type="button" class="mo-store-track-btn" data-mo-track>View tracking details</button>`
       : '';
@@ -3321,59 +3960,60 @@ function renderOrderDetail(id){
   const cancelReasonHtml = String(data.status || '').toLowerCase() === 'cancelled' && data.cancellation_reason
     ? `<p class="mo-cancel-reason"><strong>Cancellation reason</strong><span>${escHtml(data.cancellation_reason)}</span></p>`
     : '';
-  const receiptTitle = confirmed || fullyPaid ? 'Payment Successful' : 'Payment Pending';
   const receiptStatus = confirmed || fullyPaid ? 'Paid' : 'Pending';
-  const receiptAmount = fullyPaid ? data.total_amount : (confirmed ? data.down_payment : paidOnline);
+  const paidPercent = fullyPaid ? 100 : Math.round((paidOnline / Math.max(1, Number(data.total_amount) || 1)) * 100);
+  const duePercent = Math.max(0, 100 - paidPercent);
+  const collectAmount = fullyPaid ? 0 : remaining;
+  const paidNowAmount = fullyPaid ? data.total_amount : paidOnline;
+  const heroTitle = fullyPaid ? 'Fully paid' : (confirmed ? 'Down payment received' : 'Payment pending');
+  const orderPrices = residenceOrderVatBreakdown(data.items || [], data.total_amount, data.vat, data.subtotal);
+  const payNote = fullyPaid
+    ? 'All payments have been settled. Your order is fully paid.'
+    : `Order total includes ${peso(orderPrices.vat)} VAT. Pay the remaining balance when you pick up your medicine.`;
 
+  if(title) title.textContent = 'Order #' + String(data.order_number || '');
+  setResidenceOrderHeadActions(cancelHtml);
   root.innerHTML = `
-    <button type="button" class="od-back" onclick="closeOrderDetail()">${odIcon('back')} Back to Orders</button>
-    <div class="mo-parent-head">
-      <div>
-        <h2>Order #${escHtml(data.order_number)}</h2>
-        <p>${storeCount} store${storeCount === 1 ? '' : 's'} • ${data.item_count || (data.items || []).length} item${(data.item_count || 1) === 1 ? '' : 's'} • ${peso(data.total_amount)}</p>
-        <small>${odIcon('calendar')} ${escHtml(data.date_label)} • ${escHtml(data.time_label)}</small>
-      </div>
-      <div class="mo-parent-badge">
-        ${fulfillmentNote ? `<small>${escHtml(fulfillmentNote)}</small>` : ''}
-        ${cancelHtml}
-      </div>
-    </div>
-    ${cancelReasonHtml}
-    ${storeCount > 1 ? `<p class="mo-parent-note">You purchased items from multiple pharmacies in one checkout. Each store will process and deliver your items separately.</p>` : ''}
-    <div class="od-layout">
-      <main class="od-main">
+    <div class="res-order-layout">
+      <aside class="res-order-track">
         <section class="od-timeline">${timelineHtml}</section>
+      </aside>
+      <div class="res-order-facts">
+        ${cancelReasonHtml}
+        ${storeCount > 1 ? `<p class="mo-parent-note">${fulfillmentNote ? escHtml(fulfillmentNote) + '. ' : ''}You purchased items from multiple pharmacies in one checkout. Each store will process your items separately.</p>` : ''}
+        ${pickupProofHtml ? `<div class="mo-parent-proofs">${pickupProofHtml}</div>` : ''}
         <div class="mo-store-list">${storeCards}</div>
-      </main>
-      <aside class="od-aside">
-        <section class="od-receipt">
-          <header class="od-receipt-head">
-            <span class="od-receipt-mark" aria-hidden="true">
-              <svg viewBox="0 0 72 56" fill="none">
-                <path d="M28 8h26v36l-3.2-2.2-3.2 2.2-3.2-2.2-3.2 2.2-3.2-2.2-3.2 2.2-3.4-2.2-3.4 2.2V8Z" fill="#fff" stroke="#2563eb" stroke-width="2.2"/>
-                <path d="M18 14h26v36l-3.2-2.2-3.2 2.2-3.2-2.2-3.2 2.2-3.2-2.2-3.2 2.2-3.4-2.2-3.4 2.2V14Z" fill="#fff" stroke="#2563eb" stroke-width="2.2"/>
-                <circle cx="31" cy="32" r="9" fill="#22c55e"/>
-                <path d="m27.2 32.2 2.4 2.4 5.2-5.4" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </span>
-            <h3>${receiptTitle}</h3>
-          </header>
-          <div class="od-receipt-perforation" aria-hidden="true"></div>
-          <div class="od-receipt-body">
-            <h4>Payment Details</h4>
-            <div class="od-receipt-row"><span>Order Number</span><i>:</i><b>${escHtml(data.order_number)}</b></div>
-            <div class="od-receipt-row"><span>Order Time</span><i>:</i><b>${escHtml(data.time_label)}, ${escHtml(data.date_label)}</b></div>
-            <div class="od-receipt-row"><span>Payment Method</span><i>:</i><b>GCash<small>${confirmed ? 'Payment confirmed via PayMongo' : 'PayMongo GCash checkout'}</small></b></div>
-            <div class="od-receipt-row"><span>Payment Status</span><i>:</i><b><span class="od-receipt-pill${confirmed || fullyPaid ? '' : ' is-pending'}">${receiptStatus}</span></b></div>
-            <div class="od-receipt-row"><span>Amount</span><i>:</i><b>${peso(receiptAmount)}</b></div>
-            <div class="od-receipt-row od-receipt-total"><span>Total Amount</span><i>:</i><b>${peso(data.total_amount)}</b></div>
-            <div class="od-receipt-row"><span>${fullyPaid ? 'Paid (100%)' : 'Paid (60%)'}<small>60% · paid via GCash</small></span><i>:</i><b class="is-paid">${peso(fullyPaid ? data.total_amount : data.down_payment)}</b></div>
-            <div class="od-receipt-row"><span>Remaining Balance (40%)<small>${fullyPaid ? 'Paid in full' : 'Pay at pickup'}</small></span><i>:</i><b>${peso(fullyPaid ? 0 : remaining)}</b></div>
-            <p class="od-receipt-note">${odIcon(fullyPaid ? 'check' : 'shield')} <span>${fullyPaid ? 'All payments have been settled. Your order is fully paid.' : 'Your order is reserved. No further payment is needed online.'}</span></p>
+        <section class="od-receipt pay-card">
+          <div class="pay-card-hero">
+            <p class="pay-card-status${confirmed || fullyPaid ? '' : ' is-pending'}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8.5 12.2 2.4 2.4 4.6-5"/></svg>
+              ${heroTitle}
+            </p>
+            <p class="pay-card-kicker">${fullyPaid ? 'Remaining at pickup' : 'Pay at pickup'}</p>
+            <p class="pay-card-amount">${peso(collectAmount)}</p>
+            <p class="pay-card-hint">${fullyPaid ? 'This order is fully paid. No balance is due at pickup.' : 'You pay this when you collect the order.'}</p>
+            <div class="pay-card-bar" aria-hidden="true"><i style="width:${paidPercent}%"></i></div>
+            <div class="pay-card-legend">
+              <span><i class="is-paid"></i> Paid ${peso(paidNowAmount)} (${paidPercent}%)</span>
+              <span><i class="is-due"></i> At pickup ${peso(collectAmount)} (${duePercent}%)</span>
+            </div>
+          </div>
+          <div class="pay-card-body">
+            <h4>Payment details</h4>
+            <div class="pay-card-row"><span>Order number</span><b>${escHtml(data.order_number)}</b></div>
+            <div class="pay-card-row"><span>Order time</span><b>${escHtml(data.time_label)}, ${escHtml(data.date_label)}</b></div>
+            <div class="pay-card-row"><span>Payment method</span><b>GCash<small>${confirmed ? 'Confirmed through PayMongo' : 'PayMongo GCash checkout'}</small></b></div>
+            <div class="pay-card-row"><span>Payment status</span><b><span class="od-receipt-pill${confirmed || fullyPaid ? '' : ' is-pending'}">${receiptStatus}</span></b></div>
+            <div class="pay-card-row"><span>Order total</span><b>${peso(data.total_amount)}</b></div>
+            <div class="pay-card-row"><span>Paid now (${paidPercent}%)</span><b class="is-paid">${peso(paidNowAmount)}</b></div>
+            <div class="pay-card-row"><span>Balance (${duePercent}%)</span><b>${peso(collectAmount)}</b></div>
+            <p class="pay-card-note">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
+              <span>${payNote}</span>
+            </p>
           </div>
         </section>
-        ${pickupProofHtml}
-      </aside>
+      </div>
     </div>`;
   bindGroupedOrderDetail(root);
   if(typeof window.preloadRxPreviewList === 'function'){
@@ -3540,10 +4180,10 @@ function orderBranchDirectionsUrl(pharmacy){
 
 function closeOrderDetail(){
   const detail = document.getElementById('orders-detail-view');
-  const list = document.getElementById('orders-list-view');
-  if(detail) detail.style.display = 'none';
-  if(list) list.style.display = '';
-  document.querySelector('[data-page="orders"]')?.classList.remove('is-order-detail');
+  if(detail) delete detail.dataset.orderId;
+  setResidenceOrderHeadActions('');
+  syncResidenceOrderDrawer(false);
+  markActiveResidenceOrder('');
 }
 
 function profileTab(el, panelId){
@@ -3571,6 +4211,7 @@ let addressMapPick = null;
 let addressMapReverseId = 0;
 let addressMapSearchTimer = null;
 let addressMapReady = false;
+let addressMapRequired = false;
 
 function addressMapBounds(){
   const bounds = window.RESIDENCE_CONFIG?.bounds;
@@ -3816,6 +4457,7 @@ function renderSavedAddresses(addresses){
         <div class="addr-card-actions">
           ${current ? '' : `<button type="button" class="btn btn-ghost btn-sm" onclick="setCurrentSavedAddress(${id})">Use as current</button>`}
           <button type="button" class="btn btn-ghost btn-sm" onclick="openAddressMapPicker('edit', ${id})">Edit</button>
+          <button type="button" class="addr-card-remove" onclick="removeSavedAddress(${id})" aria-label="Remove address">×</button>
         </div>
       </div>
     `;
@@ -3839,7 +4481,8 @@ function applySavedAddressToUi(payload){
     lat,
     lng,
     address,
-    hasLocation: lat != null && lng != null,
+    hasLocation: !!(address && lat != null && lng != null),
+    needsLocation: !address,
   };
 
   if(window.RESIDENCE_CONFIG?.profile){
@@ -3863,8 +4506,12 @@ function applySavedAddressToUi(payload){
 }
 
 function closeAddressMapPicker(){
+  if(addressMapRequired) return;
   const modal = document.getElementById('address-map-modal');
-  if(modal) modal.hidden = true;
+  if(modal){
+    modal.hidden = true;
+    modal.classList.remove('is-required');
+  }
   hideAddressSearchResults();
   addressMapEditId = 0;
   document.body.style.overflow = '';
@@ -3884,12 +4531,19 @@ function openAddressMapPicker(mode, addressId){
   const editing = mode === 'edit' ? findSavedAddress(addressId) : null;
   addressMapEditId = editing ? Number(editing.id) : 0;
 
-  if(title) title.textContent = editing ? 'Edit Address' : 'Add New Address';
+  if(title) title.textContent = addressMapRequired ? 'Add your location' : (editing ? 'Edit Address' : 'Add New Address');
   if(searchInput) searchInput.value = '';
   hideAddressSearchResults();
   setAddressMapStatus('');
   modal.hidden = false;
+  modal.classList.toggle('is-required', addressMapRequired);
   document.body.style.overflow = 'hidden';
+  const lead = modal.querySelector('.address-map-dialog-head .muted');
+  if(lead){
+    lead.textContent = addressMapRequired
+      ? 'Pin a pickup point in Laoag City, San Nicolas, or Batac City to continue.'
+      : 'Search or pin a location on the map to add your delivery address.';
+  }
   if(!ensureAddressMap()) return;
 
   const location = window.USER_LOCATION || {};
@@ -4015,6 +4669,7 @@ function initAddressMapPicker(){
           return;
         }
         applySavedAddressToUi(data);
+        addressMapRequired = false;
         closeAddressMapPicker();
         toast(data.make_current ? 'Now using this as your current address' : 'Address added');
       })
@@ -4024,6 +4679,33 @@ function initAddressMapPicker(){
       });
   });
 }
+
+function removeSavedAddress(id){
+  const cfg = window.RESIDENCE_CONFIG || {};
+  if(!cfg.saveAddressUrl || !id) return;
+
+  const body = new URLSearchParams({
+    action: 'delete',
+    id: String(id),
+  });
+
+  fetch(cfg.saveAddressUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body,
+  })
+    .then(response => response.json())
+    .then(data => {
+      if(!data.ok){
+        toast(data.error || 'Could not remove that address.');
+        return;
+      }
+      applySavedAddressToUi(data);
+      toast('Address removed');
+    })
+    .catch(() => toast('Could not remove that address.'));
+}
+window.removeSavedAddress = removeSavedAddress;
 
 function setCurrentSavedAddress(id){
   const cfg = window.RESIDENCE_CONFIG || {};
@@ -4130,14 +4812,13 @@ function focusBrowseSearch(){
 }
 
 function getMedicineSearchText(card){
+  const sub = String(card.dataset.shopSub || '').trim();
   const parts = [
     medicineCardName(card),
-    medicineCardGeneric(card),
-    card.querySelector('.med-card-meta')?.textContent,
-    card.dataset.desc,
-    card.dataset.pharmacy,
+    catalogCategoryLabel(card),
+    sub.replace(/-/g, ' '),
+    shopCategoryLabels[sub] || '',
   ];
-  card.querySelectorAll('.med-meta-line').forEach(line => parts.push(line.textContent));
   return parts.filter(Boolean).join(' ').toLowerCase();
 }
 
@@ -4177,8 +4858,9 @@ function medicineMatchesQuery(searchText, query){
 }
 
 let medicineIndex = [];
-let suggestionMatches = [];
-let suggestionActive = -1;
+let catalogPage = 1;
+const CATALOG_PAGE_SIZE = 20;
+let catalogCollection = '';
 let activeShopCategory = '';
 let activeShopSub = '';
 let activePharmacyFilter = '';
@@ -4206,6 +4888,7 @@ const shopCategoryLabels = {
   digestive:'Digestive',
   allergy:'Allergy',
   vitamins:'Vitamins',
+  'vitamins-supplements':'Vitamins & Supplements',
   wellness:'Wellness',
   skincare:'Skincare',
   'oral-care':'Oral Care',
@@ -4235,10 +4918,54 @@ function medicineMatchesPharmacyFilter(card){
   return normalizePharmacyLabel(card.dataset.pharmacy || '') === normalizePharmacyLabel(activePharmacyFilter);
 }
 
+function medicineMatchesCollection(card){
+  if(catalogCollection === 'new') return card.dataset.isNew === '1';
+  if(catalogCollection === 'top') return Number(card.dataset.unitsSold || 0) > 0;
+  if(catalogCollection === 'featured') return card.dataset.featured === '1';
+  return true;
+}
+
+function catalogPageSize(){
+  if(catalogCollection || activePharmacyAccountId || activePharmacyFilter) return 12;
+  return CATALOG_PAGE_SIZE;
+}
+
 function hasCatalogFilters(){
   const input = document.getElementById('medicine-search');
   const q = input?.value.trim() || '';
-  return Boolean(q || activeShopCategory || activePharmacyFilter);
+  return Boolean(q || activeShopCategory || activePharmacyFilter || catalogCollection);
+}
+
+function catalogCardMatches(card, query){
+  const q = String(query || '').trim();
+  return (!q || medicineMatchesQuery(getMedicineSearchText(card), q))
+    && medicineMatchesCategory(card)
+    && medicineMatchesPharmacyFilter(card)
+    && medicineMatchesCollection(card);
+}
+
+function spreadCatalogCardsByPharmacy(cards){
+  const newestFirst = [...cards].sort((a, b) => String(b.dataset.createdAt || '').localeCompare(String(a.dataset.createdAt || '')));
+  const queues = new Map();
+  newestFirst.forEach(card => {
+    const pharmacyId = card.dataset.pharmacyId || '_none';
+    const queue = queues.get(pharmacyId) || [];
+    queue.push(card);
+    queues.set(pharmacyId, queue);
+  });
+  const spread = [];
+  while(queues.size){
+    for(const pharmacyId of [...queues.keys()]){
+      const queue = queues.get(pharmacyId);
+      if(!queue?.length){
+        queues.delete(pharmacyId);
+        continue;
+      }
+      spread.push(queue.shift());
+      if(!queue.length) queues.delete(pharmacyId);
+    }
+  }
+  return spread;
 }
 
 function getPharmacyById(pharmacyId){
@@ -4342,16 +5069,25 @@ function updateStoreBrowseView(){
   const partnerHero = document.getElementById('home-partner-hero');
   const storeHero = document.getElementById('home-store-hero');
   const homeMain = document.querySelector('.home-main');
+  const categoryBar = document.getElementById('home-category-bar');
+  const categoryHost = document.getElementById('home-category-host');
+  const storeMode = Boolean(activePharmacyFilter || activePharmacyAccountId);
 
-  if(activePharmacyFilter || activePharmacyAccountId){
+  if(storeMode){
     populateStoreHero(getPharmacyById(activePharmacyAccountId) || getPharmacyByLabel(activePharmacyFilter));
     if(partnerHero) partnerHero.hidden = true;
     if(storeHero) storeHero.hidden = false;
     if(homeMain) homeMain.classList.add('is-store-browse');
+    document.body.classList.add('is-store-browse');
   }else{
     if(partnerHero) partnerHero.hidden = false;
     if(storeHero) storeHero.hidden = true;
     if(homeMain) homeMain.classList.remove('is-store-browse');
+    document.body.classList.remove('is-store-browse');
+  }
+
+  if(categoryBar && categoryHost && categoryBar.parentElement !== categoryHost){
+    categoryHost.appendChild(categoryBar);
   }
 }
 
@@ -4365,6 +5101,7 @@ function clearPharmacyFilter(){
 }
 
 function browsePharmacyMedicines(pharmacyLabel, displayName, pharmacyAccountId){
+  catalogCollection = '';
   activePharmacyFilter = pharmacyLabel || '';
   activePharmacyName = displayName || pharmacyLabel || '';
   activePharmacyAccountId = pharmacyAccountId || '';
@@ -4385,8 +5122,116 @@ function browsePharmacyMedicines(pharmacyLabel, displayName, pharmacyAccountId){
   }, 80);
 }
 
+function catalogCategoryLabel(card){
+  const labeled = (card?.dataset?.categoryLabel || '').trim();
+  if(labeled) return labeled;
+  const fromMeta = (card?.querySelector('.med-cat')?.textContent || '').replace(/^[·•]\s*/, '').trim();
+  if(fromMeta) return fromMeta;
+  const sub = card?.dataset?.shopSub || '';
+  if(sub && shopCategoryLabels[sub]) return shopCategoryLabels[sub];
+  return 'Other';
+}
+
+function catalogCategoryKey(card){
+  return (card?.dataset?.shopCategory || '') + ':' + (card?.dataset?.shopSub || '');
+}
+
+function refreshCatalogCategoryOptions(){
+  const select = document.getElementById('catalog-category-sort');
+  if(!select) return;
+  const cards = document.querySelectorAll('.med-catalog .med-grid .med-card');
+  const seen = new Map();
+  cards.forEach(card => {
+    if(!medicineMatchesPharmacyFilter(card)) return;
+    const label = catalogCategoryLabel(card);
+    if(label === '') return;
+    const key = catalogCategoryKey(card);
+    if(!seen.has(key)) seen.set(key, { key, label, category: card.dataset.shopCategory || '', sub: card.dataset.shopSub || '' });
+  });
+  const options = Array.from(seen.values()).sort((a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: 'base' }));
+  const current = (activeShopCategory || activeShopSub)
+    ? (activeShopCategory + ':' + activeShopSub)
+    : '';
+  select.innerHTML = '<option value="">All categories</option>' + options.map(item =>
+    `<option value="${escapeHtml(item.key)}">${escapeHtml(item.label)}</option>`
+  ).join('');
+  if(current && Array.from(select.options).some(option => option.value === current)){
+    select.value = current;
+  }else{
+    select.value = '';
+  }
+}
+
+function syncCatalogCategorySelect(){
+  const select = document.getElementById('catalog-category-sort');
+  if(!select) return;
+  const current = (activeShopCategory || activeShopSub) ? (activeShopCategory + ':' + activeShopSub) : '';
+  if(Array.from(select.options).some(option => option.value === current)){
+    select.value = current;
+  }else{
+    select.value = '';
+  }
+}
+
 function applyMedicineSort(){
-  // Sorting controls removed: preserve current card order.
+  const grid = getMedicineGrid();
+  if(!grid) return;
+  const cards = Array.from(grid.querySelectorAll('.med-card'));
+  let ordered;
+  if(catalogCollection === 'new'){
+    ordered = [...cards].sort((a, b) => {
+      const byDate = String(b.dataset.createdAt || '').localeCompare(String(a.dataset.createdAt || ''));
+      if(byDate !== 0) return byDate;
+      return medicineCardName(a).localeCompare(medicineCardName(b), undefined, { sensitivity: 'base' });
+    });
+  }else if(catalogCollection === 'top'){
+    ordered = [...cards].sort((a, b) => {
+      const bySold = Number(b.dataset.unitsSold || 0) - Number(a.dataset.unitsSold || 0);
+      if(bySold !== 0) return bySold;
+      return medicineCardName(a).localeCompare(medicineCardName(b), undefined, { sensitivity: 'base' });
+    });
+  }else{
+    ordered = spreadCatalogCardsByPharmacy(cards);
+  }
+  ordered.forEach(card => grid.appendChild(card));
+}
+
+function syncCatalogCollectionHeading(){
+  const title = document.querySelector('#home-all-products-head .home-spotlight-title');
+  if(title){
+    title.textContent = catalogCollection === 'new'
+      ? 'New Products'
+      : catalogCollection === 'top'
+        ? 'Current Top Sellers'
+        : catalogCollection === 'featured'
+          ? 'Featured Products'
+          : 'All Products';
+  }
+  document.querySelector('.home-main')?.classList.toggle('is-catalog-collection', Boolean(catalogCollection));
+}
+
+function initCatalogCategorySort(){
+  const select = document.getElementById('catalog-category-sort');
+  if(!select || select._categorySortReady) return;
+  select._categorySortReady = true;
+  refreshCatalogCategoryOptions();
+  select.addEventListener('change', () => {
+    const value = select.value || '';
+    const split = value.indexOf(':');
+    if(value === ''){
+      activeShopCategory = '';
+      activeShopSub = '';
+    }else if(split === -1){
+      activeShopCategory = value;
+      activeShopSub = '';
+    }else{
+      activeShopCategory = value.slice(0, split);
+      activeShopSub = value.slice(split + 1);
+    }
+    updateCategoryNavState();
+    closeCategoryMenus();
+    filterMedicines(document.getElementById('medicine-search')?.value || '');
+  });
 }
 
 function buildMedicineIndex(){
@@ -4403,100 +5248,29 @@ function buildMedicineIndex(){
   }));
 }
 
-function highlightMatch(text, query){
-  const terms = getSearchTerms(query);
-  if(!terms.length) return text;
-
-  let html = text;
-  terms.forEach(term => {
-    if(!term) return;
-    const re = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'ig');
-    html = html.replace(re, '<mark>$1</mark>');
-  });
-  return html;
-}
-
 function closeSearchSuggestions(){
-  const list = document.getElementById('medicine-search-suggestions');
-  const field = document.getElementById('home-search-field');
-  const input = document.getElementById('medicine-search');
-
-  suggestionActive = -1;
-  suggestionMatches = [];
-
-  if(list){
-    list.hidden = true;
-    list.innerHTML = '';
-  }
-  if(field) field.classList.remove('is-open');
-  if(input) input.setAttribute('aria-expanded', 'false');
-}
-
-function renderSearchSuggestions(query){
-  const list = document.getElementById('medicine-search-suggestions');
-  const field = document.getElementById('home-search-field');
-  const input = document.getElementById('medicine-search');
-  if(!list || !field || !input) return;
-
-  const q = query.trim();
-  if(!q){
-    closeSearchSuggestions();
-    return;
-  }
-
-  suggestionMatches = medicineIndex.filter(item => medicineMatchesQuery(item.searchText, q));
-
-  if(!suggestionMatches.length){
-    list.innerHTML = '<li class="med-search-suggestions-empty">No matching medicines</li>';
-    list.hidden = false;
-    field.classList.add('is-open');
-    input.setAttribute('aria-expanded', 'true');
-    return;
-  }
-
-  list.innerHTML = suggestionMatches.slice(0, 6).map((item, index) => `
-    <li
-      class="med-search-suggestion${index === suggestionActive ? ' active' : ''}"
-      role="option"
-      aria-selected="${index === suggestionActive ? 'true' : 'false'}"
-      data-index="${index}"
-    >
-      <img src="${item.img}" alt="">
-      <span class="med-search-suggestion-text">
-        <strong>${highlightMatch(item.name, q)}</strong>
-        <small>${highlightMatch(item.generic, q)}</small>
-      </span>
-    </li>
-  `).join('');
-
-  list.hidden = false;
-  field.classList.add('is-open');
-  input.setAttribute('aria-expanded', 'true');
-}
-
-function selectSearchSuggestion(index){
-  const item = suggestionMatches[index];
-  const input = document.getElementById('medicine-search');
-  if(!item || !input) return;
-
-  input.value = item.name;
-  closeSearchSuggestions();
-  filterMedicines(item.name);
-  document.getElementById('home-browse')?.scrollIntoView({ behavior:'smooth', block:'start' });
+  document.getElementById('home-search-field')?.classList.remove('is-open');
 }
 
 function medicineMatchesCategory(card){
-  if(!activeShopCategory) return true;
+  if(!activeShopCategory && !activeShopSub) return true;
 
   const category = card.dataset.shopCategory || '';
   const sub = card.dataset.shopSub || '';
-
-  if(activeShopSub) return category === activeShopCategory && sub === activeShopSub;
-  return category === activeShopCategory;
+  if(activeShopSub){
+    return sub === activeShopSub;
+  }
+  return Boolean(activeShopCategory && category === activeShopCategory);
 }
 
 function getActiveCategoryLabel(){
   if(!activeShopCategory) return '';
+
+  const select = document.getElementById('catalog-category-sort');
+  if(select?.selectedOptions?.[0]?.value){
+    const selectedLabel = select.selectedOptions[0].textContent.trim();
+    if(selectedLabel) return selectedLabel;
+  }
 
   const activeLink = document.querySelector('.home-category-link.is-active span');
   if(activeLink?.textContent.trim()) return activeLink.textContent.trim();
@@ -4529,6 +5303,7 @@ function updateCategoryNavState(){
     );
     trigger?.classList.toggle('is-active', isActive);
   });
+  syncCatalogCategorySelect();
 }
 
 function closeCategoryMenus(exceptGroup){
@@ -4615,31 +5390,95 @@ function initCategoryNav(){
   });
 }
 
-function filterMedicines(query){
+function catalogPagerHtml(page, pages){
+  if(pages <= 1) return '';
+  return `<div class="page-btns pager-pill">${residencePagerControls(page, pages, 'catalog-page')}</div>`;
+}
+
+function applyCatalogPage(matches){
+  const pager = document.getElementById('catalog-pagination');
+  const pageSize = catalogPageSize();
+  const total = matches.length;
+  const pages = Math.max(1, Math.ceil(total / pageSize));
+  catalogPage = Math.min(Math.max(1, catalogPage), pages);
+  const start = (catalogPage - 1) * pageSize;
+  const end = start + pageSize;
+
+  matches.forEach((card, index) => {
+    const onPage = index >= start && index < end;
+    card.hidden = !onPage;
+    card.classList.toggle('is-search-hidden', !onPage);
+    if(onPage){
+      card.style.removeProperty('display');
+    }else{
+      card.style.display = 'none';
+    }
+  });
+
+  if(!pager) return;
+  const from = start + 1;
+  const to = Math.min(end, total);
+  if(total < 1){
+    pager.hidden = true;
+    pager.innerHTML = '';
+    return;
+  }
+  pager.hidden = false;
+  pager.innerHTML = (total > pageSize ? catalogPagerHtml(catalogPage, pages) : '')
+    + '<span class="catalog-page-meta">' + from + '–' + to + ' of ' + total + '</span>';
+}
+
+function initCatalogPagination(){
+  const pager = document.getElementById('catalog-pagination');
+  if(!pager || pager._catalogPagerReady) return;
+  pager._catalogPagerReady = true;
+  pager.addEventListener('click', event => {
+    const button = event.target.closest('[data-catalog-page]');
+    if(!button || button.disabled) return;
+    const raw = button.getAttribute('data-catalog-page');
+    const pages = Math.max(1, Math.ceil(
+      Array.from(document.querySelectorAll('.med-catalog .med-grid .med-card')).filter(card => {
+        const q = document.getElementById('medicine-search')?.value.trim() || '';
+        return catalogCardMatches(card, q);
+      }).length / catalogPageSize()
+    ));
+    if(raw === 'prev') catalogPage -= 1;
+    else if(raw === 'next') catalogPage += 1;
+    else catalogPage = parseInt(raw, 10) || 1;
+    catalogPage = Math.min(Math.max(1, catalogPage), pages);
+    filterMedicines(document.getElementById('medicine-search')?.value || '', true);
+    document.getElementById('home-browse')?.scrollIntoView({ behavior:'smooth', block:'start' });
+  });
+}
+
+function filterMedicines(query, keepPage = false){
   const browse = document.getElementById('home-browse');
   if(!browse) return;
+  if(!keepPage) catalogPage = 1;
+  refreshCatalogCategoryOptions();
 
   const q = query.trim();
   const cards = browse.querySelectorAll('.med-catalog .med-grid .med-card');
   const emptyEl = browse.querySelector('.med-search-empty');
   const statusEl = browse.querySelector('.med-search-status');
   const grid = browse.querySelector('.med-catalog .med-grid');
-  let visible = 0;
+  const matches = [];
 
   cards.forEach(card => {
-    const matchSearch = !q || medicineMatchesQuery(getMedicineSearchText(card), q);
-    const matchCategory = medicineMatchesCategory(card);
-    const matchPharmacy = medicineMatchesPharmacyFilter(card);
-    const match = matchSearch && matchCategory && matchPharmacy;
-    card.hidden = !match;
-    card.classList.toggle('is-search-hidden', !match);
+    const match = catalogCardMatches(card, q);
     if(match){
-      card.style.removeProperty('display');
-      visible += 1;
+      matches.push(card);
     }else{
+      card.hidden = true;
+      card.classList.add('is-search-hidden');
       card.style.display = 'none';
     }
   });
+
+  const visible = matches.length;
+  applyMedicineSort();
+  const orderedMatches = Array.from(browse.querySelectorAll('.med-catalog .med-grid .med-card')).filter(card => matches.includes(card));
+  applyCatalogPage(orderedMatches);
 
   if(grid) grid.classList.toggle('is-filtering', hasCatalogFilters());
 
@@ -4649,6 +5488,7 @@ function filterMedicines(query){
     homeMain.classList.toggle('is-catalog-filtered', catalogFiltered);
     homeMain.classList.toggle('is-catalog-empty', catalogFiltered && visible === 0);
   }
+  syncCatalogCollectionHeading();
 
   if(emptyEl){
     emptyEl.hidden = visible > 0 || !hasCatalogFilters();
@@ -4660,6 +5500,24 @@ function filterMedicines(query){
       statusEl.textContent = visible === 1
         ? `1 result for “${q}”${categoryLabel ? ` in ${categoryLabel}` : ''}`
         : `${visible} results for “${q}”${categoryLabel ? ` in ${categoryLabel}` : ''}`;
+      statusEl.hidden = false;
+    }else if(!q && catalogCollection === 'featured' && visible > 0){
+      statusEl.textContent = visible === 1 ? '1 featured product from partner pharmacies' : `${visible} featured products from partner pharmacies`;
+      statusEl.hidden = false;
+    }else if(!q && catalogCollection === 'featured' && visible === 0){
+      statusEl.textContent = 'No featured products yet';
+      statusEl.hidden = false;
+    }else if(!q && catalogCollection === 'new' && visible > 0){
+      statusEl.textContent = visible === 1 ? '1 new product' : `${visible} new products`;
+      statusEl.hidden = false;
+    }else if(!q && catalogCollection === 'new' && visible === 0){
+      statusEl.textContent = 'No new products yet';
+      statusEl.hidden = false;
+    }else if(!q && catalogCollection === 'top' && visible > 0){
+      statusEl.textContent = visible === 1 ? '1 top seller' : `${visible} top sellers`;
+      statusEl.hidden = false;
+    }else if(!q && catalogCollection === 'top' && visible === 0){
+      statusEl.textContent = 'No top sellers yet';
       statusEl.hidden = false;
     }else if(!q && activePharmacyFilter && visible > 0){
       statusEl.textContent = visible === 1
@@ -4683,54 +5541,56 @@ function filterMedicines(query){
     }
   }
 
-  renderSearchSuggestions(q);
-  applyMedicineSort();
+}
+
+function updateMedicineSearchPlaceholder(){
+  const input = document.getElementById('medicine-search');
+  if(!input) return;
+  if(currentResidencePage() === 'pharmacy-profile' && activePharmacyProfileId){
+    const name = (document.getElementById('pharmacy-profile-name')?.textContent || '').trim() || 'this pharmacy';
+    input.placeholder = `Search medicines in ${name}...`;
+    input.setAttribute('aria-label', `Search medicines in ${name}`);
+    return;
+  }
+  input.placeholder = 'Search medicines, e.g. Paracetamol, Amoxicillin...';
+  input.setAttribute('aria-label', 'Search medicines by name or category');
+}
+
+function applyResidenceSearch(query, keepPage = false){
+  updateMedicineSearchPlaceholder();
+  if(currentResidencePage() === 'pharmacy-profile' && activePharmacyProfileId){
+    if(!keepPage) pharmacyProfilePage = 1;
+    renderPharmacyProfileProductPage(pharmacyProfileProducts());
+    if(String(query || '').trim()){
+      document.getElementById('pharmacy-profile-home')?.scrollIntoView({ behavior:'smooth', block:'start' });
+    }
+    return;
+  }
+  filterMedicines(query, keepPage);
+  if(String(query || '').trim() && currentResidencePage() === 'dashboard'){
+    document.getElementById('home-browse')?.scrollIntoView({ behavior:'smooth', block:'nearest' });
+  }
 }
 
 function initMedicineSearch(){
   const input = document.getElementById('medicine-search');
-  const list = document.getElementById('medicine-search-suggestions');
   if(!input || input._searchReady) return;
   input._searchReady = true;
 
   medicineIndex = buildMedicineIndex();
+  updateMedicineSearchPlaceholder();
 
   input.addEventListener('input', () => {
-    suggestionActive = -1;
-    filterMedicines(input.value);
-    if(input.value.trim()){
-      document.getElementById('home-browse')?.scrollIntoView({ behavior:'smooth', block:'nearest' });
-    }
-  });
-
-  input.addEventListener('focus', () => {
-    if(input.value.trim()) renderSearchSuggestions(input.value);
+    applyResidenceSearch(input.value);
   });
 
   input.addEventListener('keydown', e => {
-    const hasSuggestions = list && !list.hidden && suggestionMatches.length;
-
-    if(e.key === 'ArrowDown' && hasSuggestions){
-      e.preventDefault();
-      suggestionActive = Math.min(suggestionActive + 1, Math.min(suggestionMatches.length, 6) - 1);
-      renderSearchSuggestions(input.value);
-      return;
-    }
-
-    if(e.key === 'ArrowUp' && hasSuggestions){
-      e.preventDefault();
-      suggestionActive = Math.max(suggestionActive - 1, 0);
-      renderSearchSuggestions(input.value);
-      return;
-    }
-
     if(e.key === 'Enter'){
       e.preventDefault();
-      if(hasSuggestions && suggestionActive >= 0){
-        selectSearchSuggestion(suggestionActive);
-      }else{
-        filterMedicines(input.value);
-        closeSearchSuggestions();
+      applyResidenceSearch(input.value);
+      if(currentResidencePage() === 'pharmacy-profile'){
+        document.getElementById('pharmacy-profile-home')?.scrollIntoView({ behavior:'smooth', block:'start' });
+      }else if(currentResidencePage() === 'dashboard'){
         document.getElementById('home-browse')?.scrollIntoView({ behavior:'smooth', block:'start' });
       }
       return;
@@ -4740,23 +5600,9 @@ function initMedicineSearch(){
       if(input.value){
         e.stopPropagation();
         input.value = '';
-        filterMedicines('');
-        closeSearchSuggestions();
-      }else{
-        closeSearchSuggestions();
+        applyResidenceSearch('');
       }
     }
-  });
-
-  list?.addEventListener('mousedown', e => {
-    const option = e.target.closest('.med-search-suggestion');
-    if(!option) return;
-    e.preventDefault();
-    selectSearchSuggestion(Number(option.dataset.index));
-  });
-
-  document.addEventListener('click', e => {
-    if(!e.target.closest('#home-search-field')) closeSearchSuggestions();
   });
 }
 
@@ -4765,6 +5611,14 @@ document.addEventListener('keydown', e => {
     const rxViewer = document.getElementById('order-rx-viewer');
     if(rxViewer && !rxViewer.hidden){
       closeOrderPrescription();
+      return;
+    }
+    if(document.getElementById('residence-cancel-order-modal')?.hidden === false){
+      closeResidenceCancelOrderModal();
+      return;
+    }
+    if(document.getElementById('orders-detail-view')?.hidden === false){
+      closeOrderDetail();
       return;
     }
     const detail = document.getElementById('product-detail');
@@ -4779,12 +5633,21 @@ document.addEventListener('click', e => {
     openOrderPrescription(rxLink.getAttribute('data-rx-url') || '');
     return;
   }
-  const pickupPreview = e.target.closest('.od-pickup-proof');
+  const pickupPreview = e.target.closest('.od-pickup-proof, .od-view-proof-btn');
   if(pickupPreview){
     e.preventDefault();
     openOrderDocumentPreview(
       pickupPreview.getAttribute('data-preview-url') || '',
       pickupPreview.getAttribute('data-preview-title') || 'Proof of pickup'
+    );
+    return;
+  }
+  const reportProof = e.target.closest('.resident-report-proof-link[data-preview-url]');
+  if(reportProof){
+    e.preventDefault();
+    openOrderDocumentPreview(
+      reportProof.getAttribute('data-preview-url') || '',
+      reportProof.getAttribute('data-preview-title') || 'Submitted proof'
     );
     return;
   }
@@ -4794,6 +5657,7 @@ document.addEventListener('click', e => {
     return;
   }
   if(!e.target.closest('#topbar-profile-menu')) closeProfileMenu();
+  if(!e.target.closest('.topbar-notification-options-wrap')) closeNotificationOptions();
   if(!e.target.closest('#topbar-notification-menu')) closeNotificationMenu();
 });
 
@@ -4862,8 +5726,49 @@ function initUserLocationExperience(){
 
 let locatorMapInstance = null;
 let locatorMarkersLayer = null;
+let locatorCityLayer = null;
 let locatorVisiblePharmacyIds = null;
 let locatorFilterMode = 'all';
+
+function locatorCityRing(cityKey){
+  const overlay = (window.RESIDENCE_CONFIG && window.RESIDENCE_CONFIG.serviceOverlay) || {};
+  const polygons = overlay.cityPolygons || {};
+  const ring = polygons[cityKey] || [];
+  return ring
+    .map((point) => [Number(point.lat), Number(point.lng)])
+    .filter((pair) => Number.isFinite(pair[0]) && Number.isFinite(pair[1]));
+}
+
+function setLocatorServiceOverlayVisible(visible){
+  const layer = locatorMapInstance && locatorMapInstance._serviceAreaOverlay;
+  if(!layer || !locatorMapInstance) return;
+  if(visible){
+    if(!locatorMapInstance.hasLayer(layer)) locatorMapInstance.addLayer(layer);
+    return;
+  }
+  if(locatorMapInstance.hasLayer(layer)) locatorMapInstance.removeLayer(layer);
+}
+
+function updateLocatorCityOutline(){
+  if(!locatorMapInstance || !window.L) return;
+  if(locatorCityLayer){
+    locatorMapInstance.removeLayer(locatorCityLayer);
+    locatorCityLayer = null;
+  }
+  const ring = locatorCityRing(locatorFilterMode);
+  const showCity = ring.length >= 3;
+  setLocatorServiceOverlayVisible(!showCity);
+  if(!showCity) return;
+  locatorCityLayer = L.polygon(ring, {
+    color: '#c73e3e',
+    weight: 3,
+    opacity: 0.95,
+    fillColor: '#c73e3e',
+    fillOpacity: 0.12,
+    interactive: false,
+    className: 'city-area-polygon',
+  }).addTo(locatorMapInstance);
+}
 
 function filterLocatorPharmacies(){
   const input = document.getElementById('locator-search-input');
@@ -4968,7 +5873,13 @@ function initLocatorMap(){
   }
 
   locatorMarkersLayer.clearLayers();
+  updateLocatorCityOutline();
   const bounds = [];
+  if(locatorCityLayer){
+    const cityBounds = locatorCityLayer.getBounds();
+    bounds.push(cityBounds.getSouthWest());
+    bounds.push(cityBounds.getNorthEast());
+  }
 
   if(location.hasLocation){
     L.marker([location.lat, location.lng], {
@@ -5006,6 +5917,7 @@ function initLocatorMap(){
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  removeCheckoutPrescriptionUploads();
   bindResidenceOrdersTools();
   renderResidenceOrders();
   const trackOrder = new URLSearchParams(location.search).get('track');
@@ -5033,6 +5945,10 @@ document.addEventListener('DOMContentLoaded', () => {
   applyCatalogDistances(window.RESIDENCE_CONFIG?.pharmacies || []);
   document.querySelectorAll('.med-catalog .med-card').forEach(applySpotlightBadge);
   initMedicineSearch();
+  initCatalogPagination();
+  initCatalogCategorySort();
+  initPharmacyProfileCategorySort();
+  filterMedicines(document.getElementById('medicine-search')?.value || '');
   initCategoryNav();
   initProductCarousels();
   initPharmacyMarquee();
@@ -5040,6 +5956,10 @@ document.addEventListener('DOMContentLoaded', () => {
   initUserLocationExperience();
   initProfilePasswordToggles();
   initAddressMapPicker();
+  if(window.USER_LOCATION?.needsLocation){
+    addressMapRequired = true;
+    openAddressMapPicker('add');
+  }
   initLocatorSearch();
   initResidenceCancelOrderModal();
 

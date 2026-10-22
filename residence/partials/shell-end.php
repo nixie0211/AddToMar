@@ -2,60 +2,106 @@
   </div>
 </div>
 
+<button type="button" class="res-order-drawer-backdrop" id="orders-detail-backdrop" hidden aria-label="Close order details"></button>
+<aside class="res-order-drawer" id="orders-detail-view" hidden>
+  <button type="button" class="res-order-drawer-edge" id="orders-detail-edge" aria-label="Close order details">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M15 6 9 12l6 6"/></svg>
+  </button>
+  <header class="res-order-drawer-head">
+    <h2 id="orders-detail-title">Order details</h2>
+    <div class="res-order-head-actions" id="orders-detail-head-actions"></div>
+  </header>
+  <div class="res-order-drawer-body" id="orders-detail-body"></div>
+</aside>
+
 <div id="toast"><span class="tick"><svg class="icon" style="width:12px;height:12px; stroke:#fff;" viewBox="0 0 24 24"><path d="m5 13 4 4L19 7"/></svg></span><span id="toast-msg">Done</span></div>
 
 <aside id="resident-report-floating-panel" class="resident-report-floating-panel" aria-live="polite" hidden></aside>
 
 <style>
   #pharmacy-report-modal[hidden]{display:none!important}
-  #pharmacy-report-modal{position:fixed!important;inset:0!important;z-index:3000!important;display:grid!important;place-items:center!important;padding:28px!important;font-family:inherit!important}
+  #pharmacy-report-modal{position:fixed!important;inset:0!important;z-index:3000!important;display:grid!important;place-items:center!important;padding:20px!important;font-family:inherit!important}
   #pharmacy-report-modal .residence-report-backdrop{position:absolute!important;inset:0!important;border:0!important;background:rgba(38,82,89,.42)!important}
-  #pharmacy-report-modal .residence-report-dialog{position:relative!important;width:min(680px,calc(100vw - 56px))!important;max-height:calc(100vh - 56px)!important;overflow:auto!important;border-radius:18px!important;background:#fff!important;box-shadow:0 24px 64px rgba(23,64,71,.28)!important}
-  #pharmacy-report-modal .residence-report-head{display:flex!important;align-items:flex-start!important;gap:16px!important;padding:24px 28px 20px!important;border-bottom:1px solid #e3f0ef!important}
-  #pharmacy-report-modal .residence-report-title-icon{display:grid!important;place-items:center!important;flex:0 0 56px!important;width:56px!important;height:56px!important;border-radius:14px!important;background:#c9f7ee!important}
-  #pharmacy-report-modal .residence-report-title-icon svg{width:28px!important;height:28px!important;fill:none!important;stroke:#087d75!important;stroke-width:2!important;stroke-linecap:round!important;stroke-linejoin:round!important}
-  #pharmacy-report-modal .residence-report-head>div:nth-child(2){flex:1!important}
-  #pharmacy-report-modal .residence-report-head h3{margin:0 0 8px!important;color:#163541!important;font-size:24px!important;font-weight:800!important;line-height:1.2!important}
-  #pharmacy-report-modal .residence-report-head p{max-width:none!important;margin:0!important;color:#5d7782!important;font-size:14px!important;font-weight:500!important;line-height:1.5!important}
-  #pharmacy-report-modal .residence-report-head button{border:0!important;background:transparent!important;color:#3b7080!important;font-size:32px!important;line-height:1!important;cursor:pointer!important}
-  #pharmacy-report-modal .residence-report-form{display:grid!important;gap:20px!important;padding:24px 28px 20px!important}
+  #pharmacy-report-modal .residence-report-dialog{position:relative!important;width:min(760px,calc(100vw - 32px))!important;max-height:calc(100vh - 32px)!important;overflow:auto!important;padding:28px 28px 24px!important;border-radius:20px!important;background:#fff!important;box-shadow:0 18px 48px rgba(23,64,71,.22)!important}
+  #pharmacy-report-modal .residence-report-close{position:absolute!important;top:14px!important;right:16px!important;z-index:2!important;border:0!important;background:transparent!important;color:#7a919a!important;font-size:26px!important;line-height:1!important;cursor:pointer!important}
+  #pharmacy-report-modal .residence-report-form{display:block!important;padding:0!important;gap:0!important}
   #pharmacy-report-modal .residence-report-target{display:none!important}
-  #pharmacy-report-modal .residence-report-form label{display:grid!important;gap:8px!important;color:#1a4050!important;font-size:14px!important;font-weight:800!important}
-  #pharmacy-report-modal .residence-report-form label>b{display:flex!important;align-items:center!important;gap:10px!important;font-size:14px!important}
-  #pharmacy-report-modal .residence-report-form label>b svg{width:18px!important;height:18px!important;fill:none!important;stroke:#087d76!important;stroke-width:2!important;stroke-linecap:round!important;stroke-linejoin:round!important}
-  #pharmacy-report-modal .residence-report-form label>b em{color:#e14c49!important;font-style:normal!important}
-  #pharmacy-report-modal .residence-report-form label>b span{color:#718b96!important;font-size:13px!important;font-weight:600!important}
-  #pharmacy-report-modal select,#pharmacy-report-modal textarea{box-sizing:border-box!important;width:100%!important;border:1px solid #c4e5e4!important;border-radius:12px!important;background:#fff!important;color:#244854!important;font:inherit!important;font-size:15px!important}
-  #pharmacy-report-modal select{height:48px!important;padding:0 14px!important;border-color:#68ded4!important}
-  #pharmacy-report-modal textarea{min-height:110px!important;padding:14px 16px!important;resize:vertical!important;line-height:1.45!important}
+  #pharmacy-report-modal .residence-report-split{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:28px!important;align-items:stretch!important}
+  #pharmacy-report-modal .residence-report-drop{position:relative!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:8px!important;min-height:320px!important;margin:0!important;padding:0!important;border:2px dashed #7adfd6!important;border-radius:16px!important;background:#f4fffe!important;text-align:center!important;overflow:hidden!important}
+  #pharmacy-report-modal .residence-report-drop.is-dragover{border-color:#21c8bc!important;background:#eafaf8!important}
+  #pharmacy-report-modal .residence-report-drop.has-file{border-style:solid!important;border-color:#c9ece8!important;background:#f7fffe!important}
+  #pharmacy-report-modal .residence-report-empty{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:8px!important;width:100%!important;min-height:320px!important;padding:28px 20px!important;box-sizing:border-box!important}
+  #pharmacy-report-modal .residence-report-drop.has-file .residence-report-empty{display:none!important}
+  #pharmacy-report-modal .residence-report-drop-icon{display:grid!important;place-items:center!important;width:72px!important;height:56px!important;margin:0 0 4px!important}
+  #pharmacy-report-modal .residence-report-drop-icon svg{width:72px!important;height:56px!important;max-width:72px!important;max-height:56px!important}
+  #pharmacy-report-modal .residence-report-drop-title{color:#163541!important;font-size:18px!important;font-weight:800!important;line-height:1.2!important}
+  #pharmacy-report-modal .residence-report-drop-or{color:#9aafb6!important;font-size:12px!important;font-weight:700!important;letter-spacing:.04em!important}
+  #pharmacy-report-modal .residence-report-file-button{display:inline-flex!important;align-items:center!important;justify-content:center!important;min-height:36px!important;padding:0 18px!important;border-radius:999px!important;background:#3ecfc4!important;color:#fff!important;font-size:13px!important;font-weight:800!important}
+  #pharmacy-report-modal .residence-report-file-name{display:none!important}
+  #pharmacy-report-modal .residence-report-empty small{max-width:180px!important;margin:18px 0 0!important;color:#8aa0a8!important;font-size:12px!important;font-weight:500!important;line-height:1.4!important}
+  #pharmacy-report-modal .residence-report-drop input{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;opacity:0!important;cursor:pointer!important;z-index:2!important}
+  #pharmacy-report-modal .residence-report-drop.has-file input{display:none!important}
+  #pharmacy-report-modal .residence-report-preview{display:none!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:12px!important;width:100%!important;height:100%!important;min-height:320px!important;padding:18px 16px 16px!important;box-sizing:border-box!important}
+  #pharmacy-report-modal .residence-report-drop.has-file .residence-report-preview{display:flex!important}
+  #pharmacy-report-modal .residence-report-preview img{display:block!important;max-width:100%!important;max-height:230px!important;width:auto!important;height:auto!important;object-fit:contain!important;border-radius:10px!important;background:#fff!important;box-shadow:0 8px 20px rgba(23,64,71,.12)!important}
+  #pharmacy-report-modal .residence-report-preview img[hidden],#pharmacy-report-modal .residence-report-preview-file[hidden]{display:none!important}
+  #pharmacy-report-modal .residence-report-preview-file{display:grid!important;justify-items:center!important;gap:8px!important;color:#087d76!important;font-size:13px!important;font-weight:700!important;word-break:break-word!important}
+  #pharmacy-report-modal .residence-report-remove{position:relative!important;z-index:3!important;min-height:36px!important;padding:0 16px!important;border:1px solid #f0c4c4!important;border-radius:999px!important;background:#fff!important;color:#c0392b!important;font-size:13px!important;font-weight:800!important;cursor:pointer!important}
+  #pharmacy-report-modal .residence-report-info{display:grid!important;align-content:start!important;gap:14px!important;min-width:0!important;padding-top:4px!important}
+  #pharmacy-report-modal .residence-report-info h3{margin:0 0 4px!important;color:#152f38!important;font-size:22px!important;font-weight:800!important;line-height:1.2!important}
+  #pharmacy-report-modal .residence-report-info label{display:grid!important;gap:7px!important;color:#5d7782!important;font-size:13px!important;font-weight:700!important}
+  #pharmacy-report-modal .residence-report-info label>b{display:block!important;color:#5d7782!important;font-size:13px!important;font-weight:700!important}
+  #pharmacy-report-modal .residence-report-info label>b em{color:#e14c49!important;font-style:normal!important}
+  #pharmacy-report-modal .residence-report-info label>b span{color:#8aa0a8!important;font-weight:600!important}
+  #pharmacy-report-modal select,#pharmacy-report-modal textarea{box-sizing:border-box!important;width:100%!important;border:1px solid #dbe8ea!important;border-radius:12px!important;background:#fff!important;color:#244854!important;font:inherit!important;font-size:13.5px!important}
+  #pharmacy-report-modal select{height:44px!important;padding:0 14px!important}
+  #pharmacy-report-modal textarea{min-height:92px!important;padding:12px 14px!important;resize:vertical!important;line-height:1.45!important}
   #pharmacy-report-modal select:focus,#pharmacy-report-modal textarea:focus{outline:2px solid rgba(63,207,194,.18)!important;border-color:#21c8bc!important}
-  #pharmacy-report-modal .residence-report-form small{margin-left:28px!important;color:#668390!important;font-size:13px!important;font-weight:500!important}
-  #pharmacy-report-modal .residence-report-upload{position:relative!important;display:flex!important;align-items:center!important;justify-content:center!important;gap:14px!important;min-height:96px!important;border:1px dashed #bde5e7!important;border-radius:12px!important;background:#fbffff!important;overflow:hidden!important}
-  #pharmacy-report-modal .residence-report-upload>svg{display:block!important;flex:0 0 32px!important;width:32px!important;height:32px!important;max-width:32px!important;max-height:32px!important;fill:none!important;stroke:#078b82!important;stroke-width:2!important;stroke-linecap:round!important;stroke-linejoin:round!important;overflow:visible!important}
-  #pharmacy-report-modal .residence-report-file-button{padding:10px 16px!important;border-radius:999px!important;background:#c9f6ef!important;color:#087b72!important;font-size:13px!important;font-weight:800!important}
-  #pharmacy-report-modal .residence-report-file-name{color:#5d7782!important;font-size:13px!important;font-weight:600!important}
-  #pharmacy-report-modal .residence-report-upload input{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;opacity:0!important;cursor:pointer!important}
-  #pharmacy-report-modal .residence-report-error{margin:0!important;color:#bd3030!important;font-size:13px!important;font-weight:700!important}
-  #pharmacy-report-modal .residence-report-actions{display:flex!important;justify-content:flex-end!important;gap:12px!important;margin:0 -28px -20px!important;padding:18px 28px!important;border-top:1px solid #e3f0ef!important}
-  #pharmacy-report-modal .residence-report-actions .btn{min-height:44px!important;padding:0 22px!important;border-radius:12px!important;font-size:14px!important;font-weight:800!important}
+  #pharmacy-report-modal .residence-report-error{margin:0!important;color:#bd3030!important;font-size:12.5px!important;font-weight:700!important}
+  #pharmacy-report-modal .residence-report-actions{display:flex!important;justify-content:flex-end!important;align-items:center!important;gap:10px!important;margin:6px 0 0!important;padding:0!important;border:0!important}
+  #pharmacy-report-modal .residence-report-actions .btn{min-height:40px!important;padding:0 18px!important;border-radius:999px!important;font-size:13.5px!important;font-weight:800!important}
   #pharmacy-report-modal .residence-report-actions .btn-ghost{border:1px solid #d5e9e9!important;background:#fff!important;color:#087c74!important}
-  #pharmacy-report-modal .residence-report-actions .btn-primary{background:#078d82!important;color:#fff!important;box-shadow:0 6px 13px rgba(0,122,111,.25)!important}
+  #pharmacy-report-modal .residence-report-actions .btn-primary{background:#3ecfc4!important;color:#fff!important;box-shadow:none!important}
   #pharmacy-report-modal .residence-report-actions .btn-primary span{display:none!important}
   #pharmacy-report-modal #pharmacy-report-other-wrap[hidden]{display:none!important}
+  @media (max-width:720px){
+    #pharmacy-report-modal .residence-report-split{grid-template-columns:1fr!important;gap:18px!important}
+    #pharmacy-report-modal .residence-report-drop{min-height:220px!important}
+  }
 </style>
 <div class="residence-report-modal" id="pharmacy-report-modal" hidden>
   <button type="button" class="residence-report-backdrop" onclick="closePharmacyReportModal()" aria-label="Close report form"></button>
   <section class="residence-report-dialog" role="dialog" aria-modal="true" aria-labelledby="pharmacy-report-title">
-    <div class="residence-report-head"><div class="residence-report-title-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5M10 13h5M10 17h5"/></svg></div><div><h3 id="pharmacy-report-title">Report Pharmacy</h3><p>Help us keep AddToMar safe. Share any issues, concerns, or feedback about this pharmacy.</p></div><button type="button" onclick="closePharmacyReportModal()" aria-label="Close">&times;</button></div>
+    <button type="button" class="residence-report-close" onclick="closePharmacyReportModal()" aria-label="Close">&times;</button>
     <form id="pharmacy-report-form" class="residence-report-form" novalidate onsubmit="submitPharmacyReport(event)">
       <input type="hidden" name="pharmacy_id" id="pharmacy-report-pharmacy-id">
       <p class="residence-report-target" id="pharmacy-report-target"></p>
-      <label><b><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6z"/><path d="m9.5 12 1.7 1.7 3.6-3.6"/></svg>Reason for report <em>*</em></b><select name="reason" id="pharmacy-report-reason" required onchange="togglePharmacyReportOtherReason()"><option value="">Select a reason</option><option value="Incorrect pharmacy information">Incorrect pharmacy information</option><option value="Unsafe or counterfeit medicine">Unsafe or counterfeit medicine</option><option value="Unprofessional service">Unprofessional service</option><option value="Other">Other</option></select></label>
-      <label id="pharmacy-report-other-wrap" hidden><b><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 18l-2 3 4-1h11a3 3 0 0 0 3-3v-9a3 3 0 0 0-3-3H6a3 3 0 0 0-3 3v7a3 3 0 0 0 2 3z"/><path d="M8 12h.01M12 12h.01M16 12h.01"/></svg>Specify the reason</b><textarea name="other_reason" id="pharmacy-report-other" rows="3" maxlength="500" placeholder="Describe the issue in detail..."></textarea></label>
-      <label><b><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>Details <span>(optional)</span></b><textarea name="details" rows="3" maxlength="500" placeholder="Include anything that may help us review this report..."></textarea></label>
-      <label><b><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h14v14H5z"/><path d="m7 15 3-3 2 2 2-2 3 3M9 9h.01"/></svg>Proof of report</b><small>Upload a photo or file (JPG, PNG, WEBP, or PDF - up to 5 MB).</small><span class="residence-report-upload"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></svg><span class="residence-report-file-button">Choose File</span><span class="residence-report-file-name" id="pharmacy-report-file-name">No file chosen</span><input type="file" name="proof" id="pharmacy-report-proof" accept="image/jpeg,image/png,image/webp,application/pdf" required onchange="updatePharmacyReportFileName(this)"></span></label>
-      <p class="residence-report-error" id="pharmacy-report-error" role="alert" hidden></p>
-      <div class="residence-report-actions"><button type="button" class="btn btn-ghost" onclick="closePharmacyReportModal()">Cancel</button><button type="submit" class="btn btn-primary">Submit report</button></div>
+      <div class="residence-report-split">
+        <div class="residence-report-drop" id="pharmacy-report-drop">
+          <input type="file" name="proof" id="pharmacy-report-proof" accept="image/jpeg,image/png,image/webp,application/pdf" required onchange="updatePharmacyReportFileName(this)">
+          <div class="residence-report-empty">
+            <span class="residence-report-drop-icon" aria-hidden="true"><svg viewBox="0 0 72 56" fill="none"><ellipse cx="46" cy="22" rx="14" ry="13" fill="#9ee9e2"/><path d="M18 38c-7 0-12-5-12-11s5-11 12-11c1-7 7-12 14-12 6 0 11 4 13 9 2-1 4-1 6-1 8 0 14 6 14 13 0 8-6 14-14 14H18z" fill="#5fd8cd"/><path d="M36 18v16M36 18l-6 6M36 18l6 6" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <strong class="residence-report-drop-title">Drop file here</strong>
+            <span class="residence-report-drop-or">OR</span>
+            <span class="residence-report-file-button">Upload File</span>
+            <small>Only PNG, JPG, WEBP and PDF files are supported</small>
+          </div>
+          <div class="residence-report-preview">
+            <img id="pharmacy-report-preview-img" alt="Uploaded proof preview">
+            <div class="residence-report-preview-file" id="pharmacy-report-preview-file" hidden></div>
+            <span class="residence-report-file-name" id="pharmacy-report-file-name">No file chosen</span>
+            <button type="button" class="residence-report-remove" onclick="removePharmacyReportProof(event)">Remove</button>
+          </div>
+        </div>
+        <div class="residence-report-info">
+          <h3 id="pharmacy-report-title">Report Pharmacy</h3>
+          <label><b>Reason for report <em>*</em></b><select name="reason" id="pharmacy-report-reason" required onchange="togglePharmacyReportOtherReason()"><option value="">Select a reason</option><option value="Incorrect pharmacy information">Incorrect pharmacy information</option><option value="Unsafe or counterfeit medicine">Unsafe or counterfeit medicine</option><option value="Unprofessional service">Unprofessional service</option><option value="Other">Other</option></select></label>
+          <label id="pharmacy-report-other-wrap" hidden><b>Specify the reason</b><textarea name="other_reason" id="pharmacy-report-other" rows="3" maxlength="500" placeholder="Describe the issue in detail..."></textarea></label>
+          <label><b>Details <span>(optional)</span></b><textarea name="details" rows="4" maxlength="500" placeholder="Include anything that may help us review this report..."></textarea></label>
+          <p class="residence-report-error" id="pharmacy-report-error" role="alert" hidden></p>
+          <div class="residence-report-actions"><button type="button" class="btn btn-ghost" onclick="closePharmacyReportModal()">Cancel</button><button type="submit" class="btn btn-primary">Submit report</button></div>
+        </div>
+      </div>
     </form>
   </section>
 </div>
@@ -108,6 +154,7 @@
 #address-map-modal .address-map-status{margin:0 0 8px!important;font-size:12px!important}#address-map-modal .address-map-preview{margin:0 0 12px!important}#address-map-modal .address-map-preview span{margin:0 0 6px!important;font-size:12px!important;color:#31515d!important}#address-map-modal .address-map-preview .field-input{height:40px!important;padding:0 32px 0 13px!important;border:1px solid #dce9e8!important;border-radius:9px!important;font-size:12px!important}
 #address-map-modal .address-map-current-opt{display:flex!important;align-items:center!important;gap:7px!important;margin:0 0 2px!important;color:#22414c!important;font-size:12px!important;font-weight:800!important;line-height:18px!important}#address-map-modal .address-map-current-opt input{width:14px!important;height:14px!important;margin:0!important;flex:0 0 14px!important;accent-color:#07896f!important}#address-map-modal .address-map-current-hint{margin:0 0 15px 23px!important;font-size:11px!important;line-height:1.35!important}#address-map-modal .address-map-actions{margin:0!important;padding-top:5px!important;gap:10px!important}#address-map-modal .address-map-actions .btn{min-height:38px!important;padding:0 19px!important;border-radius:19px!important;font-size:12px!important;font-weight:800!important}#address-map-modal .address-map-actions .btn-ghost{border:1px solid #d8e6e6!important;background:#fff!important;color:#137d70!important}#address-map-modal .address-map-actions .btn-primary{border:0!important;background:#087d68!important;box-shadow:0 5px 12px rgba(4,110,89,.2)!important}
 @media(max-width:600px){#address-map-modal{padding:12px!important}#address-map-modal .address-map-dialog{width:calc(100vw - 24px)!important;padding:16px!important}#address-map-modal .address-map-canvas{height:280px!important;min-height:280px!important}}
+#address-map-modal.is-required [data-close-address-map]{display:none!important}
 </style>
 <div class="address-map-modal" id="address-map-modal" hidden>
   <div class="address-map-modal-backdrop" data-close-address-map></div>
